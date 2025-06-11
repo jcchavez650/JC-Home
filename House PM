@@ -1,1 +1,98 @@
+# app.py
+from flask import Flask, render_template, request, redirect, url_for, flash
+import os
+import datetime
+import csv
+
+app = Flask(__name__)
+app.secret_key = 'your_secret_key'
+
+QUESTIONS_FILE = "questions.txt"
+RESPONSES_DIR = "responses"
+EMPLOYEE_IDS_FILE = "employee_ids.txt"
+MORNING_DEADLINE = datetime.time(6, 30)
+AFTERNOON_DEADLINE = datetime.time(15, 0)
+
+if not os.path.exists(RESPONSES_DIR):
+    os.makedirs(RESPONSES_DIR)
+
+def load_questions():
+    with open(QUESTIONS_FILE, "r") as f:
+        return [line.strip() for line in f if line.strip()]
+
+def load_valid_employee_ids():
+    with open(EMPLOYEE_IDS_FILE, "r") as f:
+        return set(line.strip().lower() for line in f if line.strip())
+
+def get_check_type():
+    now = datetime.datetime.now().time()
+    return "AM" if now < datetime.time(12, 0) else "PM"
+
+def is_late(check_type):
+    now = datetime.datetime.now().time()
+    if check_type == "AM" and now > MORNING_DEADLINE:
+        return True
+    if check_type == "PM" and now > AFTERNOON_DEADLINE:
+        return True
+    return False
+
+def save_responses_csv(emp_id, selection, answers, timestamps, check_type, late):
+    date_str = datetime.date.today().isoformat()
+    suffix = f"_{check_type}"
+    base_filename = f"{emp_id}_{date_str}{suffix}.csv"
+    filepath = os.path.join(RESPONSES_DIR, base_filename)
+
+    counter = 1
+    while os.path.exists(filepath):
+        filepath = os.path.join(RESPONSES_DIR, f"{emp_id}_{date_str}{suffix}_{counter}.csv")
+        counter += 1
+
+    with open(filepath, "w", newline="") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["Employee ID", "Department", "Question", "Answer", "Late", "Timestamp"])
+        for q in answers:
+            writer.writerow([emp_id, selection, q, answers[q], "Yes" if late else "No", timestamps[q]])
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        emp_id = request.form['employee_id'].strip().lower()
+        selection = request.form.get('department')
+        if not emp_id:
+            flash("Please enter your Employee ID.", "error")
+            return redirect(url_for('index'))
+
+        valid_ids = load_valid_employee_ids()
+        if emp_id not in valid_ids:
+            flash("Invalid Employee ID.", "error")
+            return redirect(url_for('index'))
+
+        return redirect(url_for('questionnaire', emp_id=emp_id, dept=selection))
+    return render_template('index.html')
+
+@app.route('/questionnaire/<emp_id>', methods=['GET', 'POST'])
+def questionnaire(emp_id):
+    check_type = get_check_type()
+    late = is_late(check_type)
+    questions = load_questions()
+    selection = request.args.get('dept')
+
+    if request.method == 'POST':
+        answers = {}
+        timestamps = {}
+        for q in questions:
+            answer = request.form.get(q, "").strip().capitalize()
+            if answer not in ["Yes", "No"]:
+                flash("All questions must be answered with 'Yes' or 'No'.", "error")
+                return redirect(request.url)
+            answers[q] = answer
+            timestamps[q] = datetime.datetime.now().strftime("%H:%M:%S")
+
+        save_responses_csv(emp_id, selection, answers, timestamps, check_type, late)
+        return render_template('success.html')
+
+    return render_template('questionnaire.html', emp_id=emp_id, department=selection, questions=questions, check_type=check_type)
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
