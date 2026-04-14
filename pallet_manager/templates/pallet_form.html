@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ action }} Pallet &mdash; Pallet Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-3">
+  <div class="col-12 col-md-8 col-lg-6">
+
+    <div class="d-flex align-items-center mb-3">
+      <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm me-3">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+      <h4 class="mb-0">
+        <i class="bi bi-{{ 'plus-circle' if action == 'Add' else 'pencil-square' }} me-2"></i>
+        {{ action }} Pallet
+      </h4>
+    </div>
+
+    <div class="card form-card">
+      <div class="card-body">
+        <form method="POST">
+          <!-- Pallet ID -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              Pallet ID <span class="text-danger">*</span>
+            </label>
+            <input type="text" name="pallet_id" class="form-control text-uppercase"
+                   value="{{ pallet.get('pallet_id', '') if pallet else '' }}"
+                   placeholder="e.g. PLT-0042" required autofocus
+                   style="text-transform:uppercase;">
+            <div class="form-text">Must be unique. Will be saved in uppercase.</div>
+          </div>
+
+          <!-- Location -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Location</label>
+            <input type="text" name="location" class="form-control text-uppercase"
+                   value="{{ pallet.get('location', '') if pallet else '' }}"
+                   placeholder="e.g. AISLE-3B, DOCK-1"
+                   style="text-transform:uppercase;">
+            <div class="form-text">Aisle, bay, dock, or zone.</div>
+          </div>
+
+          <!-- Description -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Description / Contents</label>
+            <textarea name="description" class="form-control" rows="2"
+                      placeholder="What's on this pallet?">{{ pallet.get('description', '') if pallet else '' }}</textarea>
+          </div>
+
+          <!-- Status -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
+            <select name="status" class="form-select">
+              {% for s in statuses %}
+              <option value="{{ s }}"
+                {% if pallet and pallet.get('status') == s %}selected
+                {% elif not pallet and s == 'Available' %}selected
+                {% endif %}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Quantity & Weight -->
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">Quantity</label>
+              <input type="number" name="quantity" class="form-control" min="0"
+                     value="{{ pallet.get('quantity', 0) if pallet else 0 }}"
+                     placeholder="0">
+              <div class="form-text">Number of items / units.</div>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Weight (lbs)</label>
+              <input type="number" name="weight" class="form-control" min="0" step="0.1"
+                     value="{{ pallet.get('weight', '') if pallet and pallet.get('weight') else '' }}"
+                     placeholder="0.0">
+              <div class="form-text">Leave blank if unknown.</div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Notes</label>
+            <textarea name="notes" class="form-control" rows="3"
+                      placeholder="Any additional info, reference numbers, handling instructions…">{{ pallet.get('notes', '') if pallet else '' }}</textarea>
+          </div>
+
+          <!-- Buttons -->
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-grow-1">
+              <i class="bi bi-{{ 'plus-lg' if action == 'Add' else 'check-lg' }} me-1"></i>
+              {{ action }} Pallet
+            </button>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
