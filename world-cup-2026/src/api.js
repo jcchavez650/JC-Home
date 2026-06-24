@@ -124,7 +124,7 @@ export function parseStandings(data) {
         gd: stats.pointDifferential ?? 0,
         pts: stats.points ?? 0,
       }
-    }).sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf),
+    }), // keep ESPN's ordering — it includes head-to-head tiebreakers we don't have
   }))
 }
 

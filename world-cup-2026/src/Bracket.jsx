@@ -9,13 +9,17 @@ function getGroupQualifiers(groups) {
     if (!letter) return
     const gp = g.teams[0]?.gp ?? 0
     const complete = gp >= 3
+    const thirdPts = g.teams[2]?.pts ?? 0
     const qualified = []
 
     g.teams.forEach((t, i) => {
       const isThrough =
-        complete && i < 2 ||
-        gp >= 2 && t.pts >= 6 ||
-        gp >= 2 && i < 2 && t.pts >= 4 && (g.teams[2]?.pts ?? 0) <= 1
+        // Group finished: top 2 are through
+        (complete && i < 2) ||
+        // 6 pts from 2 games: won both, mathematically safe regardless of last game
+        (gp >= 2 && t.pts >= 6) ||
+        // 4 pts AND 3rd place has 0 pts: 3rd can reach max 3, can't catch us
+        (gp >= 2 && i < 2 && t.pts >= 4 && thirdPts === 0)
       if (isThrough) qualified.push(t)
     })
 
