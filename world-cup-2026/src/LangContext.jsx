@@ -83,6 +83,8 @@ const translations = {
     finished: 'Finished',
     todayOnly: 'Showing today only — full schedule unavailable',
     noGamesFound: 'No matches found.',
+    filterByTeam: 'Filter by Team',
+    searchTeam: 'Search team…',
     // Groups
     noGroups: 'Group standings not available yet.',
     group: 'Group',
@@ -123,6 +125,8 @@ const translations = {
     finished: 'Terminados',
     todayOnly: 'Solo mostrando hoy — horario completo no disponible',
     noGamesFound: 'No se encontraron partidos.',
+    filterByTeam: 'Filtrar por Equipo',
+    searchTeam: 'Buscar equipo…',
     // Groups
     noGroups: 'Posiciones de grupos no disponibles aún.',
     group: 'Grupo',

@@ -648,6 +648,91 @@
   font-weight: 700;
 }
 
+/* ── Team filter ── */
+.team-filter-bar {
+  padding: 8px 12px 0;
+}
+
+.team-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.team-filter-btn.active {
+  background: rgba(var(--gold-rgb, 212,175,55), 0.15);
+  border-color: var(--gold);
+  color: var(--text);
+}
+.team-filter-clear {
+  margin-left: auto;
+  font-size: 11px;
+  opacity: 0.6;
+  padding: 0 2px;
+}
+
+.team-picker {
+  margin: 6px 12px 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg2);
+}
+
+.team-search-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.team-picker-list {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.team-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.team-picker-item:last-child { border-bottom: none; }
+.team-picker-item:hover, .team-picker-item.active {
+  background: rgba(212,175,55,0.12);
+}
+.team-picker-item.active { font-weight: 600; }
+.team-picker-abbr {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text2);
+  font-family: monospace;
+}
+
 /* ── Game row (Games tab) ── */
 .game-row {
   display: flex;

@@ -5,16 +5,42 @@ import HighlightsModal from './HighlightsModal.jsx'
 
 export default function Games({ matches, allLoaded }) {
   const [filter, setFilter] = useState('all')
-  const { t } = useLang()
+  const [teamFilter, setTeamFilter] = useState('')
+  const [teamSearch, setTeamSearch] = useState('')
+  const [showTeamPicker, setShowTeamPicker] = useState(false)
+  const { t, tn } = useLang()
+
+  // Collect unique teams from all matches
+  const allTeams = useMemo(() => {
+    const seen = new Map()
+    matches.forEach(m => {
+      if (m.home.abbr && !seen.has(m.home.abbr)) seen.set(m.home.abbr, { abbr: m.home.abbr, team: m.home.team, logo: m.home.logo })
+      if (m.away.abbr && !seen.has(m.away.abbr)) seen.set(m.away.abbr, { abbr: m.away.abbr, team: m.away.team, logo: m.away.logo })
+    })
+    return [...seen.values()].sort((a, b) => a.team.localeCompare(b.team))
+  }, [matches])
+
+  const filteredTeams = useMemo(() =>
+    teamSearch
+      ? allTeams.filter(t => t.team.toLowerCase().includes(teamSearch.toLowerCase()) || t.abbr.toLowerCase().includes(teamSearch.toLowerCase()))
+      : allTeams,
+    [allTeams, teamSearch]
+  )
 
   const grouped = useMemo(() => {
-    const sorted = [...matches].sort((a, b) => a.date - b.date)
+    let sorted = [...matches].sort((a, b) => a.date - b.date)
+
+    // Apply team filter first
+    if (teamFilter) {
+      sorted = sorted.filter(m => m.home.abbr === teamFilter || m.away.abbr === teamFilter)
+    }
+
     const filtered = filter === 'all' ? sorted
       : filter === 'live' ? sorted.filter(m => m.statusType === 'STATUS_IN_PROGRESS')
       : filter === 'done' ? sorted.filter(m => m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME')
       : sorted.filter(m => m.statusType !== 'STATUS_FINAL' && m.statusType !== 'STATUS_FULL_TIME' && m.statusType !== 'STATUS_IN_PROGRESS')
 
-    // Group by date — use a sortable key so dates stay in order
+    // Group by date
     const byDate = {}
     filtered.forEach(m => {
       const key = m.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
@@ -22,9 +48,10 @@ export default function Games({ matches, allLoaded }) {
       byDate[key].push(m)
     })
     return byDate
-  }, [matches, filter])
+  }, [matches, filter, teamFilter])
 
   const liveCount = matches.filter(m => m.statusType === 'STATUS_IN_PROGRESS').length
+  const selectedTeam = allTeams.find(t => t.abbr === teamFilter)
 
   return (
     <div>
@@ -33,7 +60,51 @@ export default function Games({ matches, allLoaded }) {
           {t.todayOnly}
         </div>
       )}
-      {/* Filter pills */}
+
+      {/* Team filter */}
+      <div className="team-filter-bar">
+        <button
+          className={`team-filter-btn ${teamFilter ? 'active' : ''}`}
+          onClick={() => setShowTeamPicker(p => !p)}
+        >
+          {selectedTeam ? (
+            <>
+              <TeamFlag abbr={selectedTeam.abbr} logo={selectedTeam.logo} size={16} />
+              <span>{tn(selectedTeam.team, selectedTeam.abbr)}</span>
+              <span className="team-filter-clear" onClick={e => { e.stopPropagation(); setTeamFilter(''); setShowTeamPicker(false) }}>✕</span>
+            </>
+          ) : (
+            <span>{t.filterByTeam ?? 'Filter by Team'}</span>
+          )}
+        </button>
+      </div>
+
+      {showTeamPicker && (
+        <div className="team-picker">
+          <input
+            className="team-search-input"
+            placeholder={t.searchTeam ?? 'Search team…'}
+            value={teamSearch}
+            onChange={e => setTeamSearch(e.target.value)}
+            autoFocus
+          />
+          <div className="team-picker-list">
+            {filteredTeams.map(team => (
+              <button
+                key={team.abbr}
+                className={`team-picker-item ${teamFilter === team.abbr ? 'active' : ''}`}
+                onClick={() => { setTeamFilter(team.abbr); setShowTeamPicker(false); setTeamSearch('') }}
+              >
+                <TeamFlag abbr={team.abbr} logo={team.logo} size={20} />
+                <span>{tn(team.team, team.abbr)}</span>
+                <span className="team-picker-abbr">{team.abbr}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Status filter pills */}
       <div className="filter-bar">
         {[
           { key: 'all', label: t.all },
