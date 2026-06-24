@@ -2,12 +2,24 @@
 const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world'
 const ESPN_V2 = 'https://site.api.espn.com/apis/v2/sports/soccer/fifa.world'
 
-const CORS = 'https://corsproxy.io/?url='
+const PROXIES = [
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  u => `https://cors-anywhere.herokuapp.com/${u}`,
+]
 
 async function get(url) {
-  const res = await fetch(CORS + encodeURIComponent(url))
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json()
+  let lastErr
+  for (const proxy of PROXIES) {
+    try {
+      const res = await fetch(proxy(url))
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      return res.json()
+    } catch (e) {
+      lastErr = e
+    }
+  }
+  throw lastErr
 }
 
 export async function fetchScoreboard() {
