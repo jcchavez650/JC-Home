@@ -141,7 +141,27 @@ function MatchCard({ match: m }) {
           <TeamFlag abbr={m.away.abbr} logo={m.away.logo} size={36} />
         </div>
       </div>
+
+      {/* Win probability bar */}
+      {m.homeWinPct != null && !isFinal && (
+        <WinProbBar home={m.homeWinPct} draw={m.drawPct} away={m.awayWinPct}
+          homeAbbr={m.home.abbr} awayAbbr={m.away.abbr} />
+      )}
     </div>
     </>
+  )
+}
+
+function WinProbBar({ home, draw, away, homeAbbr, awayAbbr }) {
+  return (
+    <div className="prob-bar-wrap">
+      <span className="prob-label">{home}%</span>
+      <div className="prob-bar">
+        <div className="prob-seg prob-home" style={{ width: `${home}%` }} />
+        {draw > 0 && <div className="prob-seg prob-draw" style={{ width: `${draw}%` }} />}
+        <div className="prob-seg prob-away" style={{ width: `${away}%` }} />
+      </div>
+      <span className="prob-label">{away}%</span>
+    </div>
   )
 }

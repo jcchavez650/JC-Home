@@ -98,6 +98,23 @@ export function parseMatches(data) {
     // Extract any highlight videos directly in the scoreboard payload
     const videos = extractVideos(comp, event)
 
+    // Win probability from predictor or odds
+    const predictor = comp.predictor ?? {}
+    const odds = comp.odds?.[0] ?? {}
+    let homeWinPct = null
+    let awayWinPct = null
+    let drawPct = null
+
+    if (predictor.homeTeam?.winProbability != null) {
+      homeWinPct = Math.round(predictor.homeTeam.winProbability)
+      awayWinPct = Math.round(predictor.awayTeam?.winProbability ?? (100 - homeWinPct))
+      drawPct = Math.max(0, 100 - homeWinPct - awayWinPct)
+    } else if (odds.homeTeamOdds?.winPercentage != null) {
+      homeWinPct = Math.round(odds.homeTeamOdds.winPercentage)
+      awayWinPct = Math.round(odds.awayTeamOdds?.winPercentage ?? 0)
+      drawPct = Math.max(0, 100 - homeWinPct - awayWinPct)
+    }
+
     return {
       id: event.id,
       date: new Date(event.date),
@@ -108,6 +125,9 @@ export function parseMatches(data) {
       displayClock: status.displayClock ?? '',
       period: status.period ?? 0,
       videos,
+      homeWinPct,
+      awayWinPct,
+      drawPct,
       home: {
         team: home?.team?.displayName ?? 'TBD',
         abbr: home?.team?.abbreviation ?? '',
