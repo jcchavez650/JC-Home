@@ -1,9 +1,10 @@
 // ESPN unofficial API – no key required
 const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world'
 const ESPN_V2 = 'https://site.api.espn.com/apis/v2/sports/soccer/fifa.world'
+const ESPN_CORE = 'https://sports.core.api.espn.com/v2/sports/soccer/leagues/fifa.world'
 
 const PROXIES = [
-  u => u, // direct fetch first — ESPN API has CORS headers for browsers
+  u => u,
   u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
   u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
 ]
