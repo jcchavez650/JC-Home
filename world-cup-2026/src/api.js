@@ -27,10 +27,10 @@ export async function fetchScoreboard() {
   return get(`${ESPN_BASE}/scoreboard`)
 }
 
-// WC 2026 runs Jun 11 – Jul 19, 2026
+// WC 2026 runs Jun 11 – Jul 22, 2026
 // ESPN accepts ?dates=YYYYMMDD-YYYYMMDD for a range
 export async function fetchAllGames() {
-  const data = await get(`${ESPN_BASE}/scoreboard?dates=20260611-20260719&limit=200`)
+  const data = await get(`${ESPN_BASE}/scoreboard?dates=20260611-20260722&limit=200`)
   return data
 }
 
@@ -44,19 +44,30 @@ export async function fetchBracket() {
 }
 
 export function parseBracket(data) {
-  // ESPN bracket structure: data.bracket.rounds[].seeds[].teams/competitors
-  const rounds = data?.bracket?.rounds ?? data?.rounds ?? []
+  // Log actual shape so we can debug ESPN's bracket response
+  if (data) console.log('[bracket]', JSON.stringify(data).slice(0, 400))
+
+  // Try multiple possible ESPN bracket shapes
+  const rounds =
+    data?.bracket?.rounds ??
+    data?.rounds ??
+    data?.bracket?.entries ??
+    data?.children ??
+    []
+
+  if (!rounds.length) return []
+
   return rounds.map(r => ({
-    name: r.name ?? '',
-    seeds: (r.seeds ?? []).map(seed => ({
+    name: r.name ?? r.displayName ?? '',
+    seeds: ((r.seeds ?? r.entries ?? r.competitors ?? [])).map(seed => ({
       id: seed.id,
-      home: extractBracketTeam(seed.teams?.[0] ?? seed.competitors?.[0]),
-      away: extractBracketTeam(seed.teams?.[1] ?? seed.competitors?.[1]),
+      home: extractBracketTeam(seed.teams?.[0] ?? seed.competitors?.[0] ?? seed.home),
+      away: extractBracketTeam(seed.teams?.[1] ?? seed.competitors?.[1] ?? seed.away),
       homeScore: seed.teams?.[0]?.score ?? null,
       awayScore: seed.teams?.[1]?.score ?? null,
       status: seed.status?.type?.name ?? '',
     })),
-  }))
+  })).filter(r => r.seeds.length > 0)
 }
 
 function extractBracketTeam(t) {

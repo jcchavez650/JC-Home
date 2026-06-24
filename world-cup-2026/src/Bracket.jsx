@@ -56,15 +56,30 @@ function labelFor([g, pos], t) {
   return `${pos === 'w' ? (t?.confirmed ?? '1st') : (t?.runnerUp ?? '2nd')} ${t?.group ?? 'Group'} ${g}`
 }
 
-// Classify match name into a round key
-function getRoundKey(name) {
-  const n = (name ?? '').toLowerCase()
-  if (n.includes('round of 32')) return 'r32'
-  if (n.includes('round of 16')) return 'r16'
-  if (n.includes('quarter')) return 'qf'
-  if (n.includes('semi')) return 'sf'
-  if (n.includes('3rd place') || n.includes('third place')) return '3p'
-  if (n.includes('final')) return 'f'
+// Classify a match into a round key using slug, name, AND date
+function getRoundKey(m) {
+  const slug = (m.group ?? '').toLowerCase()
+  const name = (m.name ?? '').toLowerCase()
+  const text = slug + ' ' + name
+
+  if (text.includes('round-of-32') || text.includes('round of 32')) return 'r32'
+  if (text.includes('round-of-16') || text.includes('round of 16')) return 'r16'
+  if (text.includes('quarter')) return 'qf'
+  if (text.includes('semi')) return 'sf'
+  if (text.includes('third') || text.includes('3rd place')) return '3p'
+  if (text.includes('final')) return 'f'
+
+  // Date-based fallback — WC 2026 knockout schedule
+  const d = m.date
+  if (d && d.getFullYear() === 2026 && d.getMonth() === 6) { // July (0-indexed)
+    const day = d.getDate()
+    if (day >= 4  && day <= 7)  return 'r32'
+    if (day >= 10 && day <= 12) return 'r16'
+    if (day >= 15 && day <= 16) return 'qf'
+    if (day >= 18 && day <= 19) return 'sf'
+    if (day === 21)              return '3p'
+    if (day >= 22)               return 'f'
+  }
   return null
 }
 
@@ -101,11 +116,12 @@ export default function Bracket({ allGames, groups, bracketRounds }) {
   // ── Priority 2: ESPN knockout games from allGames ─────────────────────────
   const byRound = {}
   ;(allGames ?? []).forEach(m => {
-    const key = getRoundKey(m.name)
+    const key = getRoundKey(m)
     if (!key) return
     if (!byRound[key]) byRound[key] = []
     byRound[key].push(m)
   })
+  if (Object.keys(byRound).length) console.log('[bracket rounds]', Object.fromEntries(Object.entries(byRound).map(([k,v]) => [k, v.map(m => m.name + ' ' + m.group)])))
 
   const ROUNDS = [
     { key: 'r32', label: t.r32,   count: 16 },
