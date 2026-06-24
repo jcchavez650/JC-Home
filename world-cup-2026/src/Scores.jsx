@@ -2,6 +2,7 @@ import { useState } from 'react'
 import TeamFlag from './TeamFlag.jsx'
 import { useLang } from './LangContext.jsx'
 import HighlightsModal from './HighlightsModal.jsx'
+import { useLiveClock } from './useLiveClock.js'
 
 export default function Scores({ matches }) {
   const { t } = useLang()
@@ -62,6 +63,7 @@ function MatchCard({ match: m }) {
   const isFinal = m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME'
   const hasScore = m.home.score !== null
   const canHighlight = isFinal || isLive
+  const liveClock = useLiveClock(m.displayClock, isLive)
 
   return (
     <>
@@ -112,7 +114,7 @@ function MatchCard({ match: m }) {
           )}
           <div className={`match-status ${isLive ? 'status-live' : isFinal ? 'status-ft' : 'status-upcoming'}`}>
             {isLive
-              ? `${m.displayClock || "'"}`
+              ? `${liveClock || "'"}`
               : isFinal
               ? t.ft
               : m.date.toLocaleString([], {

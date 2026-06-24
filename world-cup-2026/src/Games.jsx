@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import TeamFlag from './TeamFlag.jsx'
 import { useLang } from './LangContext.jsx'
 import HighlightsModal from './HighlightsModal.jsx'
+import { useLiveClock } from './useLiveClock.js'
 
 export default function Games({ matches, allLoaded }) {
   const [filter, setFilter] = useState('all')
@@ -143,6 +144,7 @@ function GameRow({ match: m }) {
   const isFinal = m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME'
   const canHighlight = isFinal || isLive
   const hasScore = m.home.score !== null
+  const liveClock = useLiveClock(m.displayClock, isLive)
 
   return (
     <>
@@ -153,7 +155,7 @@ function GameRow({ match: m }) {
         {isLive ? (
           <span className="game-status-live">
             <span className="live-dot" style={{ background: 'var(--red)' }} />
-            {m.displayClock || t.live}
+            {liveClock || t.live}
           </span>
         ) : isFinal ? (
           <span className="game-status-ft">{t.ft}</span>
