@@ -212,6 +212,7 @@ function SlotTeamRow({ team, label }) {
       <div className="b-team b-confirmed">
         <TeamFlag abbr={team.abbr} logo={team.logo} size={16} />
         <span className="b-name">{tn(team.team, team.abbr)}</span>
+        <span className="b-check">✓</span>
       </div>
     )
   }

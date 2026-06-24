@@ -844,6 +844,15 @@
 
 .b-confirmed {
   color: var(--text);
+  border-left: 3px solid var(--green);
+  background: rgba(46,160,67,0.08);
+}
+
+.b-check {
+  font-size: 9px;
+  color: var(--green);
+  flex-shrink: 0;
+  font-weight: 700;
 }
 
 .b-name {
