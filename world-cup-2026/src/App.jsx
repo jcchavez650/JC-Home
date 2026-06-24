@@ -9,7 +9,7 @@ import Games from './Games.jsx'
 
 export default function App() {
   const [tab, setTab] = useState('scores')
-  const { matches, allGames, groups, loading, error, lastUpdated, refreshing, refresh } = useWorldCup()
+  const { matches, allGames, groups, bracketRounds, loading, error, lastUpdated, refreshing, refresh } = useWorldCup()
   const { lang, toggle, t } = useLang()
 
   const TABS = [
@@ -95,7 +95,7 @@ export default function App() {
             {tab === 'scores'  && <Scores matches={matches} />}
             {tab === 'games'   && <Games matches={allGames.length ? allGames : matches} allLoaded={allGames.length > 0} />}
             {tab === 'groups'  && <Groups groups={groups} />}
-            {tab === 'bracket' && <Bracket matches={matches} groups={groups} />}
+            {tab === 'bracket' && <Bracket allGames={allGames} groups={groups} bracketRounds={bracketRounds} />}
           </>
         )}
       </main>

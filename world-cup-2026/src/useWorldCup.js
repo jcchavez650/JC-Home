@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import { fetchScoreboard, fetchAllGames, fetchStandings, parseMatches, parseStandings } from './api.js'
+import { fetchScoreboard, fetchAllGames, fetchStandings, fetchBracket, parseMatches, parseStandings, parseBracket } from './api.js'
 
 export function useWorldCup() {
   const [matches, setMatches] = useState([])   // today / live
   const [allGames, setAllGames] = useState([]) // full tournament schedule
   const [groups, setGroups] = useState([])
+  const [bracketRounds, setBracketRounds] = useState([]) // ESPN bracket rounds
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [lastUpdated, setLastUpdated] = useState(null)
@@ -16,20 +17,24 @@ export function useWorldCup() {
     setError(null)
 
     try {
-      // Use allSettled so one failing endpoint doesn't kill everything
-      const [scoreRes, allRes, standRes] = await Promise.allSettled([
+      const [scoreRes, allRes, standRes, bracketRes] = await Promise.allSettled([
         fetchScoreboard(),
         fetchAllGames(),
         fetchStandings(),
+        fetchBracket(),
       ])
 
       if (scoreRes.status === 'fulfilled') setMatches(parseMatches(scoreRes.value))
-      else throw scoreRes.reason // scores are required; surface this error
+      else throw scoreRes.reason
 
       if (allRes.status === 'fulfilled') setAllGames(parseMatches(allRes.value))
-      // if full schedule fails, fall back to today's matches (already set above)
 
       if (standRes.status === 'fulfilled') setGroups(parseStandings(standRes.value))
+
+      if (bracketRes.status === 'fulfilled') {
+        const rounds = parseBracket(bracketRes.value)
+        if (rounds.length) setBracketRounds(rounds)
+      }
 
       setLastUpdated(new Date())
     } catch (e) {
@@ -48,5 +53,5 @@ export function useWorldCup() {
 
   const refresh = () => load(true)
 
-  return { matches, allGames, groups, loading, error, lastUpdated, refreshing, refresh }
+  return { matches, allGames, groups, bracketRounds, loading, error, lastUpdated, refreshing, refresh }
 }

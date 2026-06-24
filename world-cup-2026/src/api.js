@@ -38,6 +38,39 @@ export async function fetchStandings() {
   return get(`${ESPN_V2}/standings`)
 }
 
+// Fetch the full knockout bracket from ESPN
+export async function fetchBracket() {
+  return get(`${ESPN_V2}/bracket`)
+}
+
+export function parseBracket(data) {
+  // ESPN bracket structure: data.bracket.rounds[].seeds[].teams/competitors
+  const rounds = data?.bracket?.rounds ?? data?.rounds ?? []
+  return rounds.map(r => ({
+    name: r.name ?? '',
+    seeds: (r.seeds ?? []).map(seed => ({
+      id: seed.id,
+      home: extractBracketTeam(seed.teams?.[0] ?? seed.competitors?.[0]),
+      away: extractBracketTeam(seed.teams?.[1] ?? seed.competitors?.[1]),
+      homeScore: seed.teams?.[0]?.score ?? null,
+      awayScore: seed.teams?.[1]?.score ?? null,
+      status: seed.status?.type?.name ?? '',
+    })),
+  }))
+}
+
+function extractBracketTeam(t) {
+  if (!t) return null
+  const team = t.team ?? t
+  return {
+    team: team.displayName ?? team.name ?? 'TBD',
+    abbr: team.abbreviation ?? '',
+    logo: team.logo ?? null,
+    score: t.score ?? null,
+    winner: t.winner ?? false,
+  }
+}
+
 // Fetch detailed match data including videos/highlights
 export async function fetchMatchDetail(eventId) {
   return get(`${ESPN_BASE}/summary?event=${eventId}`)
