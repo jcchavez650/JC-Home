@@ -391,6 +391,98 @@
   font-size: 11px;
 }
 
+/* Qualifier cards */
+.qualifiers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.qual-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.qual-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+}
+
+.qual-letter {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.qual-status {
+  font-size: 9px;
+  color: var(--text2);
+}
+
+.qual-team {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  gap: 4px;
+}
+
+.qual-team:last-child { border-bottom: none; }
+
+.qual-team-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  flex: 1;
+}
+
+.qual-confirmed { background: rgba(46,160,67,0.08); }
+.qual-eliminated { opacity: 0.45; }
+
+.pos-sm {
+  font-size: 9px;
+  color: var(--text2);
+  width: 10px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.qual-name {
+  font-size: 11px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60px;
+}
+
+.qual-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.qual-pts {
+  font-size: 10px;
+  color: var(--text2);
+}
+
+.qual-check {
+  font-size: 10px;
+  color: var(--green);
+  font-weight: 700;
+}
+
 /* Loading */
 .loading {
   display: flex;
