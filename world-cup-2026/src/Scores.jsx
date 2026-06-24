@@ -16,22 +16,27 @@ export default function Scores({ matches }) {
     )
   }
 
-  const live = matches.filter(m => m.statusType === 'STATUS_IN_PROGRESS')
   const now = new Date()
+  const isFinished = m => m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME'
+  const isLiveStatus = m => m.statusType === 'STATUS_IN_PROGRESS'
+  // Treat a game as live if ESPN says so, OR if its start time has passed (within ~2hrs) and it's not finished
+  const isProbablyLive = m => isLiveStatus(m) || (!isFinished(m) && m.date <= now && now - m.date < 2 * 60 * 60 * 1000)
+
+  const live = matches.filter(isProbablyLive)
   const today = matches.filter(m => {
     const d = m.date
     return (
-      m.statusType !== 'STATUS_IN_PROGRESS' &&
+      !isProbablyLive(m) &&
       d.getFullYear() === now.getFullYear() &&
       d.getMonth() === now.getMonth() &&
       d.getDate() === now.getDate()
     )
   })
   const upcoming = matches
-    .filter(m => m.statusType !== 'STATUS_IN_PROGRESS' && !today.includes(m) && m.date > now)
+    .filter(m => !isProbablyLive(m) && !today.includes(m) && m.date > now)
     .slice(0, 20)
   const recent = matches
-    .filter(m => (m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME') && !today.includes(m))
+    .filter(m => isFinished(m) && !today.includes(m))
     .slice(0, 10)
 
   const sections = []
@@ -59,8 +64,9 @@ export default function Scores({ matches }) {
 function MatchCard({ match: m }) {
   const { t, tn } = useLang()
   const [showClips, setShowClips] = useState(false)
-  const isLive = m.statusType === 'STATUS_IN_PROGRESS'
   const isFinal = m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME'
+  const now2 = new Date()
+  const isLive = m.statusType === 'STATUS_IN_PROGRESS' || (!isFinal && m.date <= now2 && now2 - m.date < 2 * 60 * 60 * 1000)
   const hasScore = m.home.score !== null
   const canHighlight = isFinal || isLive
   const liveClock = useLiveClock(m.displayClock, isLive)

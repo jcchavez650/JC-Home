@@ -37,9 +37,18 @@ export default function Games({ matches, allLoaded }) {
     }
 
     const filtered = filter === 'all' ? sorted
-      : filter === 'live' ? sorted.filter(m => m.statusType === 'STATUS_IN_PROGRESS')
+      : filter === 'live' ? sorted.filter(m => {
+          const fin = m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME'
+          const nowF = new Date()
+          return m.statusType === 'STATUS_IN_PROGRESS' || (!fin && m.date <= nowF && nowF - m.date < 2 * 60 * 60 * 1000)
+        })
       : filter === 'done' ? sorted.filter(m => m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME')
-      : sorted.filter(m => m.statusType !== 'STATUS_FINAL' && m.statusType !== 'STATUS_FULL_TIME' && m.statusType !== 'STATUS_IN_PROGRESS')
+      : sorted.filter(m => {
+          const fin = m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME'
+          const nowF = new Date()
+          const probLive = m.statusType === 'STATUS_IN_PROGRESS' || (!fin && m.date <= nowF && nowF - m.date < 2 * 60 * 60 * 1000)
+          return !fin && !probLive
+        })
 
     // Group by date
     const byDate = {}
@@ -51,7 +60,11 @@ export default function Games({ matches, allLoaded }) {
     return byDate
   }, [matches, filter, teamFilter])
 
-  const liveCount = matches.filter(m => m.statusType === 'STATUS_IN_PROGRESS').length
+  const nowLc = new Date()
+  const liveCount = matches.filter(m => {
+    const fin = m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME'
+    return m.statusType === 'STATUS_IN_PROGRESS' || (!fin && m.date <= nowLc && nowLc - m.date < 2 * 60 * 60 * 1000)
+  }).length
   const selectedTeam = allTeams.find(t => t.abbr === teamFilter)
 
   return (
@@ -140,8 +153,9 @@ export default function Games({ matches, allLoaded }) {
 function GameRow({ match: m }) {
   const { t, tn } = useLang()
   const [showClips, setShowClips] = useState(false)
-  const isLive = m.statusType === 'STATUS_IN_PROGRESS'
   const isFinal = m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME'
+  const nowGr = new Date()
+  const isLive = m.statusType === 'STATUS_IN_PROGRESS' || (!isFinal && m.date <= nowGr && nowGr - m.date < 2 * 60 * 60 * 1000)
   const canHighlight = isFinal || isLive
   const hasScore = m.home.score !== null
   const liveClock = useLiveClock(m.displayClock, isLive)
