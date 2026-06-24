@@ -38,6 +38,11 @@ export async function fetchStandings() {
   return get(`${ESPN_V2}/standings`)
 }
 
+// Fetch detailed match data including videos/highlights
+export async function fetchMatchDetail(eventId) {
+  return get(`${ESPN_BASE}/summary?event=${eventId}`)
+}
+
 export function parseMatches(data) {
   if (!data?.events) return []
   return data.events.map(event => {
@@ -45,6 +50,9 @@ export function parseMatches(data) {
     const home = comp.competitors?.find(c => c.homeAway === 'home')
     const away = comp.competitors?.find(c => c.homeAway === 'away')
     const status = comp.status ?? {}
+
+    // Extract any highlight videos directly in the scoreboard payload
+    const videos = extractVideos(comp, event)
 
     return {
       id: event.id,
@@ -55,6 +63,7 @@ export function parseMatches(data) {
       statusType: status.type?.name ?? '',
       displayClock: status.displayClock ?? '',
       period: status.period ?? 0,
+      videos,
       home: {
         team: home?.team?.displayName ?? 'TBD',
         abbr: home?.team?.abbreviation ?? '',
@@ -71,6 +80,28 @@ export function parseMatches(data) {
       },
     }
   })
+}
+
+function extractVideos(comp, event) {
+  const clips = []
+
+  // ESPN embeds videos directly in competition or event objects
+  const sources = [comp.videos, event.videos, comp.highlights]
+  for (const arr of sources) {
+    if (!Array.isArray(arr)) continue
+    for (const v of arr) {
+      const mp4 = v.links?.source?.href ?? v.links?.mobile?.href ?? null
+      const embed = v.links?.web?.href ?? null
+      clips.push({
+        title: v.headline ?? v.caption ?? 'Highlight',
+        thumbnail: v.thumbnail ?? v.images?.[0]?.url ?? null,
+        mp4,
+        embed,
+        duration: v.duration ?? null,
+      })
+    }
+  }
+  return clips
 }
 
 export function parseStandings(data) {

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import TeamFlag from './TeamFlag.jsx'
 import { useLang } from './LangContext.jsx'
+import HighlightsModal from './HighlightsModal.jsx'
 
 export default function Games({ matches, allLoaded }) {
   const [filter, setFilter] = useState('all')
@@ -66,11 +67,15 @@ export default function Games({ matches, allLoaded }) {
 
 function GameRow({ match: m }) {
   const { t, tn } = useLang()
+  const [showClips, setShowClips] = useState(false)
   const isLive = m.statusType === 'STATUS_IN_PROGRESS'
   const isFinal = m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME'
+  const canHighlight = isFinal || isLive
   const hasScore = m.home.score !== null
 
   return (
+    <>
+    {showClips && <HighlightsModal match={m} onClose={() => setShowClips(false)} />}
     <div className="game-row">
       {/* Status column */}
       <div className="game-status-col">
@@ -117,6 +122,14 @@ function GameRow({ match: m }) {
           </>
         )}
       </div>
+
+      {/* Highlights button */}
+      {canHighlight && (
+        <button className="highlights-btn" onClick={() => setShowClips(true)}>
+          ▶
+        </button>
+      )}
     </div>
+    </>
   )
 }

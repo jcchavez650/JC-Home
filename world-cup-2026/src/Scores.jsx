@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import TeamFlag from './TeamFlag.jsx'
 import { useLang } from './LangContext.jsx'
+import HighlightsModal from './HighlightsModal.jsx'
 
 export default function Scores({ matches }) {
   const { t } = useLang()
@@ -55,11 +57,15 @@ export default function Scores({ matches }) {
 
 function MatchCard({ match: m }) {
   const { t, tn } = useLang()
+  const [showClips, setShowClips] = useState(false)
   const isLive = m.statusType === 'STATUS_IN_PROGRESS'
   const isFinal = m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME'
   const hasScore = m.home.score !== null
+  const canHighlight = isFinal || isLive
 
   return (
+    <>
+    {showClips && <HighlightsModal match={m} onClose={() => setShowClips(false)} />}
     <div className="match-card">
       <div className="match-meta">
         {isLive && (
@@ -70,6 +76,11 @@ function MatchCard({ match: m }) {
         )}
         <span>{m.group ? m.group.replace(/-/g, ' ').toUpperCase() : 'World Cup 2026'}</span>
         {m.venue && <span>· {m.venue}</span>}
+        {canHighlight && (
+          <button className="highlights-btn" onClick={() => setShowClips(true)} style={{ marginLeft: 'auto' }}>
+            ▶ Highlights
+          </button>
+        )}
       </div>
 
       <div className="match-body">
@@ -123,5 +134,6 @@ function MatchCard({ match: m }) {
         </div>
       </div>
     </div>
+    </>
   )
 }
