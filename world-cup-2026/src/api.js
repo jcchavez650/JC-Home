@@ -3,9 +3,9 @@ const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.wor
 const ESPN_V2 = 'https://site.api.espn.com/apis/v2/sports/soccer/fifa.world'
 
 const PROXIES = [
+  u => u, // direct fetch first — ESPN API has CORS headers for browsers
   u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
   u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
-  u => `https://cors-anywhere.herokuapp.com/${u}`,
 ]
 
 async function get(url) {
