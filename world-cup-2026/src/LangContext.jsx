@@ -1,5 +1,61 @@
 import { createContext, useContext, useState } from 'react'
 
+// Spanish names keyed by ESPN abbreviation
+const TEAM_NAMES_ES = {
+  USA: 'Estados Unidos', MEX: 'México', CAN: 'Canadá',
+  BRA: 'Brasil', ARG: 'Argentina', URU: 'Uruguay', COL: 'Colombia',
+  ECU: 'Ecuador', PER: 'Perú', CHI: 'Chile', PAR: 'Paraguay',
+  BOL: 'Bolivia', VEN: 'Venezuela',
+  FRA: 'Francia', GER: 'Alemania', ENG: 'Inglaterra', ESP: 'España',
+  POR: 'Portugal', ITA: 'Italia', NED: 'Países Bajos', BEL: 'Bélgica',
+  CRO: 'Croacia', SER: 'Serbia', POL: 'Polonia', SUI: 'Suiza',
+  AUT: 'Austria', DEN: 'Dinamarca', SWE: 'Suecia', NOR: 'Noruega',
+  SCO: 'Escocia', WAL: 'Gales', SVK: 'Eslovaquia', CZE: 'República Checa',
+  HUN: 'Hungría', ROM: 'Rumanía', UKR: 'Ucrania', TUR: 'Turquía',
+  GRE: 'Grecia', ALB: 'Albania', GEO: 'Georgia', SLO: 'Eslovenia',
+  MAR: 'Marruecos', SEN: 'Senegal', NGR: 'Nigeria', EGY: 'Egipto',
+  CMR: 'Camerún', CIV: 'Costa de Marfil', GHA: 'Ghana', TUN: 'Túnez',
+  RSA: 'Sudáfrica', MLI: 'Malí', COD: 'R.D. Congo',
+  JPN: 'Japón', KOR: 'Corea del Sur', SAU: 'Arabia Saudita', IRN: 'Irán',
+  AUS: 'Australia', QAT: 'Catar', UAE: 'Emiratos Árabes', IRQ: 'Irak',
+  UZB: 'Uzbekistán', JOR: 'Jordania', CHN: 'China',
+  NZL: 'Nueva Zelanda', CRI: 'Costa Rica', HON: 'Honduras',
+  GUA: 'Guatemala', PAN: 'Panamá', JAM: 'Jamaica', TRI: 'Trinidad y Tobago',
+  // Common ESPN display name variants
+  'United States': 'Estados Unidos',
+  'Mexico': 'México', 'Brazil': 'Brasil', 'France': 'Francia',
+  'Germany': 'Alemania', 'England': 'Inglaterra', 'Spain': 'España',
+  'Portugal': 'Portugal', 'Italy': 'Italia', 'Netherlands': 'Países Bajos',
+  'Belgium': 'Bélgica', 'Croatia': 'Croacia', 'Serbia': 'Serbia',
+  'Poland': 'Polonia', 'Switzerland': 'Suiza', 'Austria': 'Austria',
+  'Denmark': 'Dinamarca', 'Sweden': 'Suecia', 'Norway': 'Noruega',
+  'Scotland': 'Escocia', 'Wales': 'Gales', 'Slovakia': 'Eslovaquia',
+  'Czech Republic': 'República Checa', 'Czechia': 'República Checa',
+  'Hungary': 'Hungría', 'Romania': 'Rumanía', 'Ukraine': 'Ucrania',
+  'Turkey': 'Turquía', 'Greece': 'Grecia', 'Albania': 'Albania',
+  'Georgia': 'Georgia', 'Slovenia': 'Eslovenia',
+  'Morocco': 'Marruecos', 'Senegal': 'Senegal', 'Nigeria': 'Nigeria',
+  'Egypt': 'Egipto', 'Cameroon': 'Camerún', "Ivory Coast": 'Costa de Marfil',
+  "Côte d'Ivoire": 'Costa de Marfil', 'Ghana': 'Ghana', 'Tunisia': 'Túnez',
+  'South Africa': 'Sudáfrica', 'Mali': 'Malí', 'DR Congo': 'R.D. Congo',
+  'Japan': 'Japón', 'South Korea': 'Corea del Sur', 'Saudi Arabia': 'Arabia Saudita',
+  'Iran': 'Irán', 'Australia': 'Australia', 'Qatar': 'Catar',
+  'UAE': 'Emiratos Árabes', 'Iraq': 'Irak', 'Uzbekistan': 'Uzbekistán',
+  'Jordan': 'Jordania', 'China': 'China', 'New Zealand': 'Nueva Zelanda',
+  'Costa Rica': 'Costa Rica', 'Honduras': 'Honduras', 'Guatemala': 'Guatemala',
+  'Panama': 'Panamá', 'Jamaica': 'Jamaica', 'Trinidad & Tobago': 'Trinidad y Tobago',
+  'Canada': 'Canadá', 'Argentina': 'Argentina', 'Uruguay': 'Uruguay',
+  'Colombia': 'Colombia', 'Ecuador': 'Ecuador', 'Peru': 'Perú',
+  'Chile': 'Chile', 'Paraguay': 'Paraguay', 'Bolivia': 'Bolivia',
+  'Venezuela': 'Venezuela', 'Bosnia-Herzegovina': 'Bosnia-Herzegovina',
+  'Bosnia and Herzegovina': 'Bosnia-Herzegovina',
+}
+
+export function getTeamName(displayName, abbr, lang) {
+  if (lang === 'en') return displayName
+  return TEAM_NAMES_ES[abbr] ?? TEAM_NAMES_ES[displayName] ?? displayName
+}
+
 const translations = {
   en: {
     title: 'World Cup 2026',
@@ -97,5 +153,8 @@ export function LangProvider({ children }) {
 }
 
 export function useLang() {
-  return useContext(LangContext)
+  const ctx = useContext(LangContext)
+  // Convenience: translate a team name
+  const tn = (displayName, abbr) => getTeamName(displayName, abbr, ctx.lang)
+  return { ...ctx, tn }
 }

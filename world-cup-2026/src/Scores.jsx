@@ -54,7 +54,7 @@ export default function Scores({ matches }) {
 }
 
 function MatchCard({ match: m }) {
-  const { t } = useLang()
+  const { t, tn } = useLang()
   const isLive = m.statusType === 'STATUS_IN_PROGRESS'
   const isFinal = m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME'
   const hasScore = m.home.score !== null
@@ -78,7 +78,7 @@ function MatchCard({ match: m }) {
           <TeamFlag abbr={m.home.abbr} logo={m.home.logo} size={36} />
           <div className="team-info">
             <div className="team-name" style={m.home.winner ? { color: 'var(--green)' } : {}}>
-              {m.home.team}
+              {tn(m.home.team, m.home.abbr)}
             </div>
             <div className="team-abbr">{m.home.abbr}</div>
           </div>
@@ -115,7 +115,7 @@ function MatchCard({ match: m }) {
         <div className="match-team away">
           <div className="team-info" style={{ textAlign: 'right' }}>
             <div className="team-name" style={m.away.winner ? { color: 'var(--green)' } : {}}>
-              {m.away.team}
+              {tn(m.away.team, m.away.abbr)}
             </div>
             <div className="team-abbr">{m.away.abbr}</div>
           </div>

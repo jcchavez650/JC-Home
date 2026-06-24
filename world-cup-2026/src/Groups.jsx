@@ -20,7 +20,7 @@ export default function Groups({ groups }) {
 }
 
 function GroupTable({ group }) {
-  const { t } = useLang()
+  const { t, tn } = useLang()
   return (
     <div className="group-card">
       <div className="group-title">{t.group} {group.name}</div>
@@ -37,23 +37,23 @@ function GroupTable({ group }) {
           </tr>
         </thead>
         <tbody>
-          {group.teams.map((t, i) => (
-            <tr key={t.team} className={i < 2 ? 'advance' : ''}>
+          {group.teams.map((team, i) => (
+            <tr key={team.team} className={i < 2 ? 'advance' : ''}>
               <td>
                 <div className="team-row">
                   <span className={`pos-num ${i < 2 ? 'top' : ''}`}>{i + 1}</span>
-                  <TeamFlag abbr={t.abbr} logo={t.logo} size={22} />
-                  <span style={{ fontSize: 12 }}>{t.team}</span>
+                  <TeamFlag abbr={team.abbr} logo={team.logo} size={22} />
+                  <span style={{ fontSize: 12 }}>{tn(team.team, team.abbr)}</span>
                 </div>
               </td>
-              <td>{t.gp}</td>
-              <td>{t.w}</td>
-              <td>{t.d}</td>
-              <td>{t.l}</td>
-              <td style={{ color: t.gd > 0 ? 'var(--green)' : t.gd < 0 ? 'var(--red)' : 'inherit' }}>
-                {t.gd > 0 ? `+${t.gd}` : t.gd}
+              <td>{team.gp}</td>
+              <td>{team.w}</td>
+              <td>{team.d}</td>
+              <td>{team.l}</td>
+              <td style={{ color: team.gd > 0 ? 'var(--green)' : team.gd < 0 ? 'var(--red)' : 'inherit' }}>
+                {team.gd > 0 ? `+${team.gd}` : team.gd}
               </td>
-              <td className="pts-bold">{t.pts}</td>
+              <td className="pts-bold">{team.pts}</td>
             </tr>
           ))}
         </tbody>

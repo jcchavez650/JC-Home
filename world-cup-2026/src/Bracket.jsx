@@ -155,7 +155,7 @@ export default function Bracket({ matches, groups }) {
 }
 
 function QualRow({ team, label }) {
-  const { t } = useLang()
+  const { t, tn } = useLang()
   if (!team) {
     return (
       <div className="qual-mini-row">
@@ -169,7 +169,7 @@ function QualRow({ team, label }) {
     <div className="qual-mini-row confirmed">
       <span className="qual-mini-pos">{label}</span>
       <TeamFlag abbr={team.abbr} logo={team.logo} size={22} />
-      <span className="qual-mini-name">{team.team}</span>
+      <span className="qual-mini-name">{tn(team.team, team.abbr)}</span>
       <span className="qual-check">✓</span>
     </div>
   )
@@ -186,10 +186,11 @@ function BracketMatch({ match: m, round }) {
 }
 
 function BracketTeamRow({ side, hasScore }) {
+  const { tn } = useLang()
   return (
     <div className={`b-team ${side.winner ? 'b-winner' : ''}`}>
       <TeamFlag abbr={side.abbr} logo={side.logo} size={16} />
-      <span className="b-name">{side.abbr || side.team}</span>
+      <span className="b-name">{side.abbr || tn(side.team, side.abbr)}</span>
       {hasScore && <span className="b-score">{side.score}</span>}
     </div>
   )
@@ -205,11 +206,12 @@ function BracketSlot({ homeTeam, awayTeam, homeLabel, awayLabel, round }) {
 }
 
 function SlotTeamRow({ team, label }) {
+  const { tn } = useLang()
   if (team) {
     return (
       <div className="b-team b-confirmed">
         <TeamFlag abbr={team.abbr} logo={team.logo} size={16} />
-        <span className="b-name">{team.abbr}</span>
+        <span className="b-name">{tn(team.team, team.abbr)}</span>
       </div>
     )
   }

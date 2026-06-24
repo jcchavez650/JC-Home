@@ -65,7 +65,7 @@ export default function Games({ matches, allLoaded }) {
 }
 
 function GameRow({ match: m }) {
-  const { t } = useLang()
+  const { t, tn } = useLang()
   const isLive = m.statusType === 'STATUS_IN_PROGRESS'
   const isFinal = m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME'
   const hasScore = m.home.score !== null
@@ -95,11 +95,11 @@ function GameRow({ match: m }) {
       <div className="game-teams">
         <div className={`game-team ${m.home.winner ? 'game-winner' : ''}`}>
           <TeamFlag abbr={m.home.abbr} logo={m.home.logo} size={18} />
-          <span className="game-team-name">{m.home.team}</span>
+          <span className="game-team-name">{tn(m.home.team, m.home.abbr)}</span>
         </div>
         <div className={`game-team ${m.away.winner ? 'game-winner' : ''}`}>
           <TeamFlag abbr={m.away.abbr} logo={m.away.logo} size={18} />
-          <span className="game-team-name">{m.away.team}</span>
+          <span className="game-team-name">{tn(m.away.team, m.away.abbr)}</span>
         </div>
       </div>
 
