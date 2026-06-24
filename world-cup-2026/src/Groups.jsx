@@ -1,11 +1,13 @@
 import TeamFlag from './TeamFlag.jsx'
+import { useLang } from './LangContext.jsx'
 
 export default function Groups({ groups }) {
+  const { t } = useLang()
   if (!groups.length) {
     return (
       <div className="empty">
         <div className="e">📊</div>
-        Group standings not available yet.
+        {t.noGroups}
       </div>
     )
   }
@@ -18,19 +20,20 @@ export default function Groups({ groups }) {
 }
 
 function GroupTable({ group }) {
+  const { t } = useLang()
   return (
     <div className="group-card">
-      <div className="group-title">Group {group.name}</div>
+      <div className="group-title">{t.group} {group.name}</div>
       <table className="standings-table">
         <thead>
           <tr>
             <th>Team</th>
-            <th>GP</th>
-            <th>W</th>
-            <th>D</th>
-            <th>L</th>
-            <th>GD</th>
-            <th>PTS</th>
+            <th>{t.gp}</th>
+            <th>{t.w}</th>
+            <th>{t.d}</th>
+            <th>{t.l}</th>
+            <th>{t.gd}</th>
+            <th>{t.pts}</th>
           </tr>
         </thead>
         <tbody>

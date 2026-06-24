@@ -1,11 +1,14 @@
 import TeamFlag from './TeamFlag.jsx'
+import { useLang } from './LangContext.jsx'
 
 export default function Scores({ matches }) {
+  const { t } = useLang()
+
   if (!matches.length) {
     return (
       <div className="empty">
         <div className="e">⚽</div>
-        No matches found. Check back soon!
+        {t.noMatches}
       </div>
     )
   }
@@ -29,13 +32,13 @@ export default function Scores({ matches }) {
     .slice(0, 10)
 
   const sections = []
-  if (live.length) sections.push({ label: '🔴 Live Now', games: live })
-  if (today.length) sections.push({ label: "Today's Matches", games: today })
-  if (upcoming.length) sections.push({ label: 'Upcoming', games: upcoming })
-  if (recent.length) sections.push({ label: 'Recent Results', games: recent })
+  if (live.length) sections.push({ label: t.liveNow, games: live })
+  if (today.length) sections.push({ label: t.todayMatches, games: today })
+  if (upcoming.length) sections.push({ label: t.upcoming, games: upcoming })
+  if (recent.length) sections.push({ label: t.recentResults, games: recent })
 
   if (!sections.length) {
-    sections.push({ label: 'All Matches', games: matches.slice(0, 30) })
+    sections.push({ label: t.allMatches, games: matches.slice(0, 30) })
   }
 
   return (
@@ -51,6 +54,7 @@ export default function Scores({ matches }) {
 }
 
 function MatchCard({ match: m }) {
+  const { t } = useLang()
   const isLive = m.statusType === 'STATUS_IN_PROGRESS'
   const isFinal = m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME'
   const hasScore = m.home.score !== null
@@ -61,7 +65,7 @@ function MatchCard({ match: m }) {
         {isLive && (
           <span className="live-badge">
             <span className="live-dot" />
-            Live
+            {t.live}
           </span>
         )}
         <span>{m.group ? m.group.replace(/-/g, ' ').toUpperCase() : 'World Cup 2026'}</span>
@@ -99,7 +103,7 @@ function MatchCard({ match: m }) {
             {isLive
               ? `${m.displayClock || "'"}`
               : isFinal
-              ? 'FT'
+              ? t.ft
               : m.date.toLocaleString([], {
                   month: 'short', day: 'numeric',
                   hour: '2-digit', minute: '2-digit',

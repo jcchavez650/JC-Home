@@ -1,4 +1,5 @@
 import TeamFlag from './TeamFlag.jsx'
+import { useLang } from './LangContext.jsx'
 
 // Derive confirmed qualifiers from standings
 function getGroupQualifiers(groups) {
@@ -54,12 +55,13 @@ function resolveTeam(ref, groupMap) {
   return groupMap[g]?.[pos] ?? null
 }
 
-function labelFor([g, pos]) {
-  if (g.startsWith('*')) return '3rd Place'
-  return `${pos === 'w' ? '1st' : '2nd'} Group ${g}`
+function labelFor([g, pos], t) {
+  if (g.startsWith('*')) return t?.thirdPlace ?? '3rd Place'
+  return `${pos === 'w' ? (t?.confirmed ?? '1st') : (t?.runnerUp ?? '2nd')} ${t?.group ?? 'Group'} ${g}`
 }
 
 export default function Bracket({ matches, groups }) {
+  const { t } = useLang()
   const groupMap = getGroupQualifiers(groups)
 
   // Check if ESPN has live knockout data
@@ -87,11 +89,11 @@ export default function Bracket({ matches, groups }) {
   const hasESPN = Object.keys(espnRounds).length > 0
 
   const ROUNDS = [
-    { key: 'r32', label: 'R32', count: 16 },
-    { key: 'r16', label: 'R16', count: 8 },
-    { key: 'qf',  label: 'QF',  count: 4 },
-    { key: 'sf',  label: 'SF',  count: 2 },
-    { key: 'f',   label: 'Final', count: 1 },
+    { key: 'r32', label: t.r32,   count: 16 },
+    { key: 'r16', label: t.r16,   count: 8 },
+    { key: 'qf',  label: t.qf,    count: 4 },
+    { key: 'sf',  label: t.sf,    count: 2 },
+    { key: 'f',   label: t.final, count: 1 },
   ]
 
   return (
@@ -112,8 +114,8 @@ export default function Bracket({ matches, groups }) {
                         key={i}
                         homeTeam={resolveTeam(pair.home, groupMap)}
                         awayTeam={resolveTeam(pair.away, groupMap)}
-                        homeLabel={labelFor(pair.home)}
-                        awayLabel={labelFor(pair.away)}
+                        homeLabel={labelFor(pair.home, t)}
+                        awayLabel={labelFor(pair.away, t)}
                         index={i}
                         total={16}
                         round={round.key}
@@ -132,16 +134,16 @@ export default function Bracket({ matches, groups }) {
       {/* Group qualifier status below */}
       {groups.length > 0 && (
         <div style={{ padding: '0 12px 12px' }}>
-          <div className="round-label" style={{ marginBottom: 8 }}>Group Qualifiers</div>
+          <div className="round-label" style={{ marginBottom: 8 }}>{t.qualifiers}</div>
           <div className="qualifiers-grid">
             {groups.map(g => {
               const letter = g.name?.replace(/^Group\s*/i, '').trim().toUpperCase()
               const q = groupMap[letter]
               return (
                 <div key={letter} className="qual-mini">
-                  <div className="qual-mini-header">Group {letter}</div>
-                  <QualRow team={q?.w}  label={`1st`} />
-                  <QualRow team={q?.ru} label={`2nd`} />
+                  <div className="qual-mini-header">{t.group} {letter}</div>
+                  <QualRow team={q?.w}  label={t.confirmed} />
+                  <QualRow team={q?.ru} label={t.runnerUp} />
                 </div>
               )
             })}
@@ -153,12 +155,13 @@ export default function Bracket({ matches, groups }) {
 }
 
 function QualRow({ team, label }) {
+  const { t } = useLang()
   if (!team) {
     return (
       <div className="qual-mini-row">
         <span className="qual-mini-pos">{label}</span>
         <div style={{ width: 22, height: 15, background: 'var(--border)', borderRadius: 2 }} />
-        <span className="tbd" style={{ fontSize: 11 }}>TBD</span>
+        <span className="tbd" style={{ fontSize: 11 }}>{t.tbd}</span>
       </div>
     )
   }

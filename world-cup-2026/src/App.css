@@ -26,6 +26,25 @@
   font-weight: 400;
 }
 
+.lang-toggle {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.lang-toggle:active {
+  background: var(--border);
+}
+
 .refresh-btn {
   background: var(--bg3);
   border: 1px solid var(--border);

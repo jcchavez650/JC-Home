@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react'
 import TeamFlag from './TeamFlag.jsx'
+import { useLang } from './LangContext.jsx'
 
 export default function Games({ matches, allLoaded }) {
   const [filter, setFilter] = useState('all')
+  const { t } = useLang()
 
   const grouped = useMemo(() => {
     const sorted = [...matches].sort((a, b) => a.date - b.date)
@@ -27,16 +29,16 @@ export default function Games({ matches, allLoaded }) {
     <div>
       {!allLoaded && (
         <div style={{ padding: '6px 12px 0', fontSize: 11, color: 'var(--text2)', textAlign: 'center' }}>
-          Showing today only — full schedule unavailable
+          {t.todayOnly}
         </div>
       )}
       {/* Filter pills */}
       <div className="filter-bar">
         {[
-          { key: 'all', label: 'All' },
-          { key: 'live', label: liveCount ? `Live (${liveCount})` : 'Live' },
-          { key: 'upcoming', label: 'Upcoming' },
-          { key: 'done', label: 'Finished' },
+          { key: 'all', label: t.all },
+          { key: 'live', label: liveCount ? `${t.live} (${liveCount})` : t.live },
+          { key: 'upcoming', label: t.upcoming },
+          { key: 'done', label: t.finished },
         ].map(f => (
           <button
             key={f.key}
@@ -49,7 +51,7 @@ export default function Games({ matches, allLoaded }) {
       </div>
 
       {Object.keys(grouped).length === 0 ? (
-        <div className="empty"><div className="e">📅</div>No matches found.</div>
+        <div className="empty"><div className="e">📅</div>{t.noGamesFound}</div>
       ) : (
         Object.entries(grouped).map(([date, games]) => (
           <div key={date}>
@@ -63,6 +65,7 @@ export default function Games({ matches, allLoaded }) {
 }
 
 function GameRow({ match: m }) {
+  const { t } = useLang()
   const isLive = m.statusType === 'STATUS_IN_PROGRESS'
   const isFinal = m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME'
   const hasScore = m.home.score !== null
@@ -74,10 +77,10 @@ function GameRow({ match: m }) {
         {isLive ? (
           <span className="game-status-live">
             <span className="live-dot" style={{ background: 'var(--red)' }} />
-            {m.displayClock || 'Live'}
+            {m.displayClock || t.live}
           </span>
         ) : isFinal ? (
-          <span className="game-status-ft">FT</span>
+          <span className="game-status-ft">{t.ft}</span>
         ) : (
           <span className="game-status-time">
             {m.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
