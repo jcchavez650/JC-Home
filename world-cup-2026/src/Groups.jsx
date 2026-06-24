@@ -1,3 +1,5 @@
+import TeamFlag from './TeamFlag.jsx'
+
 export default function Groups({ groups }) {
   if (!groups.length) {
     return (
@@ -10,9 +12,7 @@ export default function Groups({ groups }) {
 
   return (
     <div style={{ paddingTop: 12 }}>
-      {groups.map(g => (
-        <GroupTable key={g.name} group={g} />
-      ))}
+      {groups.map(g => <GroupTable key={g.name} group={g} />)}
     </div>
   )
 }
@@ -39,7 +39,7 @@ function GroupTable({ group }) {
               <td>
                 <div className="team-row">
                   <span className={`pos-num ${i < 2 ? 'top' : ''}`}>{i + 1}</span>
-                  <span className="flag-sm">{t.flag}</span>
+                  <TeamFlag abbr={t.abbr} logo={t.logo} size={22} />
                   <span style={{ fontSize: 12 }}>{t.team}</span>
                 </div>
               </td>

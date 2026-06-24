@@ -1,3 +1,5 @@
+import TeamFlag from './TeamFlag.jsx'
+
 export default function Scores({ matches }) {
   if (!matches.length) {
     return (
@@ -9,8 +11,8 @@ export default function Scores({ matches }) {
   }
 
   const live = matches.filter(m => m.statusType === 'STATUS_IN_PROGRESS')
+  const now = new Date()
   const today = matches.filter(m => {
-    const now = new Date()
     const d = m.date
     return (
       m.statusType !== 'STATUS_IN_PROGRESS' &&
@@ -19,15 +21,22 @@ export default function Scores({ matches }) {
       d.getDate() === now.getDate()
     )
   })
-  const other = matches.filter(m =>
-    m.statusType !== 'STATUS_IN_PROGRESS' &&
-    !today.includes(m)
-  )
+  const upcoming = matches
+    .filter(m => m.statusType !== 'STATUS_IN_PROGRESS' && !today.includes(m) && m.date > now)
+    .slice(0, 20)
+  const recent = matches
+    .filter(m => (m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME') && !today.includes(m))
+    .slice(0, 10)
 
   const sections = []
   if (live.length) sections.push({ label: '🔴 Live Now', games: live })
   if (today.length) sections.push({ label: "Today's Matches", games: today })
-  if (other.length) sections.push({ label: 'Schedule', games: other.slice(0, 30) })
+  if (upcoming.length) sections.push({ label: 'Upcoming', games: upcoming })
+  if (recent.length) sections.push({ label: 'Recent Results', games: recent })
+
+  if (!sections.length) {
+    sections.push({ label: 'All Matches', games: matches.slice(0, 30) })
+  }
 
   return (
     <div>
@@ -55,17 +64,23 @@ function MatchCard({ match: m }) {
             Live
           </span>
         )}
-        <span>{m.group ? m.group.toUpperCase() : 'World Cup 2026'}</span>
+        <span>{m.group ? m.group.replace(/-/g, ' ').toUpperCase() : 'World Cup 2026'}</span>
         {m.venue && <span>· {m.venue}</span>}
       </div>
+
       <div className="match-body">
+        {/* Home team */}
         <div className="match-team">
-          <div className="team-flag-name">
-            <span className="team-flag">{m.home.flag}</span>
-            <span className="team-name">{m.home.team}</span>
+          <TeamFlag abbr={m.home.abbr} logo={m.home.logo} size={36} />
+          <div className="team-info">
+            <div className="team-name" style={m.home.winner ? { color: 'var(--green)' } : {}}>
+              {m.home.team}
+            </div>
+            <div className="team-abbr">{m.home.abbr}</div>
           </div>
         </div>
 
+        {/* Center: score or time */}
         <div className="match-center">
           {hasScore ? (
             <div className="score-display">
@@ -82,18 +97,25 @@ function MatchCard({ match: m }) {
           )}
           <div className={`match-status ${isLive ? 'status-live' : isFinal ? 'status-ft' : 'status-upcoming'}`}>
             {isLive
-              ? `${m.displayClock} ${m.period > 0 ? `(${m.period}')` : ''}`
+              ? `${m.displayClock || "'"}`
               : isFinal
               ? 'FT'
-              : m.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              : m.date.toLocaleString([], {
+                  month: 'short', day: 'numeric',
+                  hour: '2-digit', minute: '2-digit',
+                })}
           </div>
         </div>
 
+        {/* Away team */}
         <div className="match-team away">
-          <div className="team-flag-name">
-            <span className="team-name">{m.away.team}</span>
-            <span className="team-flag">{m.away.flag}</span>
+          <div className="team-info" style={{ textAlign: 'right' }}>
+            <div className="team-name" style={m.away.winner ? { color: 'var(--green)' } : {}}>
+              {m.away.team}
+            </div>
+            <div className="team-abbr">{m.away.abbr}</div>
           </div>
+          <TeamFlag abbr={m.away.abbr} logo={m.away.logo} size={36} />
         </div>
       </div>
     </div>

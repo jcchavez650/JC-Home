@@ -30,7 +30,6 @@ export async function fetchStandings() {
   return get(`${ESPN_V2}/standings`)
 }
 
-// Parse scoreboard into structured matches
 export function parseMatches(data) {
   if (!data?.events) return []
   return data.events.map(event => {
@@ -51,14 +50,14 @@ export function parseMatches(data) {
       home: {
         team: home?.team?.displayName ?? 'TBD',
         abbr: home?.team?.abbreviation ?? '',
-        flag: countryFlag(home?.team?.abbreviation),
+        logo: home?.team?.logo ?? null,
         score: home?.score ?? null,
         winner: home?.winner ?? false,
       },
       away: {
         team: away?.team?.displayName ?? 'TBD',
         abbr: away?.team?.abbreviation ?? '',
-        flag: countryFlag(away?.team?.abbreviation),
+        logo: away?.team?.logo ?? null,
         score: away?.score ?? null,
         winner: away?.winner ?? false,
       },
@@ -66,7 +65,6 @@ export function parseMatches(data) {
   })
 }
 
-// Parse standings into groups
 export function parseStandings(data) {
   if (!data?.children) return []
   return data.children.map(group => ({
@@ -77,7 +75,7 @@ export function parseStandings(data) {
       return {
         team: entry.team?.displayName ?? '',
         abbr: entry.team?.abbreviation ?? '',
-        flag: countryFlag(entry.team?.abbreviation),
+        logo: entry.team?.logo ?? null,
         gp: stats.gamesPlayed ?? 0,
         w: stats.wins ?? 0,
         d: stats.ties ?? 0,
@@ -91,19 +89,20 @@ export function parseStandings(data) {
   }))
 }
 
-// Country code → flag emoji
-export function countryFlag(abbr) {
-  const map = {
-    USA: '🇺🇸', MEX: '🇲🇽', CAN: '🇨🇦',
-    BRA: '🇧🇷', ARG: '🇦🇷', URU: '🇺🇾', COL: '🇨🇴', ECU: '🇪🇨', PER: '🇵🇪', CHI: '🇨🇱', PAR: '🇵🇾', BOL: '🇧🇴', VEN: '🇻🇪',
-    FRA: '🇫🇷', GER: '🇩🇪', ENG: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', ESP: '🇪🇸', POR: '🇵🇹', ITA: '🇮🇹', NED: '🇳🇱', BEL: '🇧🇪',
-    CRO: '🇭🇷', SER: '🇷🇸', POL: '🇵🇱', SUI: '🇨🇭', AUT: '🇦🇹', DEN: '🇩🇰', SWE: '🇸🇪', NOR: '🇳🇴',
-    SCO: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', WAL: '🏴󠁧󠁢󠁷󠁬󠁳󠁿', SVK: '🇸🇰', CZE: '🇨🇿', HUN: '🇭🇺', ROM: '🇷🇴', UKR: '🇺🇦',
-    TUR: '🇹🇷', GRE: '🇬🇷', ALB: '🇦🇱', GEO: '🇬🇪', SLO: '🇸🇮',
-    MAR: '🇲🇦', SEN: '🇸🇳', NGR: '🇳🇬', EGY: '🇪🇬', CMR: '🇨🇲', CIV: '🇨🇮', GHA: '🇬🇭', TUN: '🇹🇳', RSA: '🇿🇦', MLI: '🇲🇱', COD: '🇨🇩', GAB: '🇬🇦',
-    JPN: '🇯🇵', KOR: '🇰🇷', SAU: '🇸🇦', IRN: '🇮🇷', AUS: '🇦🇺', QAT: '🇶🇦', UAE: '🇦🇪', IRQ: '🇮🇶', UZB: '🇺🇿', JOR: '🇯🇴', THA: '🇹🇭', IND: '🇮🇳', CHN: '🇨🇳',
-    NZL: '🇳🇿', PNG: '🇵🇬',
-    CRI: '🇨🇷', HON: '🇭🇳', GUA: '🇬🇹', PAN: '🇵🇦', JAM: '🇯🇲', TRI: '🇹🇹',
-  }
-  return map[abbr] ?? '🏳️'
+// ESPN 3-letter → ISO 2-letter for flagcdn.com
+const ISO2 = {
+  USA: 'us', MEX: 'mx', CAN: 'ca',
+  BRA: 'br', ARG: 'ar', URU: 'uy', COL: 'co', ECU: 'ec', PER: 'pe', CHI: 'cl', PAR: 'py', BOL: 'bo', VEN: 've',
+  FRA: 'fr', GER: 'de', ENG: 'gb-eng', ESP: 'es', POR: 'pt', ITA: 'it', NED: 'nl', BEL: 'be',
+  CRO: 'hr', SER: 'rs', POL: 'pl', SUI: 'ch', AUT: 'at', DEN: 'dk', SWE: 'se', NOR: 'no',
+  SCO: 'gb-sct', WAL: 'gb-wls', SVK: 'sk', CZE: 'cz', HUN: 'hu', ROM: 'ro', UKR: 'ua',
+  TUR: 'tr', GRE: 'gr', ALB: 'al', GEO: 'ge', SLO: 'si',
+  MAR: 'ma', SEN: 'sn', NGR: 'ng', EGY: 'eg', CMR: 'cm', CIV: 'ci', GHA: 'gh', TUN: 'tn', RSA: 'za', MLI: 'ml', COD: 'cd',
+  JPN: 'jp', KOR: 'kr', SAU: 'sa', IRN: 'ir', AUS: 'au', QAT: 'qa', UAE: 'ae', IRQ: 'iq', UZB: 'uz', JOR: 'jo', CHN: 'cn',
+  NZL: 'nz', CRI: 'cr', HON: 'hn', GUA: 'gt', PAN: 'pa', JAM: 'jm', TRI: 'tt',
+}
+
+export function flagUrl(abbr, size = 40) {
+  const iso = ISO2[abbr]
+  return iso ? `https://flagcdn.com/w${size}/${iso}.png` : null
 }

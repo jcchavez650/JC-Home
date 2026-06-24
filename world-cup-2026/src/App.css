@@ -158,41 +158,33 @@
 .match-team {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
 }
 
 .match-team.away {
-  align-items: flex-end;
-  text-align: right;
-}
-
-.team-flag-name {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.match-team.away .team-flag-name {
   flex-direction: row-reverse;
 }
 
-.team-flag {
-  font-size: 22px;
-  line-height: 1;
-  flex-shrink: 0;
+.team-info {
+  min-width: 0;
 }
 
 .team-name {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 90px;
+  max-width: 85px;
+}
+
+.team-abbr {
+  font-size: 10px;
+  color: var(--text2);
+  font-weight: 500;
 }
 
 .match-center {
@@ -367,7 +359,7 @@
 .bracket-team-info {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   flex: 1;
   min-width: 0;
 }
@@ -377,6 +369,12 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 11px;
+}
+
+.team-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
 }
 
 .bracket-team-score {
