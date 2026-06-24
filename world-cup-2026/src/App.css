@@ -391,96 +391,317 @@
   font-size: 11px;
 }
 
-/* Qualifier cards */
-.qualifiers-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/* ── Filter bar ── */
+.filter-bar {
+  display: flex;
   gap: 6px;
-  margin-bottom: 4px;
+  padding: 10px 12px 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.filter-bar::-webkit-scrollbar { display: none; }
 
-.qual-card {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.qual-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 8px;
-  background: var(--bg3);
-  border-bottom: 1px solid var(--border);
-}
-
-.qual-letter {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--gold);
-}
-
-.qual-status {
-  font-size: 9px;
-  color: var(--text2);
-}
-
-.qual-team {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 8px;
-  border-bottom: 1px solid var(--border);
-  gap: 4px;
-}
-
-.qual-team:last-child { border-bottom: none; }
-
-.qual-team-left {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-  flex: 1;
-}
-
-.qual-confirmed { background: rgba(46,160,67,0.08); }
-.qual-eliminated { opacity: 0.45; }
-
-.pos-sm {
-  font-size: 9px;
-  color: var(--text2);
-  width: 10px;
+.filter-pill {
   flex-shrink: 0;
-  text-align: center;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.filter-pill.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #000;
+  font-weight: 700;
 }
 
-.qual-name {
-  font-size: 11px;
+/* ── Game row (Games tab) ── */
+.game-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  margin: 0 12px 2px;
+  border-radius: 6px;
+}
+
+.game-status-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 38px;
+  flex-shrink: 0;
+  gap: 2px;
+}
+
+.game-status-live {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--red);
+}
+
+.game-status-ft {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text2);
+}
+
+.game-status-time {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+.game-group-label {
+  font-size: 8px;
+  color: var(--text2);
+  text-align: center;
+  letter-spacing: 0.3px;
+  max-width: 38px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-teams {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.game-team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.game-team-name {
+  font-size: 12px;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 60px;
 }
 
-.qual-right {
+.game-winner .game-team-name {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.game-score-col {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 4px;
+  min-width: 20px;
   flex-shrink: 0;
 }
 
-.qual-pts {
-  font-size: 10px;
+.game-score-num {
+  font-size: 14px;
+  font-weight: 700;
   color: var(--text2);
+  line-height: 1;
+}
+
+.game-winner .game-score-num,
+.game-score-num.game-winner {
+  color: var(--text);
+}
+
+.game-score-dash {
+  font-size: 12px;
+  color: var(--border);
+  line-height: 1;
+}
+
+/* ── Traditional Bracket ── */
+.bracket-page {
+  padding-bottom: 20px;
+}
+
+.bracket-scroll {
+  overflow-x: auto;
+  padding: 12px 12px 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.bracket-tree {
+  display: flex;
+  gap: 0;
+  min-width: max-content;
+  align-items: center;
+}
+
+.bracket-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 110px;
+}
+
+.bracket-col-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--gold);
+  text-align: center;
+  padding: 4px 4px 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.bracket-col-matches {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  flex: 1;
+  gap: 4px;
+  padding: 4px;
+  position: relative;
+}
+
+/* The matchup card */
+.b-match {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Connector line on right side going to next round */
+.b-match::after {
+  content: '';
+  position: absolute;
+  right: -5px;
+  top: 50%;
+  width: 5px;
+  height: 1px;
+  background: var(--border);
+}
+
+.b-team {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 6px;
+  font-size: 11px;
+  color: var(--text2);
+  min-height: 28px;
+}
+
+.b-team + .b-team {
+  border-top: 1px solid var(--border);
+}
+
+.b-winner {
+  background: rgba(46,160,67,0.12);
+  color: var(--green);
+  font-weight: 700;
+}
+
+.b-confirmed {
+  color: var(--text);
+}
+
+.b-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+}
+
+.b-tbd {
+  color: var(--text2);
+  font-size: 9px;
+  font-style: italic;
+}
+
+.b-score {
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.b-flag-placeholder {
+  width: 22px;
+  height: 15px;
+  background: var(--border);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── Qualifier mini cards ── */
+.qualifiers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.qual-mini {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.qual-mini-header {
+  background: var(--bg3);
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gold);
+  border-bottom: 1px solid var(--border);
+}
+
+.qual-mini-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  opacity: 0.45;
+}
+
+.qual-mini-row:last-child { border-bottom: none; }
+.qual-mini-row.confirmed { opacity: 1; }
+
+.qual-mini-pos {
+  font-size: 9px;
+  color: var(--text2);
+  width: 22px;
+  flex-shrink: 0;
+}
+
+.qual-mini-name {
+  font-size: 11px;
+  color: var(--text);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .qual-check {
   font-size: 10px;
   color: var(--green);
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 /* Loading */

@@ -4,9 +4,11 @@ import { useWorldCup } from './useWorldCup.js'
 import Scores from './Scores.jsx'
 import Groups from './Groups.jsx'
 import Bracket from './Bracket.jsx'
+import Games from './Games.jsx'
 
 const TABS = [
   { id: 'scores', label: 'Scores', icon: '⚽' },
+  { id: 'games',  label: 'Games',  icon: '📅' },
   { id: 'groups', label: 'Groups', icon: '📊' },
   { id: 'bracket', label: 'Bracket', icon: '🏆' },
 ]
@@ -83,8 +85,9 @@ export default function App() {
                 Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · auto-refreshes every 60s
               </div>
             )}
-            {tab === 'scores' && <Scores matches={matches} />}
-            {tab === 'groups' && <Groups groups={groups} />}
+            {tab === 'scores'  && <Scores matches={matches} />}
+            {tab === 'games'   && <Games matches={matches} />}
+            {tab === 'groups'  && <Groups groups={groups} />}
             {tab === 'bracket' && <Bracket matches={matches} groups={groups} />}
           </>
         )}
