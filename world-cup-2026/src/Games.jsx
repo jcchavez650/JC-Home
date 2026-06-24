@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import TeamFlag from './TeamFlag.jsx'
 
-export default function Games({ matches }) {
+export default function Games({ matches, allLoaded }) {
   const [filter, setFilter] = useState('all')
 
   const grouped = useMemo(() => {
@@ -25,6 +25,11 @@ export default function Games({ matches }) {
 
   return (
     <div>
+      {!allLoaded && (
+        <div style={{ padding: '6px 12px 0', fontSize: 11, color: 'var(--text2)', textAlign: 'center' }}>
+          Showing today only — full schedule unavailable
+        </div>
+      )}
       {/* Filter pills */}
       <div className="filter-bar">
         {[

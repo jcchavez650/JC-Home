@@ -86,7 +86,7 @@ export default function App() {
               </div>
             )}
             {tab === 'scores'  && <Scores matches={matches} />}
-            {tab === 'games'   && <Games matches={allGames.length ? allGames : matches} />}
+            {tab === 'games'   && <Games matches={allGames.length ? allGames : matches} allLoaded={allGames.length > 0} />}
             {tab === 'groups'  && <Groups groups={groups} />}
             {tab === 'bracket' && <Bracket matches={matches} groups={groups} />}
           </>

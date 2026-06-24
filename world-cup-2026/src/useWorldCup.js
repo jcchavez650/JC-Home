@@ -16,14 +16,21 @@ export function useWorldCup() {
     setError(null)
 
     try {
-      const [scoreData, allData, standData] = await Promise.all([
+      // Use allSettled so one failing endpoint doesn't kill everything
+      const [scoreRes, allRes, standRes] = await Promise.allSettled([
         fetchScoreboard(),
         fetchAllGames(),
         fetchStandings(),
       ])
-      setMatches(parseMatches(scoreData))
-      setAllGames(parseMatches(allData))
-      setGroups(parseStandings(standData))
+
+      if (scoreRes.status === 'fulfilled') setMatches(parseMatches(scoreRes.value))
+      else throw scoreRes.reason // scores are required; surface this error
+
+      if (allRes.status === 'fulfilled') setAllGames(parseMatches(allRes.value))
+      // if full schedule fails, fall back to today's matches (already set above)
+
+      if (standRes.status === 'fulfilled') setGroups(parseStandings(standRes.value))
+
       setLastUpdated(new Date())
     } catch (e) {
       setError(e.message)
