@@ -23,7 +23,15 @@ async function get(url) {
 }
 
 export async function fetchScoreboard() {
+  // Fetch today for live scores
   return get(`${ESPN_BASE}/scoreboard`)
+}
+
+// WC 2026 runs Jun 11 – Jul 19, 2026
+// ESPN accepts ?dates=YYYYMMDD-YYYYMMDD for a range
+export async function fetchAllGames() {
+  const data = await get(`${ESPN_BASE}/scoreboard?dates=20260611-20260719&limit=200`)
+  return data
 }
 
 export async function fetchStandings() {

@@ -15,7 +15,7 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState('scores')
-  const { matches, groups, loading, error, lastUpdated, refreshing, refresh } = useWorldCup()
+  const { matches, allGames, groups, loading, error, lastUpdated, refreshing, refresh } = useWorldCup()
 
   const share = async () => {
     const url = window.location.href
@@ -86,7 +86,7 @@ export default function App() {
               </div>
             )}
             {tab === 'scores'  && <Scores matches={matches} />}
-            {tab === 'games'   && <Games matches={matches} />}
+            {tab === 'games'   && <Games matches={allGames.length ? allGames : matches} />}
             {tab === 'groups'  && <Groups groups={groups} />}
             {tab === 'bracket' && <Bracket matches={matches} groups={groups} />}
           </>

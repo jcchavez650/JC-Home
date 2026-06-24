@@ -11,10 +11,10 @@ export default function Games({ matches }) {
       : filter === 'done' ? sorted.filter(m => m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME')
       : sorted.filter(m => m.statusType !== 'STATUS_FINAL' && m.statusType !== 'STATUS_FULL_TIME' && m.statusType !== 'STATUS_IN_PROGRESS')
 
-    // Group by date
+    // Group by date — use a sortable key so dates stay in order
     const byDate = {}
     filtered.forEach(m => {
-      const key = m.date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
+      const key = m.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
       if (!byDate[key]) byDate[key] = []
       byDate[key].push(m)
     })

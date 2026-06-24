@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import { fetchScoreboard, fetchStandings, parseMatches, parseStandings } from './api.js'
+import { fetchScoreboard, fetchAllGames, fetchStandings, parseMatches, parseStandings } from './api.js'
 
 export function useWorldCup() {
-  const [matches, setMatches] = useState([])
+  const [matches, setMatches] = useState([])   // today / live
+  const [allGames, setAllGames] = useState([]) // full tournament schedule
   const [groups, setGroups] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -15,11 +16,13 @@ export function useWorldCup() {
     setError(null)
 
     try {
-      const [scoreData, standData] = await Promise.all([
+      const [scoreData, allData, standData] = await Promise.all([
         fetchScoreboard(),
+        fetchAllGames(),
         fetchStandings(),
       ])
       setMatches(parseMatches(scoreData))
+      setAllGames(parseMatches(allData))
       setGroups(parseStandings(standData))
       setLastUpdated(new Date())
     } catch (e) {
@@ -32,12 +35,11 @@ export function useWorldCup() {
 
   useEffect(() => {
     load()
-    // Auto-refresh every 60s
     const iv = setInterval(() => load(true), 60_000)
     return () => clearInterval(iv)
   }, [load])
 
   const refresh = () => load(true)
 
-  return { matches, groups, loading, error, lastUpdated, refreshing, refresh }
+  return { matches, allGames, groups, loading, error, lastUpdated, refreshing, refresh }
 }
