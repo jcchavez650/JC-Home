@@ -103,6 +103,7 @@
   flex: 1;
   overflow-y: auto;
   padding-bottom: 20px;
+  position: relative;
 }
 
 /* Live badge */
@@ -336,6 +337,8 @@
 .standings-table tr:last-child td { border-bottom: none; }
 
 .standings-table tr.advance td { background: rgba(46,160,67,0.07); }
+.standings-table tr.advance td:first-child { border-left: 3px solid var(--green); }
+.standings-table tr.maybe-advance td:first-child { border-left: 3px solid var(--gold); }
 
 .team-row {
   display: flex;
@@ -1235,3 +1238,41 @@
 }
 
 .empty .e { font-size: 36px; margin-bottom: 10px; }
+
+/* ── Prob bar abbr label ─────────────────────────────────── */
+.prob-label { width: auto; min-width: 42px; }
+.prob-abbr { font-weight: 700; color: var(--text); margin-right: 2px; }
+
+/* ── Live score pulse ────────────────────────────────────── */
+@keyframes score-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+.score-live .score-num { animation: score-pulse 1.8s ease-in-out infinite; }
+
+/* ── Groups: 3rd-place maybe-advance row ─────────────────── */
+.standings-table tr.maybe-advance td { background: rgba(212,175,55,0.06); }
+.third-place-note {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text2);
+  padding: 10px 16px 20px;
+}
+
+/* ── Wildcard elim card ──────────────────────────────────── */
+.elim-card-wildcard {
+  border-left-color: var(--gold) !important;
+}
+
+/* ── Pull-to-refresh indicator ───────────────────────────── */
+.pull-indicator {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text2);
+  padding: 8px 0 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}

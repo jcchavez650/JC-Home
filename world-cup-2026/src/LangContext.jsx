@@ -106,6 +106,8 @@ const translations = {
     teamCol: 'Team',
     record: 'Record',
     gf: 'GF', ga: 'GA',
+    thirdPlaceNote: 'Best 8 third-place teams also advance to the Round of 32',
+    wildcardPending: '🔶 Awaiting Wildcard Draw (3rd Place)',
   },
   es: {
     title: 'Copa del Mundo 2026',
@@ -155,6 +157,8 @@ const translations = {
     teamCol: 'Equipo',
     record: 'Record',
     gf: 'GF', ga: 'GC',
+    thirdPlaceNote: 'Los mejores 8 equipos en 3er lugar también avanzan a la Ronda de 32',
+    wildcardPending: '🔶 Esperando sorteo de comodines (3er lugar)',
   },
 }
 

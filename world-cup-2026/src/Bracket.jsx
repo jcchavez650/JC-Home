@@ -133,7 +133,6 @@ export default function Bracket({ allGames, groups, bracketRounds }) {
     if (!byRound[key]) byRound[key] = []
     byRound[key].push(m)
   })
-  if (Object.keys(byRound).length) console.log('[bracket rounds]', Object.fromEntries(Object.entries(byRound).map(([k,v]) => [k, v.map(m => m.name + ' ' + m.group)])))
 
   const ROUNDS = [
     { key: 'r32', label: t.r32,   count: 16 },

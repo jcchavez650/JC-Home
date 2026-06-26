@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 import { useWorldCup } from './useWorldCup.js'
 import { useLang } from './LangContext.jsx'
@@ -10,8 +10,28 @@ import Eliminated from './Eliminated.jsx'
 
 export default function App() {
   const [tab, setTab] = useState('scores')
+  const [tabSetByUser, setTabSetByUser] = useState(false)
   const { matches, allGames, groups, bracketRounds, loading, error, lastUpdated, refreshing, refresh } = useWorldCup()
   const { lang, toggle, t } = useLang()
+
+  // Pull-to-refresh state
+  const pullStartY = useRef(null)
+  const [pullDelta, setPullDelta] = useState(0)
+  const PULL_THRESHOLD = 72
+
+  // Default to Games tab when there are games today
+  useEffect(() => {
+    if (tabSetByUser || loading || !matches.length) return
+    const now = new Date()
+    const hasToday = matches.some(m =>
+      m.date.getFullYear() === now.getFullYear() &&
+      m.date.getMonth() === now.getMonth() &&
+      m.date.getDate() === now.getDate()
+    )
+    if (hasToday) setTab('games')
+  }, [matches, loading, tabSetByUser])
+
+  const switchTab = id => { setTab(id); setTabSetByUser(true) }
 
   const TABS = [
     { id: 'scores',    label: t.tabs.scores,    icon: '⚽' },
@@ -30,6 +50,24 @@ export default function App() {
       alert(t.shareCopied)
     }
   }
+
+  // Pull-to-refresh handlers
+  const onTouchStart = e => {
+    if (window.scrollY === 0) pullStartY.current = e.touches[0].clientY
+  }
+  const onTouchMove = e => {
+    if (pullStartY.current == null) return
+    const delta = e.touches[0].clientY - pullStartY.current
+    if (delta > 0) setPullDelta(Math.min(delta, PULL_THRESHOLD + 20))
+  }
+  const onTouchEnd = () => {
+    if (pullDelta >= PULL_THRESHOLD && !refreshing) refresh()
+    pullStartY.current = null
+    setPullDelta(0)
+  }
+
+  const pulling = pullDelta > 0
+  const pullReady = pullDelta >= PULL_THRESHOLD
 
   return (
     <>
@@ -65,7 +103,7 @@ export default function App() {
           <button
             key={tb.id}
             className={`nav-tab ${tab === tb.id ? 'active' : ''}`}
-            onClick={() => setTab(tb.id)}
+            onClick={() => switchTab(tb.id)}
           >
             <span className="tab-icon">{tb.icon}</span>
             {tb.label}
@@ -73,7 +111,19 @@ export default function App() {
         ))}
       </nav>
 
-      <main className="content">
+      <main
+        className="content"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        style={pulling ? { transform: `translateY(${pullDelta * 0.4}px)`, transition: 'none' } : {}}
+      >
+        {pulling && (
+          <div className="pull-indicator" style={{ opacity: pullDelta / PULL_THRESHOLD }}>
+            {pullReady ? '↑ Release to refresh' : '↓ Pull to refresh'}
+          </div>
+        )}
+
         {loading ? (
           <div className="loading">
             <div className="spinner" />

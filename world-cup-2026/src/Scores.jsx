@@ -4,6 +4,18 @@ import { useLang } from './LangContext.jsx'
 import HighlightsModal from './HighlightsModal.jsx'
 import { useLiveClock } from './useLiveClock.js'
 
+export function formatGroupLabel(slug) {
+  if (!slug) return 'World Cup 2026'
+  const g = slug.match(/group[-\s]([a-l])/i)
+  if (g) return `Group ${g[1].toUpperCase()}`
+  if (slug.includes('round-of-32') || slug.includes('round of 32')) return 'Round of 32'
+  if (slug.includes('round-of-16') || slug.includes('round of 16')) return 'Round of 16'
+  if (slug.includes('quarter')) return 'Quarterfinal'
+  if (slug.includes('semi')) return 'Semifinal'
+  if (slug.includes('final')) return 'Final'
+  return slug.replace(/-/g, ' ').replace(/fifa\s*world(\s*cup)?/gi, '').trim().toUpperCase() || 'World Cup 2026'
+}
+
 export default function Scores({ matches }) {
   const { t } = useLang()
 
@@ -71,6 +83,19 @@ function MatchCard({ match: m }) {
   const canHighlight = isFinal || isLive
   const liveClock = useLiveClock(m.displayClock, isLive)
 
+  const shareMatch = async () => {
+    const home = tn(m.home.team, m.home.abbr)
+    const away = tn(m.away.team, m.away.abbr)
+    const score = hasScore ? `${m.home.score}–${m.away.score}` : 'vs'
+    const status = isFinal ? ' (FT)' : isLive ? ` (${liveClock || 'Live'})` : ` · ${m.date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+    const text = `${home} ${score} ${away}${status} — World Cup 2026`
+    if (navigator.share) {
+      await navigator.share({ title: text, url: window.location.href }).catch(() => {})
+    } else {
+      await navigator.clipboard.writeText(text).catch(() => {})
+    }
+  }
+
   return (
     <>
     {showClips && <HighlightsModal match={m} onClose={() => setShowClips(false)} />}
@@ -82,13 +107,18 @@ function MatchCard({ match: m }) {
             {t.live}
           </span>
         )}
-        <span>{m.group ? m.group.replace(/-/g, ' ').toUpperCase() : 'World Cup 2026'}</span>
+        <span>{formatGroupLabel(m.group)}</span>
         {m.venue && <span>· {m.venue}</span>}
-        {canHighlight && (
-          <button className="highlights-btn" onClick={() => setShowClips(true)} style={{ marginLeft: 'auto' }}>
-            ▶ Highlights
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+          {canHighlight && (
+            <button className="highlights-btn" onClick={() => setShowClips(true)}>
+              ▶ Highlights
+            </button>
+          )}
+          <button className="highlights-btn" onClick={shareMatch} title="Share this match">
+            📤
           </button>
-        )}
+        </div>
       </div>
 
       <div className="match-body">
@@ -106,7 +136,7 @@ function MatchCard({ match: m }) {
         {/* Center: score or time */}
         <div className="match-center">
           {hasScore ? (
-            <div className="score-display">
+            <div className={`score-display ${isLive && !isFinal ? 'score-live' : ''}`}>
               <span className="score-num" style={m.home.winner ? { color: 'var(--green)' } : {}}>
                 {m.home.score}
               </span>
@@ -152,16 +182,16 @@ function MatchCard({ match: m }) {
   )
 }
 
-function WinProbBar({ home, draw, away, homeAbbr, awayAbbr }) {
+export function WinProbBar({ home, draw, away, homeAbbr, awayAbbr }) {
   return (
     <div className="prob-bar-wrap">
-      <span className="prob-label">{home}%</span>
+      <span className="prob-label"><span className="prob-abbr">{homeAbbr}</span> {home}%</span>
       <div className="prob-bar">
         <div className="prob-seg prob-home" style={{ width: `${home}%` }} />
         {draw > 0 && <div className="prob-seg prob-draw" style={{ width: `${draw}%` }} />}
         <div className="prob-seg prob-away" style={{ width: `${away}%` }} />
       </div>
-      <span className="prob-label">{away}%</span>
+      <span className="prob-label">{away}% <span className="prob-abbr">{awayAbbr}</span></span>
     </div>
   )
 }

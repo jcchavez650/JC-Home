@@ -15,6 +15,9 @@ export default function Groups({ groups }) {
   return (
     <div style={{ paddingTop: 12 }}>
       {groups.map(g => <GroupTable key={g.name} group={g} />)}
+      <div className="third-place-note">
+        🔶 {t.thirdPlaceNote ?? 'Best 8 third-place teams also advance to the Round of 32'}
+      </div>
     </div>
   )
 }
@@ -38,7 +41,7 @@ function GroupTable({ group }) {
         </thead>
         <tbody>
           {group.teams.map((team, i) => (
-            <tr key={team.team} className={i < 2 ? 'advance' : ''}>
+            <tr key={team.team} className={i < 2 ? 'advance' : i === 2 ? 'maybe-advance' : ''}>
               <td>
                 <div className="team-row">
                   <span className={`pos-num ${i < 2 ? 'top' : ''}`}>{i + 1}</span>

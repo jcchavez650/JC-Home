@@ -3,6 +3,7 @@ import TeamFlag from './TeamFlag.jsx'
 import { useLang } from './LangContext.jsx'
 import HighlightsModal from './HighlightsModal.jsx'
 import { useLiveClock } from './useLiveClock.js'
+import { WinProbBar, formatGroupLabel } from './Scores.jsx'
 
 export default function Games({ matches, allLoaded }) {
   const [filter, setFilter] = useState('all')
@@ -178,9 +179,7 @@ function GameRow({ match: m }) {
             {m.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         )}
-        <span className="game-group-label">
-          {m.group ? m.group.replace(/-/g, ' ').replace(/fifa world/i, '').trim().toUpperCase() : ''}
-        </span>
+        <span className="game-group-label">{formatGroupLabel(m.group)}</span>
       </div>
 
       {/* Teams + score */}
@@ -217,6 +216,10 @@ function GameRow({ match: m }) {
         </button>
       )}
     </div>
+    {m.homeWinPct != null && !isFinal && (
+      <WinProbBar home={m.homeWinPct} draw={m.drawPct} away={m.awayWinPct}
+        homeAbbr={m.home.abbr} awayAbbr={m.away.abbr} />
+    )}
     </>
   )
 }
