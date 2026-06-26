@@ -92,6 +92,13 @@ export default function Bracket({ allGames, groups, bracketRounds }) {
   const { t } = useLang()
   const groupMap = getGroupQualifiers(groups)
 
+  // Build confirmed abbr set to pass into ESPN bracket rows
+  const confirmedAbbrs = new Set()
+  Object.values(groupMap).forEach(({ w, ru }) => {
+    if (w?.confirmed)  confirmedAbbrs.add(w.abbr)
+    if (ru?.confirmed) confirmedAbbrs.add(ru.abbr)
+  })
+
   // ── Priority 1: ESPN bracket API ──────────────────────────────────────────
   if (bracketRounds.length > 0) {
     return (
@@ -104,8 +111,8 @@ export default function Bracket({ allGames, groups, bracketRounds }) {
                 <div className="bracket-col-matches">
                   {round.seeds.map((seed, i) => (
                     <div key={seed.id ?? i} className="b-match">
-                      <EspnTeamRow side={seed.home} score={seed.homeScore} />
-                      <EspnTeamRow side={seed.away} score={seed.awayScore} />
+                      <EspnTeamRow side={seed.home} score={seed.homeScore} confirmedAbbrs={confirmedAbbrs} />
+                      <EspnTeamRow side={seed.away} score={seed.awayScore} confirmedAbbrs={confirmedAbbrs} />
                     </div>
                   ))}
                 </div>
@@ -174,7 +181,7 @@ export default function Bracket({ allGames, groups, bracketRounds }) {
   )
 }
 
-function EspnTeamRow({ side, score }) {
+function EspnTeamRow({ side, score, confirmedAbbrs }) {
   const { tn } = useLang()
   if (!side) {
     return (
@@ -184,14 +191,17 @@ function EspnTeamRow({ side, score }) {
       </div>
     )
   }
+  const isConfirmed = side.winner || (side.abbr && confirmedAbbrs?.has(side.abbr))
+  const isLeading   = side.abbr && !isConfirmed
   return (
-    <div className={`b-team ${side.winner ? 'b-winner' : ''} ${side.abbr ? 'b-confirmed' : ''}`}>
+    <div className={`b-team ${side.winner ? 'b-winner' : ''} ${isConfirmed ? 'b-confirmed' : ''} ${isLeading ? 'b-leading' : ''}`}>
       {side.abbr
         ? <TeamFlag abbr={side.abbr} logo={side.logo} size={16} />
         : <div className="b-flag-placeholder" />
       }
       <span className="b-name">{tn(side.team, side.abbr)}</span>
-      {side.abbr && !side.winner && <span className="b-check">✓</span>}
+      {isConfirmed && !side.winner && <span className="b-check">✓</span>}
+      {isLeading && <span className="b-pending">~</span>}
       {score !== null && <span className="b-score">{score}</span>}
       {side.winner && <span className="b-score" style={{ color: 'var(--green)' }}>{score}</span>}
     </div>
