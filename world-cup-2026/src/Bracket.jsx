@@ -98,8 +98,6 @@ export default function Bracket({ allGames, groups, bracketRounds }) {
     if (w?.confirmed)  confirmedAbbrs.add(w.abbr)
     if (ru?.confirmed) confirmedAbbrs.add(ru.abbr)
   })
-  console.log('[bracket] groupMap', groupMap)
-  console.log('[bracket] confirmedAbbrs', [...confirmedAbbrs])
 
   // ── Priority 1: ESPN bracket API ──────────────────────────────────────────
   if (bracketRounds.length > 0) {
@@ -157,7 +155,7 @@ export default function Bracket({ allGames, groups, bracketRounds }) {
               <div className="bracket-col-matches">
                 {hasKnockout && byRound[round.key]
                   ? byRound[round.key].map(m => (
-                      <BracketMatch key={m.id} match={m} />
+                      <BracketMatch key={m.id} match={m} confirmedAbbrs={confirmedAbbrs} />
                     ))
                   : round.key === 'r32'
                   ? R32_PAIRS.map((pair, i) => (
@@ -215,27 +213,32 @@ function EspnTeamRow({ side, score, confirmedAbbrs }) {
   )
 }
 
-function BracketMatch({ match: m }) {
+function BracketMatch({ match: m, confirmedAbbrs }) {
   const hasScore = m.home.score !== null
   return (
     <div className="b-match">
-      <BracketTeamRow side={m.home} hasScore={hasScore} />
-      <BracketTeamRow side={m.away} hasScore={hasScore} />
+      <BracketTeamRow side={m.home} hasScore={hasScore} confirmedAbbrs={confirmedAbbrs} />
+      <BracketTeamRow side={m.away} hasScore={hasScore} confirmedAbbrs={confirmedAbbrs} />
     </div>
   )
 }
 
-function BracketTeamRow({ side, hasScore }) {
+function BracketTeamRow({ side, hasScore, confirmedAbbrs }) {
   const { tn } = useLang()
   const isKnown = !!side.abbr
+  const isGroupConfirmed = isKnown && confirmedAbbrs?.has(side.abbr)
+  const isKnockoutWinner = !!side.winner
+  const isConfirmed = isKnockoutWinner || isGroupConfirmed
+  const isLeading   = isKnown && !isConfirmed
   return (
-    <div className={`b-team ${side.winner ? 'b-winner' : ''} ${isKnown ? 'b-confirmed' : ''}`}>
+    <div className={`b-team ${isKnockoutWinner ? 'b-winner' : ''} ${isConfirmed ? 'b-confirmed' : ''} ${isLeading ? 'b-leading' : ''}`}>
       {isKnown
         ? <TeamFlag abbr={side.abbr} logo={side.logo} size={16} />
         : <div className="b-flag-placeholder" />
       }
       <span className="b-name">{isKnown ? tn(side.team, side.abbr) : (side.team || 'TBD')}</span>
-      {isKnown && !side.winner && <span className="b-check">✓</span>}
+      {isGroupConfirmed && <span className="b-check">✓</span>}
+      {isLeading && <span className="b-pending">~</span>}
       {hasScore && <span className="b-score">{side.score}</span>}
     </div>
   )
