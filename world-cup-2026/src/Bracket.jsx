@@ -1,26 +1,31 @@
 import TeamFlag from './TeamFlag.jsx'
 import { useLang } from './LangContext.jsx'
 
-// Derive confirmed qualifiers from standings (fallback when ESPN bracket unavailable)
+// Returns { w, ru } for each group, with a `confirmed` boolean on each team
 function getGroupQualifiers(groups) {
   const map = {}
   groups.forEach(g => {
     const letter = g.name?.trim().toUpperCase()
     if (!letter) return
+    if (!g.teams.length) return
+
     const gp = g.teams[0]?.gp ?? 0
     const complete = gp >= 3
     const thirdPts = g.teams[2]?.pts ?? 0
-    const qualified = []
 
-    g.teams.forEach((team, i) => {
-      const isThrough =
-        (complete && i < 2) ||
-        (gp >= 2 && team.pts >= 6) ||
-        (gp >= 2 && i < 2 && team.pts >= 4 && thirdPts === 0)
-      if (isThrough) qualified.push(team)
-    })
+    const isConfirmed = (team, i) =>
+      (complete && i < 2) ||
+      (gp >= 2 && team.pts >= 6) ||
+      (gp >= 2 && i < 2 && team.pts >= 4 && thirdPts === 0)
 
-    map[letter] = { w: qualified[0] ?? null, ru: qualified[1] ?? null }
+    // Current leader and runner-up (first two in standings, whether confirmed or not)
+    const leader    = g.teams[0] ? { ...g.teams[0], confirmed: isConfirmed(g.teams[0], 0) } : null
+    const runnerUp  = g.teams[1] ? { ...g.teams[1], confirmed: isConfirmed(g.teams[1], 1) } : null
+
+    map[letter] = {
+      w:  gp > 0 ? leader   : null,
+      ru: gp > 0 ? runnerUp : null,
+    }
   })
   return map
 }
@@ -230,19 +235,33 @@ function BracketSlot({ homeTeam, awayTeam, homeLabel, awayLabel }) {
 
 function SlotTeamRow({ team, label }) {
   const { tn } = useLang()
-  if (team) {
+
+  if (!team) {
+    return (
+      <div className="b-team b-slot-tbd">
+        <div className="b-flag-placeholder" />
+        <span className="b-name b-tbd">{label ?? 'TBD'}</span>
+      </div>
+    )
+  }
+
+  if (team.confirmed) {
+    // Mathematically confirmed — green border + green ✓
     return (
       <div className="b-team b-confirmed">
         <TeamFlag abbr={team.abbr} logo={team.logo} size={16} />
         <span className="b-name">{tn(team.team, team.abbr)}</span>
-        <span className="b-check">✓</span>
+        <span className="b-check" title="Confirmed">✓</span>
       </div>
     )
   }
+
+  // Currently leading but not yet confirmed — show with gold tint + ~ indicator
   return (
-    <div className="b-team">
-      <div className="b-flag-placeholder" />
-      <span className="b-name b-tbd">{label ?? 'TBD'}</span>
+    <div className="b-team b-leading">
+      <TeamFlag abbr={team.abbr} logo={team.logo} size={16} />
+      <span className="b-name">{tn(team.team, team.abbr)}</span>
+      <span className="b-pending" title="Currently leading">~</span>
     </div>
   )
 }
@@ -281,12 +300,22 @@ function QualRow({ team, label }) {
       </div>
     )
   }
+  if (team.confirmed) {
+    return (
+      <div className="qual-mini-row confirmed">
+        <span className="qual-mini-pos">{label}</span>
+        <TeamFlag abbr={team.abbr} logo={team.logo} size={22} />
+        <span className="qual-mini-name">{tn(team.team, team.abbr)}</span>
+        <span className="qual-check">✓</span>
+      </div>
+    )
+  }
   return (
-    <div className="qual-mini-row confirmed">
+    <div className="qual-mini-row leading">
       <span className="qual-mini-pos">{label}</span>
       <TeamFlag abbr={team.abbr} logo={team.logo} size={22} />
       <span className="qual-mini-name">{tn(team.team, team.abbr)}</span>
-      <span className="qual-check">✓</span>
+      <span className="qual-pending">~</span>
     </div>
   )
 }
