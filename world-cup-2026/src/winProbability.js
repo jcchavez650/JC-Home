@@ -134,16 +134,7 @@ function eloProbability(homeAbbr, awayAbbr) {
 
 // ── Public: enrich matches with win probabilities ─────────────────────────
 export async function enrichWithProbability(matches) {
-  return Promise.all(matches.map(async m => {
-    const dateStr = m.date.toISOString().slice(0, 10)
-
-    // Try live sources first (ESPN core predictor, then odds, then Sofascore)
-    const prob =
-      await fromEspnPredictor(m.id) ??
-      await fromEspnOdds(m.id) ??
-      await fromSofascore(m.home.abbr, m.away.abbr, dateStr) ??
-      eloProbability(m.home.abbr, m.away.abbr) // always works
-
-    return { ...m, ...prob }
-  }))
+  // ESPN predictor/odds return 400 and Sofascore is CORS-blocked — skip them
+  // to avoid console noise. Elo is instant and always available.
+  return matches.map(m => ({ ...m, ...eloProbability(m.home.abbr, m.away.abbr) }))
 }

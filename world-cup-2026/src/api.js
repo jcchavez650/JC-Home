@@ -45,9 +45,6 @@ export async function fetchBracket() {
 }
 
 export function parseBracket(data) {
-  // Log actual shape so we can debug ESPN's bracket response
-  if (data) console.log('[bracket]', JSON.stringify(data).slice(0, 400))
-
   // Try multiple possible ESPN bracket shapes
   const rounds =
     data?.bracket?.rounds ??
