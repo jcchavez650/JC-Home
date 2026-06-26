@@ -156,7 +156,7 @@ export function parseStandings(data) {
     const rawName = group.name ?? group.abbreviation ?? ''
     const letter = rawName.replace(/^Group\s*/i, '').trim()
 
-    const teams = (group.standings?.entries ?? []).map((entry, espnRank) => {
+    const teams = (group.standings?.entries ?? group.standings?.rows ?? []).map((entry, espnRank) => {
       const stats = {}
       entry.stats?.forEach(s => { stats[s.name] = s.value })
       return {

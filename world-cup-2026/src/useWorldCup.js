@@ -27,9 +27,7 @@ export function useWorldCup() {
 
       if (scoreRes.status === 'fulfilled') {
         const parsed = parseMatches(scoreRes.value)
-        setMatches(parsed)
-        // Fetch win probabilities for today's matches in the background
-        enrichWithProbability(parsed).then(enriched => setMatches(enriched)).catch(() => {})
+        setMatches(enrichWithProbability(parsed))
       } else {
         throw scoreRes.reason
       }

@@ -38,23 +38,26 @@ export function useLiveClock(displayClock, isLive) {
 
     const id = setInterval(() => {
       const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000)
+      // startExtra is in minutes (e.g. 2 from "90'+2'"), convert to seconds
       const totalSeconds = startMinute * 60 + startExtra * 60 + elapsedSeconds
       const mins = Math.floor(totalSeconds / 60)
 
-      // Cap at reasonable half/full-time limits
-      if (mins <= 45 && startMinute <= 45) {
-        setClock(`${Math.min(mins, 45)}'`)
-      } else if (mins <= 45) {
-        // extra time first half
-        const extra = mins - 45
-        setClock(`45'+${extra}'`)
-      } else if (mins <= 90 && startMinute > 45 && startMinute <= 90) {
-        setClock(`${Math.min(mins, 90)}'`)
-      } else if (startMinute > 45) {
-        const extra = mins - 90
-        setClock(`90'+${extra}'`)
+      if (startMinute <= 45) {
+        // First half — cap at 45, then show stoppage
+        if (mins < 45) {
+          setClock(`${mins}'`)
+        } else {
+          const extra = Math.floor((totalSeconds - 45 * 60) / 60)
+          setClock(extra > 0 ? `45'+${extra}'` : `45'`)
+        }
       } else {
-        setClock(`${mins}'`)
+        // Second half (startMinute > 45, including 90'+N' starts) — cap at 90
+        if (mins < 90) {
+          setClock(`${mins}'`)
+        } else {
+          const extra = Math.floor((totalSeconds - 90 * 60) / 60)
+          setClock(extra > 0 ? `90'+${extra}'` : `90'`)
+        }
       }
     }, 1000)
 

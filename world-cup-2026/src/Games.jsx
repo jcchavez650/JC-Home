@@ -10,7 +10,7 @@ export default function Games({ matches, allLoaded }) {
   const [teamFilter, setTeamFilter] = useState('')
   const [teamSearch, setTeamSearch] = useState('')
   const [showTeamPicker, setShowTeamPicker] = useState(false)
-  const { t, tn } = useLang()
+  const { t, tn, lang } = useLang()
 
   // Collect unique teams from all matches
   const allTeams = useMemo(() => {
@@ -54,7 +54,7 @@ export default function Games({ matches, allLoaded }) {
     // Group by date
     const byDate = {}
     filtered.forEach(m => {
-      const key = m.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+      const key = m.date.toLocaleDateString(lang === 'es' ? 'es-MX' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
       if (!byDate[key]) byDate[key] = []
       byDate[key].push(m)
     })
