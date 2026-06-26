@@ -98,6 +98,8 @@ export default function Bracket({ allGames, groups, bracketRounds }) {
     if (w?.confirmed)  confirmedAbbrs.add(w.abbr)
     if (ru?.confirmed) confirmedAbbrs.add(ru.abbr)
   })
+  console.log('[bracket] groupMap', groupMap)
+  console.log('[bracket] confirmedAbbrs', [...confirmedAbbrs])
 
   // ── Priority 1: ESPN bracket API ──────────────────────────────────────────
   if (bracketRounds.length > 0) {
