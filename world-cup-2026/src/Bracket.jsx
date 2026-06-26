@@ -193,19 +193,24 @@ function EspnTeamRow({ side, score, confirmedAbbrs }) {
       </div>
     )
   }
-  const isConfirmed = side.winner || (side.abbr && confirmedAbbrs?.has(side.abbr))
+  // A team is confirmed only if they've won a knockout match (side.winner)
+  // or are mathematically confirmed in group standings.
+  // ESPN bracket during group stage shows projected seedings — treat as leading.
+  const isGroupConfirmed = side.abbr && confirmedAbbrs?.has(side.abbr)
+  const isKnockoutWinner = !!side.winner
+  const isConfirmed = isKnockoutWinner || isGroupConfirmed
   const isLeading   = side.abbr && !isConfirmed
   return (
-    <div className={`b-team ${side.winner ? 'b-winner' : ''} ${isConfirmed ? 'b-confirmed' : ''} ${isLeading ? 'b-leading' : ''}`}>
+    <div className={`b-team ${isKnockoutWinner ? 'b-winner' : ''} ${isConfirmed ? 'b-confirmed' : ''} ${isLeading ? 'b-leading' : ''}`}>
       {side.abbr
         ? <TeamFlag abbr={side.abbr} logo={side.logo} size={16} />
         : <div className="b-flag-placeholder" />
       }
       <span className="b-name">{tn(side.team, side.abbr)}</span>
-      {isConfirmed && !side.winner && <span className="b-check">✓</span>}
+      {isGroupConfirmed && <span className="b-check">✓</span>}
       {isLeading && <span className="b-pending">~</span>}
-      {score !== null && <span className="b-score">{score}</span>}
-      {side.winner && <span className="b-score" style={{ color: 'var(--green)' }}>{score}</span>}
+      {score !== null && !isKnockoutWinner && <span className="b-score">{score}</span>}
+      {isKnockoutWinner && <span className="b-score" style={{ color: 'var(--green)' }}>{score}</span>}
     </div>
   )
 }
