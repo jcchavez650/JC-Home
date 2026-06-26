@@ -974,6 +974,22 @@
   font-weight: 700;
 }
 
+.b-leading {
+  border-left: 3px solid var(--gold);
+  background: rgba(212,175,55,0.08);
+}
+
+.b-pending {
+  font-size: 10px;
+  color: var(--gold);
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.b-slot-tbd {
+  opacity: 0.5;
+}
+
 .b-name {
   flex: 1;
   overflow: hidden;
@@ -1136,6 +1152,18 @@
   font-size: 10px;
   color: var(--green);
   font-weight: 700;
+  flex-shrink: 0;
+}
+
+.qual-mini-row.leading {
+  background: rgba(212,175,55,0.06);
+}
+
+.qual-pending {
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 700;
+  margin-left: auto;
   flex-shrink: 0;
 }
 
