@@ -154,26 +154,41 @@ function extractVideos(comp, event) {
 
 export function parseStandings(data) {
   if (!data?.children) return []
-  return data.children.map(group => ({
-    name: group.name ?? group.abbreviation,
-    teams: (group.standings?.entries ?? []).map(entry => {
+  return data.children.map(group => {
+    // ESPN returns "Group A" or just "A" — extract the letter/identifier
+    const rawName = group.name ?? group.abbreviation ?? ''
+    const letter = rawName.replace(/^Group\s*/i, '').trim()
+
+    const teams = (group.standings?.entries ?? []).map((entry, espnRank) => {
       const stats = {}
       entry.stats?.forEach(s => { stats[s.name] = s.value })
       return {
         team: entry.team?.displayName ?? '',
         abbr: entry.team?.abbreviation ?? '',
         logo: entry.team?.logo ?? null,
+        espnRank, // preserve ESPN's original order for tiebreaking
         gp: stats.gamesPlayed ?? 0,
-        w: stats.wins ?? 0,
-        d: stats.ties ?? 0,
-        l: stats.losses ?? 0,
-        gf: stats.pointsFor ?? 0,
-        ga: stats.pointsAgainst ?? 0,
-        gd: stats.pointDifferential ?? 0,
+        w:  stats.wins ?? 0,
+        d:  stats.ties ?? 0,
+        l:  stats.losses ?? 0,
+        // ESPN uses both field name styles depending on the endpoint
+        gf: stats.goalsScored ?? stats.pointsFor ?? 0,
+        ga: stats.goalsConceded ?? stats.pointsAgainst ?? 0,
+        gd: stats.goalDifference ?? stats.pointDifferential ?? 0,
         pts: stats.points ?? 0,
       }
-    }), // keep ESPN's ordering — it includes head-to-head tiebreakers we don't have
-  }))
+    })
+
+    // Sort by pts → gd → gf, fall back to ESPN's own order on full ties
+    teams.sort((a, b) =>
+      b.pts - a.pts ||
+      b.gd  - a.gd  ||
+      b.gf  - a.gf  ||
+      a.espnRank - b.espnRank  // ESPN already applied head-to-head
+    )
+
+    return { name: letter || rawName, teams }
+  })
 }
 
 // ESPN 3-letter → ISO 2-letter for flagcdn.com

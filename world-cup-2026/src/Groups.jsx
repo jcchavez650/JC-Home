@@ -27,7 +27,7 @@ function GroupTable({ group }) {
       <table className="standings-table">
         <thead>
           <tr>
-            <th>Team</th>
+            <th>{t.teamCol ?? 'Team'}</th>
             <th>{t.gp}</th>
             <th>{t.w}</th>
             <th>{t.d}</th>

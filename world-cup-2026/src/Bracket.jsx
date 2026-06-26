@@ -5,7 +5,7 @@ import { useLang } from './LangContext.jsx'
 function getGroupQualifiers(groups) {
   const map = {}
   groups.forEach(g => {
-    const letter = g.name?.replace(/^Group\s*/i, '').trim().toUpperCase()
+    const letter = g.name?.trim().toUpperCase()
     if (!letter) return
     const gp = g.teams[0]?.gp ?? 0
     const complete = gp >= 3
@@ -255,7 +255,7 @@ function QualifiersSection({ groups, groupMap }) {
       <div className="round-label" style={{ marginBottom: 8 }}>{t.qualifiers}</div>
       <div className="qualifiers-grid">
         {groups.map(g => {
-          const letter = g.name?.replace(/^Group\s*/i, '').trim().toUpperCase()
+          const letter = g.name?.trim().toUpperCase()
           const q = groupMap[letter]
           return (
             <div key={letter} className="qual-mini">
