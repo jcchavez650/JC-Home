@@ -1009,6 +1009,85 @@
   gap: 6px;
 }
 
+/* ── Eliminated tab ── */
+.elim-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 12px;
+}
+
+.elim-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--red);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.elim-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.elim-card-info {
+  flex: 1;
+}
+
+.elim-team-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.elim-group-badge {
+  font-size: 11px;
+  color: var(--text2);
+  margin-top: 2px;
+}
+
+.elim-x {
+  font-size: 16px;
+  color: var(--red);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.elim-stats {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.elim-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg3);
+  border-radius: 6px;
+  padding: 4px 8px;
+  min-width: 36px;
+}
+
+.elim-stat-pts {
+  background: rgba(var(--red-rgb, 218,54,51), 0.12);
+}
+
+.elim-stat-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.elim-stat-label {
+  font-size: 9px;
+  color: var(--text2);
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
 .qual-mini {
   background: var(--bg2);
   border: 1px solid var(--border);

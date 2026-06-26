@@ -6,6 +6,7 @@ import Scores from './Scores.jsx'
 import Groups from './Groups.jsx'
 import Bracket from './Bracket.jsx'
 import Games from './Games.jsx'
+import Eliminated from './Eliminated.jsx'
 
 export default function App() {
   const [tab, setTab] = useState('scores')
@@ -13,10 +14,11 @@ export default function App() {
   const { lang, toggle, t } = useLang()
 
   const TABS = [
-    { id: 'scores',  label: t.tabs.scores,  icon: '⚽' },
-    { id: 'games',   label: t.tabs.games,   icon: '📅' },
-    { id: 'groups',  label: t.tabs.groups,  icon: '📊' },
-    { id: 'bracket', label: t.tabs.bracket, icon: '🏆' },
+    { id: 'scores',    label: t.tabs.scores,    icon: '⚽' },
+    { id: 'games',     label: t.tabs.games,     icon: '📅' },
+    { id: 'groups',    label: t.tabs.groups,    icon: '📊' },
+    { id: 'bracket',   label: t.tabs.bracket,   icon: '🏆' },
+    { id: 'eliminated',label: t.tabs.eliminated,icon: '❌' },
   ]
 
   const share = async () => {
@@ -95,7 +97,8 @@ export default function App() {
             {tab === 'scores'  && <Scores matches={matches} />}
             {tab === 'games'   && <Games matches={allGames.length ? allGames : matches} allLoaded={allGames.length > 0} />}
             {tab === 'groups'  && <Groups groups={groups} />}
-            {tab === 'bracket' && <Bracket allGames={allGames} groups={groups} bracketRounds={bracketRounds} />}
+            {tab === 'bracket'    && <Bracket allGames={allGames} groups={groups} bracketRounds={bracketRounds} />}
+            {tab === 'eliminated' && <Eliminated groups={groups} />}
           </>
         )}
       </main>
