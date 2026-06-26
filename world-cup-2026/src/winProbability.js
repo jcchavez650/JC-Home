@@ -133,7 +133,7 @@ function eloProbability(homeAbbr, awayAbbr) {
 }
 
 // ── Public: enrich matches with win probabilities ─────────────────────────
-export async function enrichWithProbability(matches) {
+export function enrichWithProbability(matches) {
   // ESPN predictor/odds return 400 and Sofascore is CORS-blocked — skip them
   // to avoid console noise. Elo is instant and always available.
   return matches.map(m => ({ ...m, ...eloProbability(m.home.abbr, m.away.abbr) }))
