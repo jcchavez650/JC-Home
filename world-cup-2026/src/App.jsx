@@ -19,7 +19,7 @@ export default function App() {
   const [pullDelta, setPullDelta] = useState(0)
   const PULL_THRESHOLD = 72
 
-  // Default to Games tab when there are games today
+  // Default to Scores tab when there are games today
   useEffect(() => {
     if (tabSetByUser || loading || !matches.length) return
     const now = new Date()
@@ -28,7 +28,7 @@ export default function App() {
       m.date.getMonth() === now.getMonth() &&
       m.date.getDate() === now.getDate()
     )
-    if (hasToday) setTab('games')
+    if (hasToday) setTab('scores')
   }, [matches, loading, tabSetByUser])
 
   const switchTab = id => { setTab(id); setTabSetByUser(true) }
