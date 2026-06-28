@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import ToteIcon from '../components/ToteIcon.jsx';
 
 export default function ShareView() {
   const { token } = useParams();
@@ -31,7 +32,7 @@ export default function ShareView() {
     <div className="page">
       <div className="app-header">
         <div className="app-logo">
-          <div className="logo-icon">📦</div>
+          <div className="logo-icon"><ToteIcon size={24} /></div>
           <div>
             <div className="app-title">Tote Tracker</div>
             <div className="app-subtitle">Shared Manifest — View Only</div>

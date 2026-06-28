@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import ToteIcon from '../components/ToteIcon.jsx';
 
 const ALL_TAGS = ['Garage', 'Kitchen', 'Bedroom', 'Office', 'Holiday', 'Tools', 'Clothes', 'Sports', 'Electronics', 'Other'];
 
@@ -213,7 +214,7 @@ export default function ToteDetail() {
           {uploading ? (
             <div className="analyzing">
               <div className="scan-animation">
-                <div className="scan-icon">📦</div>
+                <div className="scan-icon"><ToteIcon size={24} /></div>
                 <div className="scan-line" />
               </div>
               <div className="analyzing-title">Scanning contents…</div>

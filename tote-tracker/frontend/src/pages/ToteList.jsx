@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ToteIcon from '../components/ToteIcon.jsx';
 
 const ALL_TAGS = ['Garage', 'Kitchen', 'Bedroom', 'Office', 'Holiday', 'Tools', 'Clothes', 'Sports', 'Electronics', 'Other'];
 
@@ -64,7 +65,7 @@ export default function ToteList() {
     <div className="page">
       <div className="app-header">
         <div className="app-logo">
-          <div className="logo-icon">📦</div>
+          <div className="logo-icon"><ToteIcon size={24} /></div>
           <div>
             <div className="app-title">Tote Tracker</div>
             <div className="app-subtitle">Inventory Management</div>
@@ -132,7 +133,7 @@ export default function ToteList() {
       {!searchResults && (
         visibleTotes.length === 0 ? (
           <div className="empty">
-            <span className="empty-icon">📦</span>
+            <span className="empty-icon"><ToteIcon size={52} /></span>
             <div className="empty-title">{activeTag ? `No ${activeTag} totes` : 'No totes yet'}</div>
             <div className="empty-sub">{'Create your first tote and use AI\nto automatically catalog its contents'}</div>
             {!activeTag && (
