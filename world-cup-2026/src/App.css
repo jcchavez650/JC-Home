@@ -1276,3 +1276,225 @@
   right: 0;
   pointer-events: none;
 }
+
+/* ── Bracket vertical card layout (bk-*) ─────────────────── */
+.bk-page {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 20px;
+}
+
+.bk-round {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.bk-round-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  text-align: left;
+}
+
+.bk-round-title {
+  font-weight: 700;
+  font-size: 14px;
+  flex: 1;
+}
+
+.bk-round-meta {
+  font-size: 11px;
+  color: var(--text2);
+}
+
+.bk-chevron {
+  font-size: 10px;
+  color: var(--text2);
+}
+
+.bk-round-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border-top: 1px solid var(--border);
+}
+
+/* Individual match card */
+.bk-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--bg);
+}
+
+.bk-card + .bk-card {
+  border-top: 1px solid var(--border);
+}
+
+/* Team side */
+.bk-side {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bk-side-right {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.bk-side-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bk-side-info-right {
+  align-items: flex-end;
+}
+
+.bk-side-name {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+
+.bk-side-abbr {
+  font-size: 10px;
+  color: var(--text2);
+  text-transform: uppercase;
+}
+
+.bk-side-winner .bk-side-name {
+  color: var(--green);
+}
+
+.bk-side-confirmed .bk-side-name {
+  color: var(--green);
+}
+
+.bk-side-leading .bk-side-name {
+  color: var(--gold);
+}
+
+.bk-side-tbd .bk-side-name,
+.bk-side-tbd .bk-side-abbr {
+  color: var(--text2);
+  opacity: 0.5;
+}
+
+/* Status badges */
+.bk-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.bk-badge-confirmed {
+  background: rgba(76, 175, 80, 0.18);
+  color: var(--green);
+}
+
+.bk-badge-leading {
+  background: rgba(212, 175, 55, 0.18);
+  color: var(--gold);
+}
+
+/* Center score section */
+.bk-card-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 52px;
+  flex-shrink: 0;
+}
+
+.bk-score {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.bk-score-dash {
+  color: var(--text2);
+  font-weight: 400;
+}
+
+@keyframes bk-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.bk-score-live .bk-score {
+  color: var(--red);
+  animation: bk-pulse 1.8s ease-in-out infinite;
+}
+
+.bk-vs {
+  font-size: 11px;
+  color: var(--text2);
+  font-weight: 500;
+}
+
+.bk-date {
+  font-size: 10px;
+  color: var(--text2);
+  text-align: center;
+}
+
+.bk-status {
+  font-size: 10px;
+  color: var(--text2);
+  text-align: center;
+}
+
+/* Flag placeholder for TBD */
+.bk-flag-ph {
+  width: 32px;
+  height: 24px;
+  background: var(--border);
+  border-radius: 4px;
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
+.bk-tbd-text {
+  font-size: 12px;
+  color: var(--text2);
+  opacity: 0.6;
+}
+
+/* Qualifier section at bottom */
+.bk-qual-section {
+  padding: 8px 12px 4px;
+}
+
+.bk-qual-title {
+  font-size: 11px;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
