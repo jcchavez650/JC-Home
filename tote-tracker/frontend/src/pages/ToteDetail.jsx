@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ToteIcon from '../components/ToteIcon.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const ALL_TAGS = ['Garage', 'Kitchen', 'Bedroom', 'Office', 'Holiday', 'Tools', 'Clothes', 'Sports', 'Electronics', 'Other'];
 
 export default function ToteDetail({ theme, onToggleTheme }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, apiFetch } = useAuth();
+
+  const canEdit = user?.role === 'editor' || user?.role === 'admin';
+
   const [tote, setTote] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [newItem, setNewItem] = useState('');
@@ -23,7 +28,7 @@ export default function ToteDetail({ theme, onToggleTheme }) {
   useEffect(() => { fetchTote(); }, [id]);
 
   async function fetchTote() {
-    const res = await fetch(`/api/totes/${id}`);
+    const res = await apiFetch(`/api/totes/${id}`);
     if (res.ok) {
       const data = await res.json();
       setTote(data);
@@ -36,7 +41,7 @@ export default function ToteDetail({ theme, onToggleTheme }) {
     const fd = new FormData();
     fd.append('photo', file);
     try {
-      const res = await fetch(`/api/analyze/${id}`, { method: 'POST', body: fd });
+      const res = await apiFetch(`/api/analyze/${id}`, { method: 'POST', body: fd });
       if (res.ok) { await fetchTote(); setTab('items'); }
       else { const err = await res.json(); alert('Analysis failed: ' + (err.error || 'Unknown')); }
     } catch (e) { alert('Upload failed: ' + e.message); }
@@ -45,7 +50,7 @@ export default function ToteDetail({ theme, onToggleTheme }) {
 
   async function saveTote(e) {
     e.preventDefault();
-    await fetch(`/api/totes/${id}`, {
+    await apiFetch(`/api/totes/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(editForm),
@@ -57,7 +62,7 @@ export default function ToteDetail({ theme, onToggleTheme }) {
   async function addItem(e) {
     e.preventDefault();
     if (!newItem.trim()) return;
-    await fetch(`/api/totes/${id}/items`, {
+    await apiFetch(`/api/totes/${id}/items`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newItem.trim() }),
@@ -67,7 +72,7 @@ export default function ToteDetail({ theme, onToggleTheme }) {
   }
 
   async function saveItem(item) {
-    await fetch(`/api/totes/${id}/items/${item.id}`, {
+    await apiFetch(`/api/totes/${id}/items/${item.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(item),
@@ -77,18 +82,18 @@ export default function ToteDetail({ theme, onToggleTheme }) {
   }
 
   async function deleteItem(itemId) {
-    await fetch(`/api/totes/${id}/items/${itemId}`, { method: 'DELETE' });
+    await apiFetch(`/api/totes/${id}/items/${itemId}`, { method: 'DELETE' });
     fetchTote();
   }
 
   async function deleteTote() {
-    if (!confirm('DELETE THIS TOTE AND ALL CONTENTS?')) return;
-    await fetch(`/api/totes/${id}`, { method: 'DELETE' });
+    if (!confirm('Delete this tote and all its contents?')) return;
+    await apiFetch(`/api/totes/${id}`, { method: 'DELETE' });
     navigate('/');
   }
 
   async function getShareLink() {
-    const res = await fetch(`/api/totes/${id}/share`, { method: 'POST' });
+    const res = await apiFetch(`/api/totes/${id}/share`, { method: 'POST' });
     const { token } = await res.json();
     const url = `${window.location.origin}/share/${token}`;
     setShareUrl(url);
@@ -96,19 +101,16 @@ export default function ToteDetail({ theme, onToggleTheme }) {
   }
 
   async function revokeShare() {
-    await fetch(`/api/totes/${id}/share`, { method: 'DELETE' });
+    await apiFetch(`/api/totes/${id}/share`, { method: 'DELETE' });
     setShareUrl(null);
     fetchTote();
   }
 
   function copyShareUrl() {
-    navigator.clipboard.writeText(shareUrl);
+    const u = shareUrl || `${window.location.origin}/share/${tote.share_token}`;
+    navigator.clipboard.writeText(u);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }
-
-  function printQR() {
-    window.print();
   }
 
   function onDrop(e) {
@@ -136,22 +138,15 @@ export default function ToteDetail({ theme, onToggleTheme }) {
 
   return (
     <>
-      {/* Print styles */}
-      <style>{`
-        @media print {
-          body > * { display: none !important; }
-          .print-label { display: flex !important; }
-        }
-      `}</style>
+      <style>{`@media print { body > * { display: none !important; } .print-label { display: flex !important; } }`}</style>
 
-      {/* Printable QR label */}
-      <div className="print-label" style={{ display: 'none' }}>
+      <div className="print-label">
         <div className="print-label-inner">
           {tote.qr_code && <img src={tote.qr_code} alt="QR" style={{ width: 160, height: 160 }} />}
           <div className="print-label-text">
             <div className="print-label-title">{tote.label}</div>
             {tote.location && <div className="print-label-loc">📍 {tote.location}</div>}
-            <div className="print-label-count">{tote.items?.length || 0} ITEMS</div>
+            <div className="print-label-count">{tote.items?.length || 0} items</div>
           </div>
         </div>
       </div>
@@ -159,13 +154,11 @@ export default function ToteDetail({ theme, onToggleTheme }) {
       <div className="page">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <div className="back-nav" style={{ marginBottom: 0 }} onClick={() => navigate('/')}>← Back</div>
-          <button className="theme-toggle" onClick={onToggleTheme} title="Toggle theme">
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
+          <button className="theme-toggle" onClick={onToggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button>
         </div>
 
         {/* Header */}
-        {editingTote ? (
+        {editingTote && canEdit ? (
           <form onSubmit={saveTote} className="edit-tote-form">
             <div className="field">
               <label>Label</label>
@@ -189,7 +182,7 @@ export default function ToteDetail({ theme, onToggleTheme }) {
                 ))}
               </div>
             </div>
-            <div className="modal-actions" style={{ marginTop: 12, marginBottom: 20 }}>
+            <div className="modal-actions" style={{ marginTop: 12, marginBottom: 4 }}>
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingTote(false)}>Cancel</button>
               <button type="submit" className="btn btn-primary btn-sm">Save Changes</button>
             </div>
@@ -199,7 +192,9 @@ export default function ToteDetail({ theme, onToggleTheme }) {
             <div className="detail-tag">
               <span style={{ color: 'var(--text-3)' }}>Tote</span>
               {id.slice(0, 8).toUpperCase()}
-              <button className="edit-link" onClick={() => setEditingTote(true)}>✎ Edit</button>
+              {canEdit && (
+                <button className="edit-link" onClick={() => setEditingTote(true)}>✎ Edit</button>
+              )}
             </div>
             <div className="detail-title">{tote.label}</div>
             {tote.location && <div className="detail-loc">📍 {tote.location}</div>}
@@ -209,46 +204,54 @@ export default function ToteDetail({ theme, onToggleTheme }) {
               </div>
             )}
             <div className="detail-stats">
-              <div className="stat"><div className="stat-val">{tote.items?.length || 0}</div><div className="stat-label">Items</div></div>
-              <div className="stat"><div className="stat-val">{tote.photos?.length || 0}</div><div className="stat-label">Scans</div></div>
+              <div className="stat">
+                <div className="stat-val">{tote.items?.length || 0}</div>
+                <div className="stat-label">Items</div>
+              </div>
+              <div className="stat">
+                <div className="stat-val">{tote.photos?.length || 0}</div>
+                <div className="stat-label">Scans</div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* AI Scanner */}
-        <div className="camera-section">
-          <div className="section-label">AI Scan</div>
-          {uploading ? (
-            <div className="analyzing">
-              <div className="scan-animation">
-                <div className="scan-icon"><ToteIcon size={24} /></div>
-                <div className="scan-line" />
+        {/* AI Scanner — editors and admins only */}
+        {canEdit && (
+          <div className="camera-section">
+            <div className="section-label">AI Scan</div>
+            {uploading ? (
+              <div className="analyzing">
+                <div className="scan-animation">
+                  <div className="scan-icon"><ToteIcon size={24} /></div>
+                  <div className="scan-line" />
+                </div>
+                <div className="analyzing-title">Scanning contents…</div>
+                <div className="analyzing-sub">AI is identifying all items</div>
               </div>
-              <div className="analyzing-title">Scanning contents…</div>
-              <div className="analyzing-sub">AI is identifying all items</div>
-            </div>
-          ) : (
-            <>
-              <button className="btn btn-camera btn-full" onClick={() => cameraRef.current.click()}>
-                📷 Scan with Camera
-              </button>
-              <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
-                onChange={e => e.target.files[0] && analyzePhoto(e.target.files[0])} />
-              <div className={`upload-area${dragOver ? ' drag-over' : ''}`}
-                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={onDrop}
-                onClick={() => fileRef.current.click()}
-              >
-                <div className="upload-icon">🖼️</div>
-                <div className="upload-text">Upload from Library</div>
-                <div className="upload-hint">Drag & drop or tap to select</div>
-              </div>
-              <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}
-                onChange={e => e.target.files[0] && analyzePhoto(e.target.files[0])} />
-            </>
-          )}
-        </div>
+            ) : (
+              <>
+                <button className="btn btn-camera btn-full" onClick={() => cameraRef.current.click()}>
+                  📷 Scan with Camera
+                </button>
+                <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+                  onChange={e => e.target.files[0] && analyzePhoto(e.target.files[0])} />
+                <div className={`upload-area${dragOver ? ' drag-over' : ''}`}
+                  onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={onDrop}
+                  onClick={() => fileRef.current.click()}
+                >
+                  <div className="upload-icon">🖼️</div>
+                  <div className="upload-text">Upload from Library</div>
+                  <div className="upload-hint">Drag & drop or tap to select</div>
+                </div>
+                <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}
+                  onChange={e => e.target.files[0] && analyzePhoto(e.target.files[0])} />
+              </>
+            )}
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="tabs">
@@ -269,7 +272,9 @@ export default function ToteDetail({ theme, onToggleTheme }) {
           <div className="section">
             <div className="section-label">Item Manifest</div>
             {tote.items?.length === 0 ? (
-              <div className="empty-items">No items logged — scan or add manually</div>
+              <div className="empty-items">
+                {canEdit ? 'No items logged — scan or add manually' : 'No items logged'}
+              </div>
             ) : (
               tote.items.map(item => (
                 <div key={item.id}>
@@ -277,30 +282,36 @@ export default function ToteDetail({ theme, onToggleTheme }) {
                     <div className="item-edit-row">
                       <input className="input" style={{ flex: 1 }} value={editingItem.name}
                         onChange={e => setEditingItem(i => ({ ...i, name: e.target.value }))} />
-                      <input className="input" style={{ width: 60 }} type="number" min="1" value={editingItem.quantity}
+                      <input className="input" style={{ width: 64 }} type="number" min="1" value={editingItem.quantity}
                         onChange={e => setEditingItem(i => ({ ...i, quantity: parseInt(e.target.value) || 1 }))} />
                       <button className="btn btn-primary btn-sm" onClick={() => saveItem(editingItem)}>✓</button>
                       <button className="btn btn-ghost btn-sm" onClick={() => setEditingItem(null)}>✕</button>
                     </div>
                   ) : (
-                    <div className="item-row" onDoubleClick={() => setEditingItem({ ...item })}>
+                    <div className="item-row" onDoubleClick={() => canEdit && setEditingItem({ ...item })}>
                       <div className="qty-tag">×{item.quantity}</div>
                       <div style={{ flex: 1 }}>
                         <div className="item-name">{item.name}</div>
                         {item.notes && <div className="item-notes">{item.notes}</div>}
                       </div>
-                      <button className="edit-item-btn" onClick={() => setEditingItem({ ...item })}>✎</button>
-                      <button className="delete-btn" onClick={() => deleteItem(item.id)}>✕</button>
+                      {canEdit && (
+                        <>
+                          <button className="edit-item-btn" onClick={() => setEditingItem({ ...item })}>✎</button>
+                          <button className="delete-btn" onClick={() => deleteItem(item.id)}>✕</button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
               ))
             )}
-            <form onSubmit={addItem} className="add-item-row">
-              <input className="input" placeholder="Add item manually..." value={newItem}
-                onChange={e => setNewItem(e.target.value)} />
-              <button type="submit" className="btn btn-primary btn-sm">ADD</button>
-            </form>
+            {canEdit && (
+              <form onSubmit={addItem} className="add-item-row">
+                <input className="input" placeholder="Add item manually..." value={newItem}
+                  onChange={e => setNewItem(e.target.value)} />
+                <button type="submit" className="btn btn-primary btn-sm">Add</button>
+              </form>
+            )}
           </div>
         )}
 
@@ -317,10 +328,10 @@ export default function ToteDetail({ theme, onToggleTheme }) {
                 <div style={{ display: 'flex', gap: 8 }}>
                   <a href={tote.qr_code} download={`tote-${tote.label}-qr.png`}
                     className="btn btn-ghost btn-sm" style={{ textDecoration: 'none', flex: 1 }}>
-                    ↓ DOWNLOAD
+                    ↓ Download
                   </a>
-                  <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={printQR}>
-                    🖨 PRINT LABEL
+                  <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => window.print()}>
+                    🖨 Print Label
                   </button>
                 </div>
               </>
@@ -357,29 +368,34 @@ export default function ToteDetail({ theme, onToggleTheme }) {
                 <div className="share-url">{shareUrl || `${window.location.origin}/share/${tote.share_token}`}</div>
                 <div className="share-hint">Anyone with this link can view this tote's manifest</div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                  <button className="btn btn-primary btn-sm" style={{ flex: 1 }}
-                    onClick={() => { const u = shareUrl || `${window.location.origin}/share/${tote.share_token}`; navigator.clipboard.writeText(u); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
-                    {copied ? '✓ COPIED' : '⎘ COPY LINK'}
+                  <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={copyShareUrl}>
+                    {copied ? '✓ Copied' : '⎘ Copy Link'}
                   </button>
-                  <button className="btn btn-danger btn-sm" style={{ flex: 1 }} onClick={revokeShare}>
-                    REVOKE
-                  </button>
+                  {canEdit && (
+                    <button className="btn btn-danger btn-sm" style={{ flex: 1 }} onClick={revokeShare}>
+                      Revoke
+                    </button>
+                  )}
                 </div>
               </>
             ) : (
               <>
                 <div className="empty-items">No share link generated yet</div>
-                <button className="btn btn-primary btn-full" style={{ marginTop: 12 }} onClick={getShareLink}>
-                  Generate Share Link
-                </button>
+                {canEdit && (
+                  <button className="btn btn-primary btn-full" style={{ marginTop: 12 }} onClick={getShareLink}>
+                    Generate Share Link
+                  </button>
+                )}
               </>
             )}
           </div>
         )}
 
-        <div style={{ marginTop: 8 }}>
-          <button className="btn btn-danger btn-full btn-sm" onClick={deleteTote}>Delete Tote</button>
-        </div>
+        {canEdit && (
+          <div style={{ marginTop: 8 }}>
+            <button className="btn btn-danger btn-full btn-sm" onClick={deleteTote}>Delete Tote</button>
+          </div>
+        )}
       </div>
     </>
   );

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ToteIcon from '../components/ToteIcon.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const ALL_TAGS = ['Garage', 'Kitchen', 'Bedroom', 'Office', 'Holiday', 'Tools', 'Clothes', 'Sports', 'Electronics', 'Other'];
 
 export default function ToteList({ theme, onToggleTheme }) {
+  const { user, logout, apiFetch } = useAuth();
   const [totes, setTotes] = useState([]);
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState(null);
@@ -14,27 +16,29 @@ export default function ToteList({ theme, onToggleTheme }) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const canEdit = user?.role === 'editor' || user?.role === 'admin';
+
   useEffect(() => { fetchTotes(); }, []);
 
   useEffect(() => {
     if (!search.trim()) { setSearchResults(null); return; }
     const t = setTimeout(async () => {
-      const res = await fetch(`/api/totes/search?q=${encodeURIComponent(search)}`);
+      const res = await apiFetch(`/api/totes/search?q=${encodeURIComponent(search)}`);
       setSearchResults(await res.json());
     }, 300);
     return () => clearTimeout(t);
   }, [search]);
 
   async function fetchTotes() {
-    const res = await fetch('/api/totes');
-    setTotes(await res.json());
+    const res = await apiFetch('/api/totes');
+    if (res.ok) setTotes(await res.json());
   }
 
   async function createTote(e) {
     e.preventDefault();
     if (!form.label.trim()) return;
     setLoading(true);
-    await fetch('/api/totes', {
+    await apiFetch('/api/totes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
@@ -71,11 +75,28 @@ export default function ToteList({ theme, onToggleTheme }) {
             <div className="app-subtitle">Inventory Management</div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button className="theme-toggle" onClick={onToggleTheme} title="Toggle theme">
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
-          <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>+ New Tote</button>
+          {canEdit && (
+            <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>+ New Tote</button>
+          )}
+        </div>
+      </div>
+
+      {/* User bar */}
+      <div className="user-bar">
+        <div className="user-bar-info">
+          <div className="user-avatar-sm">{user?.name?.[0]?.toUpperCase()}</div>
+          <span className="user-bar-name">{user?.name}</span>
+          <span className={`role-badge role-${user?.role}`}>{user?.role}</span>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {user?.role === 'admin' && (
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/admin')}>⚙ Users</button>
+          )}
+          <button className="btn btn-ghost btn-sm" onClick={logout}>Sign Out</button>
         </div>
       </div>
 
@@ -105,8 +126,8 @@ export default function ToteList({ theme, onToggleTheme }) {
         <div className="search-results">
           <div className="search-results-header">
             {searchResults.length === 0
-              ? `// no results for "${search}"`
-              : `// ${searchResults.length} result${searchResults.length !== 1 ? 's' : ''} for "${search}"`}
+              ? `No results for "${search}"`
+              : `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''} for "${search}"`}
           </div>
           {searchResults.map(item => (
             <div key={item.id} className="search-result-row" onClick={() => navigate(`/tote/${item.tote_id}`)}>
@@ -121,10 +142,7 @@ export default function ToteList({ theme, onToggleTheme }) {
       {/* Tag filter */}
       {allUsedTags.length > 0 && !searchResults && (
         <div className="tag-filter">
-          <button
-            className={`tag-chip ${!activeTag ? 'active' : ''}`}
-            onClick={() => setActiveTag(null)}
-          >All</button>
+          <button className={`tag-chip ${!activeTag ? 'active' : ''}`} onClick={() => setActiveTag(null)}>All</button>
           {allUsedTags.map(tag => (
             <button
               key={tag}
@@ -140,8 +158,12 @@ export default function ToteList({ theme, onToggleTheme }) {
           <div className="empty">
             <span className="empty-icon"><ToteIcon size={52} /></span>
             <div className="empty-title">{activeTag ? `No ${activeTag} totes` : 'No totes yet'}</div>
-            <div className="empty-sub">{'Create your first tote and use AI\nto automatically catalog its contents'}</div>
-            {!activeTag && (
+            <div className="empty-sub">
+              {canEdit
+                ? 'Create your first tote and use AI\nto automatically catalog its contents'
+                : 'No totes have been created yet.'}
+            </div>
+            {!activeTag && canEdit && (
               <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ Create First Tote</button>
             )}
           </div>
@@ -171,7 +193,7 @@ export default function ToteList({ theme, onToggleTheme }) {
         )
       )}
 
-      {showModal && (
+      {showModal && canEdit && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
           <div className="modal-box">
             <div className="modal-title">New Tote</div>

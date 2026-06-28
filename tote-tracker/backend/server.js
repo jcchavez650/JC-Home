@@ -6,6 +6,10 @@ import { fileURLToPath } from 'url';
 import { mkdirSync } from 'fs';
 import totesRouter from './routes/totes.js';
 import analyzeRouter from './routes/analyze.js';
+import authRouter from './routes/auth.js';
+import usersRouter from './routes/users.js';
+import { requireAuth, requireEditor } from './middleware/auth.js';
+import db from './database.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const uploadsDir = process.env.UPLOADS_DIR || join(__dirname, 'uploads');
@@ -28,8 +32,21 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
-app.use('/api/totes', totesRouter);
-app.use('/api/analyze', upload.single('photo'), analyzeRouter);
+// Public routes (no auth)
+app.use('/api/auth', authRouter);
+
+// Public share endpoint — must be mounted before the protected totes router
+app.get('/api/totes/share/:token', (req, res) => {
+  const tote = db.prepare('SELECT * FROM totes WHERE share_token = ?').get(req.params.token);
+  if (!tote) return res.status(404).json({ error: 'Not found' });
+  const items = db.prepare('SELECT * FROM items WHERE tote_id = ? ORDER BY name').all(tote.id);
+  res.json({ ...tote, tags: JSON.parse(tote.tags || '[]'), items });
+});
+
+// Protected routes
+app.use('/api/totes', requireAuth, totesRouter);
+app.use('/api/analyze', requireAuth, requireEditor, upload.single('photo'), analyzeRouter);
+app.use('/api/users', usersRouter);
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 

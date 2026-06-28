@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import QRCode from 'qrcode';
 import db from '../database.js';
+import { requireEditor } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -61,13 +62,6 @@ router.get('/search', (req, res) => {
   res.json(results);
 });
 
-router.get('/share/:token', (req, res) => {
-  const tote = db.prepare('SELECT * FROM totes WHERE share_token = ?').get(req.params.token);
-  if (!tote) return res.status(404).json({ error: 'Not found' });
-  const items = db.prepare('SELECT * FROM items WHERE tote_id = ? ORDER BY name').all(tote.id);
-  res.json({ ...parseTote(tote), items });
-});
-
 router.get('/:id', (req, res) => {
   const tote = db.prepare('SELECT * FROM totes WHERE id = ?').get(req.params.id);
   if (!tote) return res.status(404).json({ error: 'Tote not found' });
@@ -76,7 +70,8 @@ router.get('/:id', (req, res) => {
   res.json({ ...parseTote(tote), items, photos });
 });
 
-router.post('/', async (req, res) => {
+// Write operations require editor or admin role
+router.post('/', requireEditor, async (req, res) => {
   const { label, location, tags } = req.body;
   if (!label) return res.status(400).json({ error: 'Label is required' });
 
@@ -85,28 +80,25 @@ router.post('/', async (req, res) => {
   const qrCode = await QRCode.toDataURL(qrData, { width: 300 });
   const tagsJson = JSON.stringify(Array.isArray(tags) ? tags : []);
 
-  db.prepare(`
-    INSERT INTO totes (id, label, location, tags, qr_code) VALUES (?, ?, ?, ?, ?)
-  `).run(id, label, location || null, tagsJson, qrCode);
+  db.prepare(`INSERT INTO totes (id, label, location, tags, qr_code) VALUES (?, ?, ?, ?, ?)`)
+    .run(id, label, location || null, tagsJson, qrCode);
 
   res.status(201).json(parseTote(db.prepare('SELECT * FROM totes WHERE id = ?').get(id)));
 });
 
-router.put('/:id', (req, res) => {
+router.put('/:id', requireEditor, (req, res) => {
   const { label, location, tags } = req.body;
   const tote = db.prepare('SELECT * FROM totes WHERE id = ?').get(req.params.id);
   if (!tote) return res.status(404).json({ error: 'Tote not found' });
 
   const tagsJson = tags !== undefined ? JSON.stringify(Array.isArray(tags) ? tags : []) : tote.tags;
-
-  db.prepare(`
-    UPDATE totes SET label = ?, location = ?, tags = ?, updated_at = datetime('now') WHERE id = ?
-  `).run(label || tote.label, location !== undefined ? location : tote.location, tagsJson, req.params.id);
+  db.prepare(`UPDATE totes SET label = ?, location = ?, tags = ?, updated_at = datetime('now') WHERE id = ?`)
+    .run(label || tote.label, location !== undefined ? location : tote.location, tagsJson, req.params.id);
 
   res.json(parseTote(db.prepare('SELECT * FROM totes WHERE id = ?').get(req.params.id)));
 });
 
-router.post('/:id/share', (req, res) => {
+router.post('/:id/share', requireEditor, (req, res) => {
   const tote = db.prepare('SELECT * FROM totes WHERE id = ?').get(req.params.id);
   if (!tote) return res.status(404).json({ error: 'Tote not found' });
 
@@ -118,19 +110,19 @@ router.post('/:id/share', (req, res) => {
   res.json({ token });
 });
 
-router.delete('/:id/share', (req, res) => {
+router.delete('/:id/share', requireEditor, (req, res) => {
   db.prepare('UPDATE totes SET share_token = NULL WHERE id = ?').run(req.params.id);
   res.json({ success: true });
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', requireEditor, (req, res) => {
   const tote = db.prepare('SELECT * FROM totes WHERE id = ?').get(req.params.id);
   if (!tote) return res.status(404).json({ error: 'Tote not found' });
   db.prepare('DELETE FROM totes WHERE id = ?').run(req.params.id);
   res.json({ success: true });
 });
 
-router.post('/:id/items', (req, res) => {
+router.post('/:id/items', requireEditor, (req, res) => {
   const { name, quantity, notes } = req.body;
   if (!name) return res.status(400).json({ error: 'Item name is required' });
   const tote = db.prepare('SELECT id FROM totes WHERE id = ?').get(req.params.id);
@@ -144,7 +136,7 @@ router.post('/:id/items', (req, res) => {
   res.status(201).json(db.prepare('SELECT * FROM items WHERE id = ?').get(id));
 });
 
-router.put('/:id/items/:itemId', (req, res) => {
+router.put('/:id/items/:itemId', requireEditor, (req, res) => {
   const { name, quantity, notes } = req.body;
   const item = db.prepare('SELECT * FROM items WHERE id = ? AND tote_id = ?').get(req.params.itemId, req.params.id);
   if (!item) return res.status(404).json({ error: 'Item not found' });
@@ -155,7 +147,7 @@ router.put('/:id/items/:itemId', (req, res) => {
   res.json(db.prepare('SELECT * FROM items WHERE id = ?').get(req.params.itemId));
 });
 
-router.delete('/:id/items/:itemId', (req, res) => {
+router.delete('/:id/items/:itemId', requireEditor, (req, res) => {
   db.prepare('DELETE FROM items WHERE id = ? AND tote_id = ?').run(req.params.itemId, req.params.id);
   res.json({ success: true });
 });

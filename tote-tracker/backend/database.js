@@ -10,6 +10,15 @@ mkdirSync(dataDir, { recursive: true });
 const db = new Database(join(dataDir, 'totes.db'));
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'viewer',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
   CREATE TABLE IF NOT EXISTS totes (
     id TEXT PRIMARY KEY,
     label TEXT NOT NULL,
