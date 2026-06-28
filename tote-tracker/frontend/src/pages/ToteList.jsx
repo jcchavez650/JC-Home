@@ -1,14 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const ALL_TAGS = ['Garage', 'Kitchen', 'Bedroom', 'Office', 'Holiday', 'Tools', 'Clothes', 'Sports', 'Electronics', 'Other'];
+
 export default function ToteList() {
   const [totes, setTotes] = useState([]);
+  const [search, setSearch] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
+  const [activeTag, setActiveTag] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ label: '', location: '' });
+  const [form, setForm] = useState({ label: '', location: '', tags: [] });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => { fetchTotes(); }, []);
+
+  useEffect(() => {
+    if (!search.trim()) { setSearchResults(null); return; }
+    const t = setTimeout(async () => {
+      const res = await fetch(`/api/totes/search?q=${encodeURIComponent(search)}`);
+      setSearchResults(await res.json());
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
   async function fetchTotes() {
     const res = await fetch('/api/totes');
@@ -24,13 +38,27 @@ export default function ToteList() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
     });
-    setForm({ label: '', location: '' });
+    setForm({ label: '', location: '', tags: [] });
     setShowModal(false);
     setLoading(false);
     fetchTotes();
   }
 
+  function toggleTag(tag) {
+    setForm(f => ({
+      ...f,
+      tags: f.tags.includes(tag) ? f.tags.filter(t => t !== tag) : [...f.tags, tag],
+    }));
+  }
+
   const totalItems = totes.reduce((a, t) => a + (t.item_count || 0), 0);
+
+  const visibleTotes = totes.filter(t => {
+    if (activeTag && !t.tags?.includes(activeTag)) return false;
+    return true;
+  });
+
+  const allUsedTags = [...new Set(totes.flatMap(t => t.tags || []))];
 
   return (
     <div className="page">
@@ -42,9 +70,7 @@ export default function ToteList() {
             <div className="app-subtitle">INVENTORY MANAGEMENT SYSTEM</div>
           </div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
-          + NEW TOTE
-        </button>
+        <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>+ NEW</button>
       </div>
 
       {totes.length > 0 && (
@@ -52,39 +78,91 @@ export default function ToteList() {
           <div className="status-dot" />
           <div className="status-item">TOTES: <span className="status-val">{totes.length}</span></div>
           <div className="status-item">ITEMS: <span className="status-val">{totalItems}</span></div>
-          <div className="status-item">STATUS: <span className="status-val">ONLINE</span></div>
+          <a href="/api/totes/export" className="status-export">↓ EXPORT CSV</a>
         </div>
       )}
 
-      {totes.length === 0 ? (
-        <div className="empty">
-          <span className="empty-icon">📦</span>
-          <div className="empty-title">No Totes Registered</div>
-          <div className="empty-sub">{'// Create your first tote and use AI\n// to automatically catalog its contents'}</div>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-            + CREATE FIRST TOTE
-          </button>
-        </div>
-      ) : (
-        <div className="tote-grid">
-          {totes.map((t, i) => (
-            <div key={t.id} className="tote-card" onClick={() => navigate(`/tote/${t.id}`)}>
-              <div className="tote-card-inner">
-                <div className="tote-num">{String(i + 1).padStart(2, '0')}</div>
-                <div className="tote-card-content">
-                  <div className="tote-card-label">{t.label}</div>
-                  <div className="tote-card-loc">
-                    {t.location ? `📍 ${t.location}` : '— NO LOCATION SET'}
-                  </div>
-                </div>
-                <div className="tote-card-right">
-                  <div className="item-count">{t.item_count}</div>
-                  <div className="item-count-label">ITEMS</div>
-                </div>
-              </div>
+      {/* Search */}
+      <div className="search-wrap">
+        <span className="search-icon">⌕</span>
+        <input
+          className="search-input"
+          placeholder="Search items across all totes..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        {search && <button className="search-clear" onClick={() => setSearch('')}>✕</button>}
+      </div>
+
+      {/* Search results */}
+      {searchResults !== null && (
+        <div className="search-results">
+          <div className="search-results-header">
+            {searchResults.length === 0
+              ? `// no results for "${search}"`
+              : `// ${searchResults.length} result${searchResults.length !== 1 ? 's' : ''} for "${search}"`}
+          </div>
+          {searchResults.map(item => (
+            <div key={item.id} className="search-result-row" onClick={() => navigate(`/tote/${item.tote_id}`)}>
+              <div className="search-result-item">{item.name}</div>
+              <div className="search-result-tote">in {item.tote_label}</div>
+              {item.tote_location && <div className="search-result-loc">📍 {item.tote_location}</div>}
             </div>
           ))}
         </div>
+      )}
+
+      {/* Tag filter */}
+      {allUsedTags.length > 0 && !searchResults && (
+        <div className="tag-filter">
+          <button
+            className={`tag-chip ${!activeTag ? 'active' : ''}`}
+            onClick={() => setActiveTag(null)}
+          >ALL</button>
+          {allUsedTags.map(tag => (
+            <button
+              key={tag}
+              className={`tag-chip ${activeTag === tag ? 'active' : ''}`}
+              onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+            >{tag.toUpperCase()}</button>
+          ))}
+        </div>
+      )}
+
+      {!searchResults && (
+        visibleTotes.length === 0 ? (
+          <div className="empty">
+            <span className="empty-icon">📦</span>
+            <div className="empty-title">{activeTag ? `No ${activeTag} Totes` : 'No Totes Registered'}</div>
+            <div className="empty-sub">{'// Create your first tote and use AI\n// to automatically catalog its contents'}</div>
+            {!activeTag && (
+              <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ CREATE FIRST TOTE</button>
+            )}
+          </div>
+        ) : (
+          <div className="tote-grid">
+            {visibleTotes.map((t, i) => (
+              <div key={t.id} className="tote-card" onClick={() => navigate(`/tote/${t.id}`)}>
+                <div className="tote-card-inner">
+                  <div className="tote-num">{String(i + 1).padStart(2, '0')}</div>
+                  <div className="tote-card-content">
+                    <div className="tote-card-label">{t.label}</div>
+                    <div className="tote-card-loc">{t.location ? `📍 ${t.location}` : '— NO LOCATION'}</div>
+                    {t.tags?.length > 0 && (
+                      <div className="tote-tags">
+                        {t.tags.map(tag => <span key={tag} className="tote-tag">{tag}</span>)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="tote-card-right">
+                    <div className="item-count">{t.item_count}</div>
+                    <div className="item-count-label">ITEMS</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
       )}
 
       {showModal && (
@@ -94,22 +172,24 @@ export default function ToteList() {
             <form onSubmit={createTote}>
               <div className="field">
                 <label>Tote Label *</label>
-                <input
-                  className="input input-full"
-                  placeholder="e.g. KITCHEN SUPPLIES"
-                  value={form.label}
-                  onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
-                  autoFocus
-                />
+                <input className="input input-full" placeholder="e.g. KITCHEN SUPPLIES"
+                  value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))} autoFocus />
               </div>
               <div className="field">
                 <label>Storage Location</label>
-                <input
-                  className="input input-full"
-                  placeholder="e.g. GARAGE SHELF 3"
-                  value={form.location}
-                  onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
-                />
+                <input className="input input-full" placeholder="e.g. GARAGE SHELF 3"
+                  value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
+              </div>
+              <div className="field">
+                <label>Categories</label>
+                <div className="tag-picker">
+                  {ALL_TAGS.map(tag => (
+                    <button key={tag} type="button"
+                      className={`tag-chip ${form.tags.includes(tag) ? 'active' : ''}`}
+                      onClick={() => toggleTag(tag)}
+                    >{tag}</button>
+                  ))}
+                </div>
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>CANCEL</button>

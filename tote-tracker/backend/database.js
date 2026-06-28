@@ -14,6 +14,8 @@ db.exec(`
     id TEXT PRIMARY KEY,
     label TEXT NOT NULL,
     location TEXT,
+    tags TEXT DEFAULT '[]',
+    share_token TEXT,
     qr_code TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
@@ -37,5 +39,9 @@ db.exec(`
     FOREIGN KEY (tote_id) REFERENCES totes(id) ON DELETE CASCADE
   );
 `);
+
+// Migrations for existing databases
+try { db.exec(`ALTER TABLE totes ADD COLUMN tags TEXT DEFAULT '[]'`); } catch {}
+try { db.exec(`ALTER TABLE totes ADD COLUMN share_token TEXT`); } catch {}
 
 export default db;

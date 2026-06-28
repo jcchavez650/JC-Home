@@ -73,13 +73,21 @@ Be specific and descriptive. If you see multiple of the same item, use the quant
     INSERT INTO photos (id, tote_id, filename, ai_raw_response) VALUES (?, ?, ?, ?)
   `).run(photoId, toteId, req.file.filename, aiResponse);
 
-  const insertItem = db.prepare(`
-    INSERT INTO items (id, tote_id, name, quantity, notes) VALUES (?, ?, ?, ?, ?)
-  `);
+  const existingItems = db.prepare('SELECT * FROM items WHERE tote_id = ?').all(toteId);
+
+  const insertItem = db.prepare(`INSERT INTO items (id, tote_id, name, quantity, notes) VALUES (?, ?, ?, ?, ?)`);
+  const updateQty = db.prepare(`UPDATE items SET quantity = quantity + ? WHERE id = ?`);
 
   const insertMany = db.transaction((items) => {
     for (const item of items) {
-      insertItem.run(uuidv4(), toteId, item.name, item.quantity || 1, item.notes || null);
+      const existing = existingItems.find(e =>
+        e.name.toLowerCase().trim() === item.name.toLowerCase().trim()
+      );
+      if (existing) {
+        updateQty.run(item.quantity || 1, existing.id);
+      } else {
+        insertItem.run(uuidv4(), toteId, item.name, item.quantity || 1, item.notes || null);
+      }
     }
   });
 
