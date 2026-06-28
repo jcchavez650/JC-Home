@@ -127,8 +127,10 @@ export default function ToteDetail() {
 
   if (!tote) return (
     <div className="page-loading">
-      <div className="loader-dot" /><div className="loader-dot" /><div className="loader-dot" />
-      <span style={{ marginLeft: 8 }}>LOADING</span>
+      <div className="loader-dots">
+        <div className="loader-dot" /><div className="loader-dot" /><div className="loader-dot" />
+      </div>
+      <span>Loading…</span>
     </div>
   );
 

@@ -16,15 +16,19 @@ export default function ShareView() {
 
   if (error) return (
     <div className="page-loading">
-      <div className="loader-dot" /><div className="loader-dot" /><div className="loader-dot" />
-      <span style={{ marginLeft: 8 }}>TOTE NOT FOUND</span>
+      <div className="loader-dots">
+        <div className="loader-dot" /><div className="loader-dot" /><div className="loader-dot" />
+      </div>
+      <span>Tote not found</span>
     </div>
   );
 
   if (!tote) return (
     <div className="page-loading">
-      <div className="loader-dot" /><div className="loader-dot" /><div className="loader-dot" />
-      <span style={{ marginLeft: 8 }}>LOADING</span>
+      <div className="loader-dots">
+        <div className="loader-dot" /><div className="loader-dot" /><div className="loader-dot" />
+      </div>
+      <span>Loading…</span>
     </div>
   );
 

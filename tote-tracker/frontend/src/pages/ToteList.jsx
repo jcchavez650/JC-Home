@@ -119,13 +119,13 @@ export default function ToteList() {
           <button
             className={`tag-chip ${!activeTag ? 'active' : ''}`}
             onClick={() => setActiveTag(null)}
-          >ALL</button>
+          >All</button>
           {allUsedTags.map(tag => (
             <button
               key={tag}
               className={`tag-chip ${activeTag === tag ? 'active' : ''}`}
               onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-            >{tag.toUpperCase()}</button>
+            >{tag}</button>
           ))}
         </div>
       )}
@@ -142,13 +142,13 @@ export default function ToteList() {
           </div>
         ) : (
           <div className="tote-grid">
-            {visibleTotes.map((t, i) => (
+            {visibleTotes.map(t => (
               <div key={t.id} className="tote-card" onClick={() => navigate(`/tote/${t.id}`)}>
                 <div className="tote-card-inner">
-                  <div className="tote-num">{String(i + 1).padStart(2, '0')}</div>
+                  <div className="tote-card-icon"><ToteIcon size={22} /></div>
                   <div className="tote-card-content">
                     <div className="tote-card-label">{t.label}</div>
-                    <div className="tote-card-loc">{t.location ? `📍 ${t.location}` : '— NO LOCATION'}</div>
+                    <div className="tote-card-loc">{t.location ? `📍 ${t.location}` : 'No location set'}</div>
                     {t.tags?.length > 0 && (
                       <div className="tote-tags">
                         {t.tags.map(tag => <span key={tag} className="tote-tag">{tag}</span>)}
@@ -157,7 +157,7 @@ export default function ToteList() {
                   </div>
                   <div className="tote-card-right">
                     <div className="item-count">{t.item_count}</div>
-                    <div className="item-count-label">ITEMS</div>
+                    <div className="item-count-label">items</div>
                   </div>
                 </div>
               </div>
@@ -173,12 +173,12 @@ export default function ToteList() {
             <form onSubmit={createTote}>
               <div className="field">
                 <label>Tote Label *</label>
-                <input className="input input-full" placeholder="e.g. KITCHEN SUPPLIES"
+                <input className="input input-full" placeholder="e.g. Kitchen Supplies"
                   value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))} autoFocus />
               </div>
               <div className="field">
                 <label>Storage Location</label>
-                <input className="input input-full" placeholder="e.g. GARAGE SHELF 3"
+                <input className="input input-full" placeholder="e.g. Garage Shelf 3"
                   value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
               </div>
               <div className="field">
