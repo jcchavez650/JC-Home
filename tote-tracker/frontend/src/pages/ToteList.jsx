@@ -30,106 +30,97 @@ export default function ToteList() {
     fetchTotes();
   }
 
-  const icons = ['📦', '🗃️', '📫', '🧺', '🪣', '🎒', '🗄️', '📬'];
-  const getIcon = (label) => icons[label.charCodeAt(0) % icons.length];
+  const totalItems = totes.reduce((a, t) => a + (t.item_count || 0), 0);
 
   return (
-    <>
-      <div className="bg-orbs">
-        <div className="orb orb-1" />
-        <div className="orb orb-2" />
-        <div className="orb orb-3" />
+    <div className="page">
+      <div className="app-header">
+        <div className="app-logo">
+          <div className="logo-icon">📦</div>
+          <div>
+            <div className="app-title">Tote Tracker</div>
+            <div className="app-subtitle">INVENTORY MANAGEMENT SYSTEM</div>
+          </div>
+        </div>
+        <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
+          + NEW TOTE
+        </button>
       </div>
 
-      <div className="page">
-        <div className="app-header">
-          <div className="app-logo">
-            <div className="logo-icon">📦</div>
-            <div>
-              <div className="app-title">Tote Tracker</div>
-              <div className="app-subtitle">
-                {totes.length > 0 ? `${totes.length} tote${totes.length !== 1 ? 's' : ''} · ${totes.reduce((a,t) => a + (t.item_count||0), 0)} items` : 'No totes yet'}
-              </div>
-            </div>
-          </div>
-          <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
-            + New
+      {totes.length > 0 && (
+        <div className="status-bar">
+          <div className="status-dot" />
+          <div className="status-item">TOTES: <span className="status-val">{totes.length}</span></div>
+          <div className="status-item">ITEMS: <span className="status-val">{totalItems}</span></div>
+          <div className="status-item">STATUS: <span className="status-val">ONLINE</span></div>
+        </div>
+      )}
+
+      {totes.length === 0 ? (
+        <div className="empty">
+          <span className="empty-icon">📦</span>
+          <div className="empty-title">No Totes Registered</div>
+          <div className="empty-sub">{'// Create your first tote and use AI\n// to automatically catalog its contents'}</div>
+          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+            + CREATE FIRST TOTE
           </button>
         </div>
-
-        {totes.length === 0 ? (
-          <div className="empty">
-            <span className="empty-icon">📦</span>
-            <div className="empty-title">No totes yet</div>
-            <div className="empty-sub">Create your first tote and use AI to instantly catalog everything inside it</div>
-            <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-              Create First Tote
-            </button>
-          </div>
-        ) : (
-          <div className="tote-grid">
-            {totes.map(t => (
-              <div key={t.id} className="glass-card tote-card" onClick={() => navigate(`/tote/${t.id}`)}>
-                <div className="tote-card-inner">
-                  <div className="tote-icon">{getIcon(t.label)}</div>
-                  <div className="tote-card-content">
-                    <div className="tote-card-label">{t.label}</div>
-                    {t.location && (
-                      <div className="tote-card-loc">📍 {t.location}</div>
-                    )}
-                    <div className="tote-card-meta">
-                      {t.item_count > 0
-                        ? <span className="badge badge-accent">{t.item_count} item{t.item_count !== 1 ? 's' : ''}</span>
-                        : <span className="badge badge-default">Empty</span>
-                      }
-                      {t.photo_count > 0 && (
-                        <span className="badge badge-green">{t.photo_count} photo{t.photo_count !== 1 ? 's' : ''}</span>
-                      )}
-                    </div>
+      ) : (
+        <div className="tote-grid">
+          {totes.map((t, i) => (
+            <div key={t.id} className="tote-card" onClick={() => navigate(`/tote/${t.id}`)}>
+              <div className="tote-card-inner">
+                <div className="tote-num">{String(i + 1).padStart(2, '0')}</div>
+                <div className="tote-card-content">
+                  <div className="tote-card-label">{t.label}</div>
+                  <div className="tote-card-loc">
+                    {t.location ? `📍 ${t.location}` : '— NO LOCATION SET'}
                   </div>
-                  <div className="tote-card-arrow">›</div>
+                </div>
+                <div className="tote-card-right">
+                  <div className="item-count">{t.item_count}</div>
+                  <div className="item-count-label">ITEMS</div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {showModal && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
           <div className="modal-box">
-            <div className="modal-drag" />
-            <div className="modal-title">New Tote</div>
+            <div className="modal-title">Register New Tote</div>
             <form onSubmit={createTote}>
               <div className="field">
-                <label>Label *</label>
+                <label>Tote Label *</label>
                 <input
                   className="input input-full"
-                  placeholder="e.g. Kitchen Supplies"
+                  placeholder="e.g. KITCHEN SUPPLIES"
                   value={form.label}
                   onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
                   autoFocus
                 />
               </div>
               <div className="field">
-                <label>Location</label>
+                <label>Storage Location</label>
                 <input
                   className="input input-full"
-                  placeholder="e.g. Garage Shelf 3"
+                  placeholder="e.g. GARAGE SHELF 3"
                   value={form.location}
                   onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
                 />
               </div>
               <div className="modal-actions">
-                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>CANCEL</button>
                 <button type="submit" className="btn btn-primary" disabled={loading}>
-                  {loading ? 'Creating…' : 'Create Tote'}
+                  {loading ? 'CREATING...' : 'REGISTER TOTE'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
