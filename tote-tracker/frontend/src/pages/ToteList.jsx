@@ -4,7 +4,7 @@ import ToteIcon from '../components/ToteIcon.jsx';
 
 const ALL_TAGS = ['Garage', 'Kitchen', 'Bedroom', 'Office', 'Holiday', 'Tools', 'Clothes', 'Sports', 'Electronics', 'Other'];
 
-export default function ToteList() {
+export default function ToteList({ theme, onToggleTheme }) {
   const [totes, setTotes] = useState([]);
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState(null);
@@ -71,7 +71,12 @@ export default function ToteList() {
             <div className="app-subtitle">Inventory Management</div>
           </div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>+ New Tote</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="theme-toggle" onClick={onToggleTheme} title="Toggle theme">
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>+ New Tote</button>
+        </div>
       </div>
 
       {totes.length > 0 && (

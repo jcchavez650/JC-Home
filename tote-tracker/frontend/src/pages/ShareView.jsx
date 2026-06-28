@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import ToteIcon from '../components/ToteIcon.jsx';
 
-export default function ShareView() {
+export default function ShareView({ theme, onToggleTheme }) {
   const { token } = useParams();
   const [tote, setTote] = useState(null);
   const [error, setError] = useState(null);
@@ -42,6 +42,9 @@ export default function ShareView() {
             <div className="app-subtitle">Shared Manifest — View Only</div>
           </div>
         </div>
+        <button className="theme-toggle" onClick={onToggleTheme} title="Toggle theme">
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
       </div>
 
       <div className="detail-header">

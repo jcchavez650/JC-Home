@@ -4,7 +4,7 @@ import ToteIcon from '../components/ToteIcon.jsx';
 
 const ALL_TAGS = ['Garage', 'Kitchen', 'Bedroom', 'Office', 'Holiday', 'Tools', 'Clothes', 'Sports', 'Electronics', 'Other'];
 
-export default function ToteDetail() {
+export default function ToteDetail({ theme, onToggleTheme }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [tote, setTote] = useState(null);
@@ -157,7 +157,12 @@ export default function ToteDetail() {
       </div>
 
       <div className="page">
-        <div className="back-nav" onClick={() => navigate('/')}>← BACK TO INVENTORY</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div className="back-nav" style={{ marginBottom: 0 }} onClick={() => navigate('/')}>← Back</div>
+          <button className="theme-toggle" onClick={onToggleTheme} title="Toggle theme">
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+        </div>
 
         {/* Header */}
         {editingTote ? (
