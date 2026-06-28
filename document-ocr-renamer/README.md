@@ -14,7 +14,9 @@ Your pattern is saved automatically and reloaded next time you open the app.
 
 ---
 
-## Installation
+## Installation (Mac — build a double-click .app)
+
+This is the recommended way. You run the build script **once** on your Mac, and it produces a `Document OCR Renamer.app` file you drag to `/Applications` like any other Mac app. No Python or terminal needed to run it after that.
 
 ### Step 1 — Install Python
 
@@ -71,7 +73,23 @@ pip install -r requirements.txt
 
 ---
 
-### Step 5 — Run the app
+### Step 5 — Build the .app
+
+Open Terminal, navigate to this folder, and run:
+
+```bash
+bash build_mac.sh
+```
+
+This takes a minute or two. When done you'll see:
+
+```
+dist/Document OCR Renamer.app
+```
+
+**Drag that file to your `/Applications` folder.** Done — it now launches like any Mac app.
+
+### Step 6 (optional) — Run directly without building
 
 ```bash
 python main.py

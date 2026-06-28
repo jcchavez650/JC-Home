@@ -6,6 +6,7 @@ pattern, and renames files as DATE_PATTERN.ext
 
 import os
 import re
+import sys
 import json
 import shutil
 import threading
@@ -27,6 +28,30 @@ try:
     PDF_AVAILABLE = True
 except ImportError:
     PDF_AVAILABLE = False
+
+# On macOS, .app bundles launched from Finder don't inherit the shell PATH.
+# Search the most common Homebrew and system locations for Tesseract.
+if sys.platform == "darwin" and OCR_AVAILABLE:
+    _TESSERACT_SEARCH = [
+        "/opt/homebrew/bin/tesseract",   # Apple Silicon Homebrew
+        "/usr/local/bin/tesseract",      # Intel Mac Homebrew
+        "/usr/bin/tesseract",            # System fallback
+    ]
+    for _tp in _TESSERACT_SEARCH:
+        if os.path.isfile(_tp):
+            pytesseract.pytesseract.tesseract_cmd = _tp
+            break
+
+# Same issue for Poppler (pdf2image needs pdftoppm on PATH).
+if sys.platform == "darwin" and PDF_AVAILABLE:
+    _POPPLER_DIRS = [
+        "/opt/homebrew/bin",
+        "/usr/local/bin",
+    ]
+    _current_path = os.environ.get("PATH", "")
+    _extra = ":".join(d for d in _POPPLER_DIRS if d not in _current_path)
+    if _extra:
+        os.environ["PATH"] = _extra + ":" + _current_path
 
 
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".docrenamer_config.json")
