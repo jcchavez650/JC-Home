@@ -66,89 +66,98 @@ export default function ToteDetail() {
     if (file && file.type.startsWith('image/')) analyzePhoto(file);
   }
 
-  if (!tote) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>Loading...</div>;
+  if (!tote) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80vh' }}>
+      <div className="spinner" />
+    </div>
+  );
 
   return (
     <div className="page">
-      <div className="back-nav" onClick={() => navigate('/')}>← All Totes</div>
-
-      {/* Header */}
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#f8fafc' }}>{tote.label}</div>
-        {tote.location && <div style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>{tote.location}</div>}
+      <div className="back-nav" onClick={() => navigate('/')}>
+        ← All Totes
       </div>
 
-      {/* Camera / Upload — always front and center */}
-      <div className="section">
-        <div className="section-title">📸 Scan Tote with AI</div>
+      <div className="detail-header">
+        <div className="detail-title">{tote.label}</div>
+        {tote.location && (
+          <div className="detail-loc"><span>📍</span> {tote.location}</div>
+        )}
+      </div>
+
+      {/* Camera / AI Scan */}
+      <div className="camera-section">
+        <div className="section-title" style={{ marginBottom: 14 }}>✦ AI Scanner</div>
         {uploading ? (
           <div className="analyzing">
-            <div className="spinner" />
-            <div>Analyzing photo with AI...</div>
-            <div style={{ fontSize: 13, marginTop: 6, color: '#475569' }}>Identifying all items in the tote</div>
+            <div className="spinner-wrap"><div className="spinner" /></div>
+            <div className="analyzing-title">Analyzing with AI...</div>
+            <div className="analyzing-sub">Identifying all items in your tote</div>
           </div>
         ) : (
           <>
             <button className="btn btn-camera btn-full" onClick={() => cameraRef.current.click()}>
-              📷 Take Photo
+              📷  Take Photo to Scan
             </button>
-            <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+            <input ref={cameraRef} type="file" accept="image/*" capture="environment"
+              style={{ display: 'none' }}
               onChange={e => e.target.files[0] && analyzePhoto(e.target.files[0])} />
 
             <div
               className={`upload-area${dragOver ? ' drag-over' : ''}`}
-              style={{ marginTop: 12 }}
               onDragOver={e => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={onDrop}
               onClick={() => fileRef.current.click()}
             >
               <div className="upload-icon">🖼️</div>
-              <div className="upload-text">Or upload from gallery</div>
-              <div className="upload-hint">AI will identify every item</div>
+              <div className="upload-text">Upload from gallery</div>
+              <div className="upload-hint">AI identifies every item automatically</div>
             </div>
-            <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}
+            <input ref={fileRef} type="file" accept="image/*"
+              style={{ display: 'none' }}
               onChange={e => e.target.files[0] && analyzePhoto(e.target.files[0])} />
           </>
         )}
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      <div className="tabs">
         {[
-          { key: 'items', label: `Items (${tote.items?.length || 0})` },
+          { key: 'items', label: `Items ${tote.items?.length ? `(${tote.items.length})` : ''}` },
           { key: 'qr', label: 'QR Code' },
-          { key: 'photos', label: `Photos (${tote.photos?.length || 0})` },
+          { key: 'photos', label: `Photos ${tote.photos?.length ? `(${tote.photos.length})` : ''}` },
         ].map(t => (
           <button
             key={t.key}
+            className={`tab ${tab === t.key ? 'active' : ''}`}
             onClick={() => setTab(t.key)}
-            className={`btn btn-sm ${tab === t.key ? '' : 'btn-ghost'}`}
-            style={{ flex: 1 }}
           >
             {t.label}
           </button>
         ))}
       </div>
 
-      {/* Items tab */}
+      {/* Items */}
       {tab === 'items' && (
         <div className="section">
-          {tote.items?.length === 0 && (
-            <div style={{ color: '#475569', textAlign: 'center', padding: '16px 0', fontSize: 14 }}>
-              No items yet — take a photo or add manually below
-            </div>
-          )}
-          {tote.items?.map(item => (
-            <div key={item.id} className="item-row">
-              <div className="qty-badge">{item.quantity}</div>
-              <div style={{ flex: 1 }}>
-                <div className="item-name">{item.name}</div>
-                {item.notes && <div className="item-notes">{item.notes}</div>}
+          <div className="items-list">
+            {tote.items?.length === 0 && (
+              <div className="empty-items">
+                No items yet — scan a photo or add manually
               </div>
-              <button className="delete-btn" onClick={() => deleteItem(item.id)}>✕</button>
-            </div>
-          ))}
+            )}
+            {tote.items?.map(item => (
+              <div key={item.id} className="item-row">
+                <div className="qty-badge">×{item.quantity}</div>
+                <div style={{ flex: 1 }}>
+                  <div className="item-name">{item.name}</div>
+                  {item.notes && <div className="item-notes">{item.notes}</div>}
+                </div>
+                <button className="delete-btn" onClick={() => deleteItem(item.id)}>✕</button>
+              </div>
+            ))}
+          </div>
           <form onSubmit={addItem} className="add-item-row">
             <input
               className="input"
@@ -156,38 +165,36 @@ export default function ToteDetail() {
               value={newItem}
               onChange={e => setNewItem(e.target.value)}
             />
-            <button type="submit" className="btn">Add</button>
+            <button type="submit" className="btn btn-primary btn-sm">Add</button>
           </form>
         </div>
       )}
 
-      {/* QR tab */}
+      {/* QR */}
       {tab === 'qr' && (
         <div className="section qr-box">
           {tote.qr_code && (
             <>
-              <img src={tote.qr_code} alt="QR Code" />
+              <img src={tote.qr_code} alt="QR Code" className="qr-img" />
               <div className="qr-label">Scan to view tote contents</div>
               <a
                 href={tote.qr_code}
                 download={`tote-${tote.label}-qr.png`}
-                className="btn"
-                style={{ textDecoration: 'none', marginTop: 8 }}
+                className="btn btn-ghost btn-full"
+                style={{ textDecoration: 'none' }}
               >
-                Download QR Code
+                ↓ Download QR Code
               </a>
             </>
           )}
         </div>
       )}
 
-      {/* Photos tab */}
+      {/* Photos */}
       {tab === 'photos' && (
         <div className="section">
           {tote.photos?.length === 0 && (
-            <div style={{ color: '#475569', textAlign: 'center', padding: '16px 0', fontSize: 14 }}>
-              No photos yet
-            </div>
+            <div className="empty-items">No photos yet</div>
           )}
           <div className="photo-grid">
             {tote.photos?.map(photo => (
@@ -205,10 +212,9 @@ export default function ToteDetail() {
         </div>
       )}
 
-      {/* Delete tote */}
-      <div style={{ marginTop: 8, paddingTop: 8 }}>
+      <div style={{ marginTop: 8 }}>
         <button className="btn btn-danger btn-full btn-sm" onClick={deleteTote}>
-          Delete This Tote
+          Delete Tote
         </button>
       </div>
     </div>

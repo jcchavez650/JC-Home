@@ -32,30 +32,46 @@ export default function ToteList() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <div>
-          <div className="page-title">📦 Tote Tracker</div>
-          <div className="page-subtitle">{totes.length} tote{totes.length !== 1 ? 's' : ''} tracked</div>
+      <div className="app-header">
+        <div className="app-logo">
+          <div className="logo-icon">📦</div>
+          <div>
+            <div className="app-title">Tote Tracker</div>
+            <div className="app-subtitle">{totes.length} tote{totes.length !== 1 ? 's' : ''} stored</div>
+          </div>
         </div>
-        <button className="btn" onClick={() => setShowModal(true)}>+ New</button>
+        <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
+          + New Tote
+        </button>
       </div>
 
       {totes.length === 0 ? (
         <div className="empty">
           <div className="empty-icon">📦</div>
           <div className="empty-title">No totes yet</div>
-          <div style={{ marginBottom: 24 }}>Create your first tote to get started</div>
-          <button className="btn" onClick={() => setShowModal(true)}>+ Create Tote</button>
+          <div className="empty-sub">Create your first tote and start scanning items with AI</div>
+          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+            + Create First Tote
+          </button>
         </div>
       ) : (
         <div className="tote-grid">
           {totes.map(t => (
             <div key={t.id} className="tote-card" onClick={() => navigate(`/tote/${t.id}`)}>
-              <div className="tote-card-label">{t.label}</div>
-              <div className="tote-card-loc">{t.location || 'No location set'}</div>
+              <div className="tote-card-top">
+                <div className="tote-card-label">{t.label}</div>
+                <span className="tote-card-arrow">›</span>
+              </div>
+              {t.location && (
+                <div className="tote-card-loc">
+                  <span>📍</span> {t.location}
+                </div>
+              )}
               <div className="tote-card-meta">
-                <span className="badge">{t.item_count} items</span>
-                <span className="badge">{t.photo_count} photos</span>
+                <span className={`badge ${t.item_count > 0 ? 'badge-accent' : ''}`}>
+                  {t.item_count} item{t.item_count !== 1 ? 's' : ''}
+                </span>
+                <span className="badge">{t.photo_count} photo{t.photo_count !== 1 ? 's' : ''}</span>
               </div>
             </div>
           ))}
@@ -65,12 +81,13 @@ export default function ToteList() {
       {showModal && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
           <div className="modal-box">
-            <div className="modal-title">Create New Tote</div>
+            <div className="modal-drag" />
+            <div className="modal-title">New Tote</div>
             <form onSubmit={createTote}>
               <div className="field">
                 <label>Label *</label>
                 <input
-                  className="input"
+                  className="input input-full"
                   placeholder="e.g. Kitchen Supplies"
                   value={form.label}
                   onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
@@ -80,7 +97,7 @@ export default function ToteList() {
               <div className="field">
                 <label>Location</label>
                 <input
-                  className="input"
+                  className="input input-full"
                   placeholder="e.g. Garage Shelf 3"
                   value={form.location}
                   onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
@@ -88,7 +105,7 @@ export default function ToteList() {
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn" disabled={loading}>
+                <button type="submit" className="btn btn-primary" disabled={loading}>
                   {loading ? 'Creating...' : 'Create Tote'}
                 </button>
               </div>
