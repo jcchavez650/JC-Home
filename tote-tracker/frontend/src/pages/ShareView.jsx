@@ -34,13 +34,13 @@ export default function ShareView() {
           <div className="logo-icon">📦</div>
           <div>
             <div className="app-title">Tote Tracker</div>
-            <div className="app-subtitle">SHARED MANIFEST — VIEW ONLY</div>
+            <div className="app-subtitle">Shared Manifest — View Only</div>
           </div>
         </div>
       </div>
 
       <div className="detail-header">
-        <div className="detail-tag"><span style={{ color: 'var(--text-3)' }}>SHARED TOTE</span></div>
+        <div className="detail-tag"><span style={{ color: 'var(--text-3)' }}>Shared Tote</span></div>
         <div className="detail-title">{tote.label}</div>
         {tote.location && <div className="detail-loc">📍 {tote.location}</div>}
         {tote.tags?.length > 0 && (
@@ -57,16 +57,16 @@ export default function ShareView() {
       </div>
 
       <div className="section">
-        <div className="section-label">ITEM MANIFEST</div>
+        <div className="section-label">Items</div>
         {tote.items?.length === 0 ? (
-          <div className="empty-items">// no items logged</div>
+          <div className="empty-items">No items logged</div>
         ) : (
           tote.items.map(item => (
             <div key={item.id} className="item-row">
               <div className="qty-tag">×{item.quantity}</div>
               <div style={{ flex: 1 }}>
                 <div className="item-name">{item.name}</div>
-                {item.notes && <div className="item-notes">// {item.notes}</div>}
+                {item.notes && <div className="item-notes">{item.notes}</div>}
               </div>
             </div>
           ))

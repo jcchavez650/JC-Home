@@ -67,18 +67,18 @@ export default function ToteList() {
           <div className="logo-icon">📦</div>
           <div>
             <div className="app-title">Tote Tracker</div>
-            <div className="app-subtitle">INVENTORY MANAGEMENT SYSTEM</div>
+            <div className="app-subtitle">Inventory Management</div>
           </div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>+ NEW</button>
+        <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>+ New Tote</button>
       </div>
 
       {totes.length > 0 && (
         <div className="status-bar">
           <div className="status-dot" />
-          <div className="status-item">TOTES: <span className="status-val">{totes.length}</span></div>
-          <div className="status-item">ITEMS: <span className="status-val">{totalItems}</span></div>
-          <a href="/api/totes/export" className="status-export">↓ EXPORT CSV</a>
+          <div className="status-item">Totes: <span className="status-val">{totes.length}</span></div>
+          <div className="status-item">Items: <span className="status-val">{totalItems}</span></div>
+          <a href="/api/totes/export" className="status-export">↓ Export CSV</a>
         </div>
       )}
 
@@ -133,10 +133,10 @@ export default function ToteList() {
         visibleTotes.length === 0 ? (
           <div className="empty">
             <span className="empty-icon">📦</span>
-            <div className="empty-title">{activeTag ? `No ${activeTag} Totes` : 'No Totes Registered'}</div>
-            <div className="empty-sub">{'// Create your first tote and use AI\n// to automatically catalog its contents'}</div>
+            <div className="empty-title">{activeTag ? `No ${activeTag} totes` : 'No totes yet'}</div>
+            <div className="empty-sub">{'Create your first tote and use AI\nto automatically catalog its contents'}</div>
             {!activeTag && (
-              <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ CREATE FIRST TOTE</button>
+              <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ Create First Tote</button>
             )}
           </div>
         ) : (
@@ -168,7 +168,7 @@ export default function ToteList() {
       {showModal && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
           <div className="modal-box">
-            <div className="modal-title">Register New Tote</div>
+            <div className="modal-title">New Tote</div>
             <form onSubmit={createTote}>
               <div className="field">
                 <label>Tote Label *</label>
@@ -192,9 +192,9 @@ export default function ToteList() {
                 </div>
               </div>
               <div className="modal-actions">
-                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>CANCEL</button>
+                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={loading}>
-                  {loading ? 'CREATING...' : 'REGISTER TOTE'}
+                  {loading ? 'Creating…' : 'Create Tote'}
                 </button>
               </div>
             </form>

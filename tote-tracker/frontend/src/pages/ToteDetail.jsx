@@ -182,16 +182,16 @@ export default function ToteDetail() {
               </div>
             </div>
             <div className="modal-actions" style={{ marginTop: 12, marginBottom: 20 }}>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingTote(false)}>CANCEL</button>
-              <button type="submit" className="btn btn-primary btn-sm">SAVE CHANGES</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingTote(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary btn-sm">Save Changes</button>
             </div>
           </form>
         ) : (
           <div className="detail-header">
             <div className="detail-tag">
-              <span style={{ color: 'var(--text-3)' }}>TOTE ID:</span>
+              <span style={{ color: 'var(--text-3)' }}>Tote</span>
               {id.slice(0, 8).toUpperCase()}
-              <button className="edit-link" onClick={() => setEditingTote(true)}>✎ EDIT</button>
+              <button className="edit-link" onClick={() => setEditingTote(true)}>✎ Edit</button>
             </div>
             <div className="detail-title">{tote.label}</div>
             {tote.location && <div className="detail-loc">📍 {tote.location}</div>}
@@ -209,20 +209,20 @@ export default function ToteDetail() {
 
         {/* AI Scanner */}
         <div className="camera-section">
-          <div className="section-label">AI SCAN</div>
+          <div className="section-label">AI Scan</div>
           {uploading ? (
             <div className="analyzing">
               <div className="scan-animation">
                 <div className="scan-icon">📦</div>
                 <div className="scan-line" />
               </div>
-              <div className="analyzing-title">Scanning Contents</div>
-              <div className="analyzing-sub">// AI identifying all items...</div>
+              <div className="analyzing-title">Scanning contents…</div>
+              <div className="analyzing-sub">AI is identifying all items</div>
             </div>
           ) : (
             <>
               <button className="btn btn-camera btn-full" onClick={() => cameraRef.current.click()}>
-                📷 SCAN WITH CAMERA
+                📷 Scan with Camera
               </button>
               <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
                 onChange={e => e.target.files[0] && analyzePhoto(e.target.files[0])} />
@@ -234,7 +234,7 @@ export default function ToteDetail() {
               >
                 <div className="upload-icon">🖼️</div>
                 <div className="upload-text">Upload from Library</div>
-                <div className="upload-hint">// drag & drop or tap to select</div>
+                <div className="upload-hint">Drag & drop or tap to select</div>
               </div>
               <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}
                 onChange={e => e.target.files[0] && analyzePhoto(e.target.files[0])} />
@@ -245,10 +245,10 @@ export default function ToteDetail() {
         {/* Tabs */}
         <div className="tabs">
           {[
-            { key: 'items', label: `MANIFEST (${tote.items?.length || 0})` },
-            { key: 'qr', label: 'QR LABEL' },
-            { key: 'photos', label: `SCANS (${tote.photos?.length || 0})` },
-            { key: 'share', label: 'SHARE' },
+            { key: 'items', label: `Items (${tote.items?.length || 0})` },
+            { key: 'qr', label: 'QR Label' },
+            { key: 'photos', label: `Scans (${tote.photos?.length || 0})` },
+            { key: 'share', label: 'Share' },
           ].map(t => (
             <button key={t.key} className={`tab ${tab === t.key ? 'active' : ''}`} onClick={() => setTab(t.key)}>
               {t.label}
@@ -259,9 +259,9 @@ export default function ToteDetail() {
         {/* Items */}
         {tab === 'items' && (
           <div className="section">
-            <div className="section-label">ITEM MANIFEST</div>
+            <div className="section-label">Item Manifest</div>
             {tote.items?.length === 0 ? (
-              <div className="empty-items">// no items logged — scan or add manually</div>
+              <div className="empty-items">No items logged — scan or add manually</div>
             ) : (
               tote.items.map(item => (
                 <div key={item.id}>
@@ -279,7 +279,7 @@ export default function ToteDetail() {
                       <div className="qty-tag">×{item.quantity}</div>
                       <div style={{ flex: 1 }}>
                         <div className="item-name">{item.name}</div>
-                        {item.notes && <div className="item-notes">// {item.notes}</div>}
+                        {item.notes && <div className="item-notes">{item.notes}</div>}
                       </div>
                       <button className="edit-item-btn" onClick={() => setEditingItem({ ...item })}>✎</button>
                       <button className="delete-btn" onClick={() => deleteItem(item.id)}>✕</button>
@@ -299,13 +299,13 @@ export default function ToteDetail() {
         {/* QR */}
         {tab === 'qr' && (
           <div className="section qr-box">
-            <div className="section-label">TOTE QR LABEL</div>
+            <div className="section-label">Tote QR Label</div>
             {tote.qr_code && (
               <>
                 <div className="qr-wrap">
                   <img src={tote.qr_code} alt="QR Code" className="qr-img" />
                 </div>
-                <div className="qr-label">// SCAN TO ACCESS TOTE MANIFEST</div>
+                <div className="qr-label">Scan to access tote manifest</div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <a href={tote.qr_code} download={`tote-${tote.label}-qr.png`}
                     className="btn btn-ghost btn-sm" style={{ textDecoration: 'none', flex: 1 }}>
@@ -323,9 +323,9 @@ export default function ToteDetail() {
         {/* Photos */}
         {tab === 'photos' && (
           <div className="section">
-            <div className="section-label">SCAN HISTORY</div>
+            <div className="section-label">Scan History</div>
             {tote.photos?.length === 0 ? (
-              <div className="empty-items">// no scans on record</div>
+              <div className="empty-items">No scans on record</div>
             ) : (
               <div className="photo-grid">
                 {tote.photos.map(photo => (
@@ -343,11 +343,11 @@ export default function ToteDetail() {
         {/* Share */}
         {tab === 'share' && (
           <div className="section">
-            <div className="section-label">SHARE TOTE</div>
+            <div className="section-label">Share Tote</div>
             {shareUrl || tote.share_token ? (
               <>
                 <div className="share-url">{shareUrl || `${window.location.origin}/share/${tote.share_token}`}</div>
-                <div className="share-hint">// anyone with this link can view this tote's manifest</div>
+                <div className="share-hint">Anyone with this link can view this tote's manifest</div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                   <button className="btn btn-primary btn-sm" style={{ flex: 1 }}
                     onClick={() => { const u = shareUrl || `${window.location.origin}/share/${tote.share_token}`; navigator.clipboard.writeText(u); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
@@ -360,9 +360,9 @@ export default function ToteDetail() {
               </>
             ) : (
               <>
-                <div className="empty-items">// no share link generated yet</div>
+                <div className="empty-items">No share link generated yet</div>
                 <button className="btn btn-primary btn-full" style={{ marginTop: 12 }} onClick={getShareLink}>
-                  GENERATE SHARE LINK
+                  Generate Share Link
                 </button>
               </>
             )}
@@ -370,7 +370,7 @@ export default function ToteDetail() {
         )}
 
         <div style={{ marginTop: 8 }}>
-          <button className="btn btn-danger btn-full btn-sm" onClick={deleteTote}>DEREGISTER TOTE</button>
+          <button className="btn btn-danger btn-full btn-sm" onClick={deleteTote}>Delete Tote</button>
         </div>
       </div>
     </>
