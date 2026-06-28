@@ -30,53 +30,70 @@ export default function ToteList() {
     fetchTotes();
   }
 
+  const icons = ['📦', '🗃️', '📫', '🧺', '🪣', '🎒', '🗄️', '📬'];
+  const getIcon = (label) => icons[label.charCodeAt(0) % icons.length];
+
   return (
-    <div className="page">
-      <div className="app-header">
-        <div className="app-logo">
-          <div className="logo-icon">📦</div>
-          <div>
-            <div className="app-title">Tote Tracker</div>
-            <div className="app-subtitle">{totes.length} tote{totes.length !== 1 ? 's' : ''} stored</div>
-          </div>
-        </div>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
-          + New Tote
-        </button>
+    <>
+      <div className="bg-orbs">
+        <div className="orb orb-1" />
+        <div className="orb orb-2" />
+        <div className="orb orb-3" />
       </div>
 
-      {totes.length === 0 ? (
-        <div className="empty">
-          <div className="empty-icon">📦</div>
-          <div className="empty-title">No totes yet</div>
-          <div className="empty-sub">Create your first tote and start scanning items with AI</div>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-            + Create First Tote
-          </button>
-        </div>
-      ) : (
-        <div className="tote-grid">
-          {totes.map(t => (
-            <div key={t.id} className="tote-card" onClick={() => navigate(`/tote/${t.id}`)}>
-              <div className="tote-card-top">
-                <div className="tote-card-label">{t.label}</div>
-                <span className="tote-card-arrow">›</span>
-              </div>
-              {t.location && (
-                <div className="tote-card-loc">
-                  <span>📍</span> {t.location}
-                </div>
-              )}
-              <div className="tote-card-meta">
-                <span className={`badge ${t.item_count > 0 ? 'badge-accent' : ''}`}>
-                  {t.item_count} item{t.item_count !== 1 ? 's' : ''}
-                </span>
-                <span className="badge">{t.photo_count} photo{t.photo_count !== 1 ? 's' : ''}</span>
+      <div className="page">
+        <div className="app-header">
+          <div className="app-logo">
+            <div className="logo-icon">📦</div>
+            <div>
+              <div className="app-title">Tote Tracker</div>
+              <div className="app-subtitle">
+                {totes.length > 0 ? `${totes.length} tote${totes.length !== 1 ? 's' : ''} · ${totes.reduce((a,t) => a + (t.item_count||0), 0)} items` : 'No totes yet'}
               </div>
             </div>
-          ))}
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
+            + New
+          </button>
         </div>
-      )}
+
+        {totes.length === 0 ? (
+          <div className="empty">
+            <span className="empty-icon">📦</span>
+            <div className="empty-title">No totes yet</div>
+            <div className="empty-sub">Create your first tote and use AI to instantly catalog everything inside it</div>
+            <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+              Create First Tote
+            </button>
+          </div>
+        ) : (
+          <div className="tote-grid">
+            {totes.map(t => (
+              <div key={t.id} className="glass-card tote-card" onClick={() => navigate(`/tote/${t.id}`)}>
+                <div className="tote-card-inner">
+                  <div className="tote-icon">{getIcon(t.label)}</div>
+                  <div className="tote-card-content">
+                    <div className="tote-card-label">{t.label}</div>
+                    {t.location && (
+                      <div className="tote-card-loc">📍 {t.location}</div>
+                    )}
+                    <div className="tote-card-meta">
+                      {t.item_count > 0
+                        ? <span className="badge badge-accent">{t.item_count} item{t.item_count !== 1 ? 's' : ''}</span>
+                        : <span className="badge badge-default">Empty</span>
+                      }
+                      {t.photo_count > 0 && (
+                        <span className="badge badge-green">{t.photo_count} photo{t.photo_count !== 1 ? 's' : ''}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="tote-card-arrow">›</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {showModal && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
@@ -106,13 +123,13 @@ export default function ToteList() {
               <div className="modal-actions">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={loading}>
-                  {loading ? 'Creating...' : 'Create Tote'}
+                  {loading ? 'Creating…' : 'Create Tote'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
