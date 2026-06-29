@@ -50,7 +50,7 @@ export function useWorldCup() {
 
   useEffect(() => {
     load()
-    const iv = setInterval(() => load(true), 60_000)
+    const iv = setInterval(() => load(true), 30_000)
     return () => clearInterval(iv)
   }, [load])
 

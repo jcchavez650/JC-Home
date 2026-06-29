@@ -70,12 +70,14 @@ function slotLabel([g, pos], t) {
 // ── Classify allGames match by round ─────────────────────────────────────────
 function getRoundKey(m) {
   const text = ((m.group ?? '') + ' ' + (m.name ?? '')).toLowerCase()
-  if (text.includes('round-of-32') || text.includes('round of 32')) return 'r32'
-  if (text.includes('round-of-16') || text.includes('round of 16')) return 'r16'
-  if (text.includes('quarter')) return 'qf'
-  if (text.includes('third') || text.includes('3rd place')) return '3p'
-  if (text.includes('semi')) return 'sf'
-  if (text.includes('final')) return 'f'
+  // ESPN uses various slug formats — cover all known variants
+  if (/round.of.32|r32|round.32/.test(text)) return 'r32'
+  if (/round.of.16|r16|round.16/.test(text)) return 'r16'
+  if (/quarter/.test(text)) return 'qf'
+  if (/third|3rd.place|third.place/.test(text)) return '3p'
+  if (/semi/.test(text)) return 'sf'
+  if (/\bfinal\b/.test(text)) return 'f'
+  // Date-based fallback (July 2026)
   const d = m.date
   if (d?.getFullYear() === 2026 && d.getMonth() === 6) {
     const day = d.getDate()
@@ -87,6 +89,35 @@ function getRoundKey(m) {
     if (day >= 22)               return 'f'
   }
   return null
+}
+
+// Build a lookup map from team pair → live match for real-time score overlay
+function buildLiveIndex(liveMatches) {
+  const idx = new Map()
+  ;(liveMatches ?? []).forEach(m => {
+    if (!m.home?.abbr || !m.away?.abbr) return
+    const key = `${m.home.abbr}:${m.away.abbr}`
+    const rev = `${m.away.abbr}:${m.home.abbr}`
+    idx.set(key, m)
+    idx.set(rev, { ...m, home: m.away, away: m.home, _flipped: true })
+  })
+  return idx
+}
+
+// Overlay live match data onto an allGames match (if available)
+function withLive(match, liveIdx) {
+  if (!match || !liveIdx) return match
+  const key = `${match.home?.abbr}:${match.away?.abbr}`
+  const live = liveIdx.get(key)
+  if (!live) return match
+  // Merge live scores and status into the bracket match
+  return {
+    ...match,
+    statusType: live.statusType,
+    displayClock: live.displayClock,
+    home: { ...match.home, score: live.home.score ?? match.home?.score, winner: live.home.winner },
+    away: { ...match.away, score: live.away.score ?? match.away?.score, winner: live.away.winner },
+  }
 }
 
 // ── Build unified bracket structure ─────────────────────────────────────────
@@ -178,7 +209,7 @@ function buildBracketData(bracketRounds, allGames, groupMap) {
 }
 
 // ── Root component ─────────────────────────────────────────────────────────
-export default function Bracket({ allGames, groups, bracketRounds }) {
+export default function Bracket({ allGames, groups, bracketRounds, liveMatches }) {
   const { t } = useLang()
   const scrollRef = useRef(null)
 
@@ -188,6 +219,8 @@ export default function Bracket({ allGames, groups, bracketRounds }) {
     if (w?.confirmed)  confirmedAbbrs.add(w.abbr)
     if (ru?.confirmed) confirmedAbbrs.add(ru.abbr)
   })
+
+  const liveIdx = useMemo(() => buildLiveIndex(liveMatches), [liveMatches])
 
   const bd = useMemo(
     () => buildBracketData(bracketRounds, allGames, groupMap),
@@ -234,7 +267,7 @@ export default function Bracket({ allGames, groups, bracketRounds }) {
           {/* Left half columns */}
           {leftMatches.map((matches, col) => (
             <>
-              <RoundCol key={`lc${col}`} matches={matches} roundIdx={col} confirmedAbbrs={confirmedAbbrs} t={t} />
+              <RoundCol key={`lc${col}`} matches={matches} roundIdx={col} confirmedAbbrs={confirmedAbbrs} liveIdx={liveIdx} t={t} />
               <ConnSvg key={`lv${col}`}
                 fromRound={col} toRound={col + 1}
                 count={matches.length / 2 || 1}
@@ -247,7 +280,7 @@ export default function Bracket({ allGames, groups, bracketRounds }) {
           {/* Final */}
           <div className="tb-col" style={{ width: COL_W, position: 'relative', height: HALF_H }}>
             <div style={{ position: 'absolute', top: ty(3, 0), left: 0, width: COL_W }}>
-              <MatchCard match={bd.final} confirmedAbbrs={confirmedAbbrs} isFinal t={t} />
+              <MatchCard match={withLive(bd.final, liveIdx)} confirmedAbbrs={confirmedAbbrs} isFinal t={t} />
             </div>
           </div>
 
@@ -262,7 +295,7 @@ export default function Bracket({ allGames, groups, bracketRounds }) {
                   side="right"
                   single={col === 0}
                 />
-                <RoundCol key={`rc${col}`} matches={matches} roundIdx={roundIdx} confirmedAbbrs={confirmedAbbrs} t={t} />
+                <RoundCol key={`rc${col}`} matches={matches} roundIdx={roundIdx} confirmedAbbrs={confirmedAbbrs} liveIdx={liveIdx} t={t} />
               </>
             )
           })}
@@ -275,12 +308,12 @@ export default function Bracket({ allGames, groups, bracketRounds }) {
 }
 
 // ── Round column ──────────────────────────────────────────────────────────────
-function RoundCol({ matches, roundIdx, confirmedAbbrs, t }) {
+function RoundCol({ matches, roundIdx, confirmedAbbrs, liveIdx, t }) {
   return (
     <div className="tb-col" style={{ width: COL_W, position: 'relative', height: HALF_H }}>
       {matches.map((match, i) => (
         <div key={match?.id ?? i} style={{ position: 'absolute', top: ty(roundIdx, i), left: 0, width: COL_W }}>
-          <MatchCard match={match} confirmedAbbrs={confirmedAbbrs} t={t} />
+          <MatchCard match={withLive(match, liveIdx)} confirmedAbbrs={confirmedAbbrs} t={t} />
         </div>
       ))}
     </div>
