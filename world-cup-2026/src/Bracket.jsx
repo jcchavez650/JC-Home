@@ -208,74 +208,71 @@ function withLive(match, liveIdx) {
 
 // ── Build unified bracket structure ─────────────────────────────────────────
 function buildBracketData(bracketRounds, allGames, groupMap) {
-  // Classify allGames by round
+  // Always classify allGames by round — this has the most up-to-date team
+  // assignments (ESPN updates fixtures with real teams as rounds advance)
   const byRound = { r32:[], r16:[], qf:[], sf:[], f:[] }
   ;(allGames ?? []).forEach(m => {
     const k = getRoundKey(m)
     if (k && byRound[k]) byRound[k].push(m)
   })
 
-  // Helper: fill array of n entries from a games list
   const fill = (games, n) => Array.from({ length: n }, (_, i) => games[i] ?? null)
 
-  // If ESPN bracket API returned data, map it to our structure
+  // ESPN bracket API: use it for R32 live scores, but prefer allGames for
+  // later rounds because ESPN bracket omits R16 and uses "RD16W1" placeholders
   if (bracketRounds.length > 0) {
-    const findRound = (keys) => {
+    const findSeeds = (keys) => {
       for (const r of bracketRounds) {
         const name = (r.name ?? '').toLowerCase()
         if (keys.some(k => name.includes(k))) return r.seeds ?? []
       }
       return []
     }
-    const espnR32 = findRound(['32','round of 32'])
-    const espnR16 = findRound(['16','round of 16'])
-    const espnQF  = findRound(['quarter'])
-    const espnSF  = findRound(['semi'])
-    const espnF   = findRound(['final'])
+    const espnR32 = findSeeds(['32', 'round of 32'])
 
-    if (espnR32.length || espnR16.length || espnQF.length || espnSF.length) {
+    if (espnR32.length) {
       const toMatch = seed => seed ? {
         id: seed.id, date: null,
-        home: seed.home  ?? null,
-        away: seed.away  ?? null,
+        home: seed.home ?? null,
+        away: seed.away ?? null,
         statusType: seed.status ?? '',
         isEspnSeed: true,
       } : null
-
       const mapSeeds = (seeds, n) => fill(seeds.map(toMatch), n)
+
+      // R32 from ESPN bracket (live scores), R16 onward from allGames
       return {
-        leftR32:  mapSeeds(espnR32.slice(0, 8), 8),
-        leftR16:  mapSeeds(espnR16.slice(0, 4), 4),
-        leftQF:   mapSeeds(espnQF.slice(0, 2),  2),
-        leftSF:   mapSeeds(espnSF.slice(0, 1),  1),
-        final:    toMatch(espnF[0] ?? null),
-        rightSF:  mapSeeds(espnSF.slice(1, 2),  1),
-        rightQF:  mapSeeds(espnQF.slice(2, 4),  2),
-        rightR16: mapSeeds(espnR16.slice(4, 8), 4),
+        leftR32:  mapSeeds(espnR32.slice(0, 8),  8),
+        leftR16:  fill(byRound.r16.slice(0, 4),  4),
+        leftQF:   fill(byRound.qf.slice(0, 2),   2),
+        leftSF:   fill(byRound.sf.slice(0, 1),   1),
+        final:    byRound.f[0] ?? null,
+        rightSF:  fill(byRound.sf.slice(1, 2),   1),
+        rightQF:  fill(byRound.qf.slice(2, 4),   2),
+        rightR16: fill(byRound.r16.slice(4, 8),  4),
         rightR32: mapSeeds(espnR32.slice(8, 16), 8),
       }
     }
   }
 
-  // allGames knockout fallback
+  // allGames-only path (no ESPN bracket API)
   if (byRound.r32.length > 0 || byRound.r16.length > 0 || byRound.qf.length > 0) {
     return {
-      leftR32:  fill(byRound.r32.slice(0, 8),   8),
-      leftR16:  fill(byRound.r16.slice(0, 4),   4),
-      leftQF:   fill(byRound.qf.slice(0, 2),    2),
-      leftSF:   fill(byRound.sf.slice(0, 1),    1),
+      leftR32:  fill(byRound.r32.slice(0, 8),  8),
+      leftR16:  fill(byRound.r16.slice(0, 4),  4),
+      leftQF:   fill(byRound.qf.slice(0, 2),   2),
+      leftSF:   fill(byRound.sf.slice(0, 1),   1),
       final:    byRound.f[0] ?? null,
-      rightSF:  fill(byRound.sf.slice(1, 2),    1),
-      rightQF:  fill(byRound.qf.slice(2, 4),    2),
-      rightR16: fill(byRound.r16.slice(4, 8),   4),
-      rightR32: fill(byRound.r32.slice(8, 16),  8),
+      rightSF:  fill(byRound.sf.slice(1, 2),   1),
+      rightQF:  fill(byRound.qf.slice(2, 4),   2),
+      rightR16: fill(byRound.r16.slice(4, 8),  4),
+      rightR32: fill(byRound.r32.slice(8, 16), 8),
     }
   }
 
-  // Group-stage projected R32 pairings
+  // Group-stage projected R32 pairings (before any knockout games are scheduled)
   const projected = R32_PAIRS.map(pair => ({
-    id: null,
-    projected: true,
+    id: null, projected: true,
     home: slotTeam(pair.home, groupMap),
     away: slotTeam(pair.away, groupMap),
     homeLabel: pair.home,
