@@ -2,6 +2,14 @@ import { useMemo, useRef, useEffect } from 'react'
 import TeamFlag from './TeamFlag.jsx'
 import { useLang } from './LangContext.jsx'
 
+// ESPN returns placeholder codes like "RD16W1", "QFW2" for undecided slots
+function isPlaceholder(abbr, name) {
+  if (!abbr) return true
+  if (/^(RD\d|QF[W\d]|SF[W\d]|[A-Z]{1,2}W\d|TBD)/i.test(abbr)) return true
+  if (/\b(winner|rd\d|round\s*of|semifinal|quarterfinal|loser)\b/i.test(name ?? '')) return true
+  return false
+}
+
 // ── Layout constants ──────────────────────────────────────────────────────────
 const MATCH_H = 52   // px – height of one match card (2 team rows × 26px)
 const UNIT    = 64   // px – slot height at R32 level (must be ≥ MATCH_H)
@@ -491,7 +499,8 @@ function LiveTeamRow({ team, isFinal, confirmedAbbrs }) {
 
 function EspnTeamRow({ team, isFinal, confirmedAbbrs, score }) {
   const { tn } = useLang()
-  if (!team?.abbr) return <div className="tb-team tb-team-tbd"><span className="tb-abbr tb-tbd-text">TBD</span></div>
+  if (!team?.abbr || isPlaceholder(team.abbr, team.team))
+    return <div className="tb-team tb-team-tbd"><span className="tb-abbr tb-tbd-text">TBD</span></div>
   const isGroupConf = confirmedAbbrs?.has(team.abbr)
   const isWinner = !!team.winner
   const isConf = isWinner || isGroupConf
