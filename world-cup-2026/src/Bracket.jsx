@@ -17,23 +17,101 @@ function cy(roundIdx, matchIdx) {
 // Top y of the match card
 function ty(roundIdx, matchIdx) { return cy(roundIdx, matchIdx) - MATCH_H / 2 }
 
-// ── Group-stage qualifier data ────────────────────────────────────────────────
-function getGroupQualifiers(groups) {
+// ── Derive group qualifiers directly from allGames match results ──────────────
+// This is more reliable than the standings API: it reads from allGames
+// (which refreshes every 30s) and extracts group letter from the match slug.
+function deriveGroupMap(allGames) {
+  const buckets = {} // letter → Map<abbr, stats>
+
+  ;(allGames ?? []).forEach(m => {
+    // Skip if it looks like a knockout game
+    if (getRoundKey(m) !== null) return
+
+    // Extract group letter from ESPN season slug, e.g. "fifa-world-cup-2026-group-b"
+    const slug = (m.group ?? '').toLowerCase()
+    const lm = slug.match(/group[-_.\s]?([a-l])\b/i) ||
+               slug.match(/group[-_.\s]?([a-l])$/i)
+    if (!lm) return
+    const letter = lm[1].toUpperCase()
+
+    if (!buckets[letter]) buckets[letter] = new Map()
+    const gt = buckets[letter]
+
+    const ensure = t => {
+      if (!t?.abbr || gt.has(t.abbr)) return
+      gt.set(t.abbr, { abbr: t.abbr, team: t.team, logo: t.logo,
+                       pts: 0, gd: 0, gf: 0, ga: 0, gp: 0 })
+    }
+    ensure(m.home); ensure(m.away)
+
+    const hs = m.home.score != null ? +m.home.score : null
+    const as_ = m.away.score != null ? +m.away.score : null
+    if (hs == null || as_ == null) return // not played yet
+
+    const h = gt.get(m.home.abbr)
+    const a = gt.get(m.away.abbr)
+    if (!h || !a) return
+
+    h.gp++; a.gp++
+    h.gf += hs; h.ga += as_; h.gd += hs - as_
+    a.gf += as_; a.ga += hs; a.gd += as_ - hs
+    if (hs > as_) h.pts += 3
+    else if (hs < as_) a.pts += 3
+    else { h.pts += 1; a.pts += 1 }
+  })
+
   const map = {}
-  groups.forEach(g => {
-    const letter = g.name?.trim().toUpperCase()
+  Object.entries(buckets).forEach(([letter, teamMap]) => {
+    const sorted = [...teamMap.values()].sort((a, b) =>
+      b.pts - a.pts || b.gd - a.gd || b.gf - a.gf
+    )
+    const maxGp = Math.max(...sorted.map(t => t.gp), 0)
+    const complete = maxGp >= 3
+    const thirdPts = sorted[2]?.pts ?? 0
+
+    const isConf = (t, i) =>
+      (complete && i < 2) ||
+      (maxGp >= 2 && t.pts >= 6) ||
+      (maxGp >= 2 && i < 2 && t.pts >= 4 && thirdPts === 0)
+
+    map[letter] = {
+      w:  sorted[0] ? { ...sorted[0], confirmed: isConf(sorted[0], 0) } : null,
+      ru: sorted[1] ? { ...sorted[1], confirmed: isConf(sorted[1], 1) } : null,
+      third: sorted[2] ?? null,
+    }
+  })
+  return map
+}
+
+// Merge standings-API data over derived data (standings API is authoritative when available)
+function getGroupQualifiers(groups, allGames) {
+  // Start with data derived from live match results
+  const base = deriveGroupMap(allGames)
+
+  // Overlay with standings API data where available
+  ;(groups ?? []).forEach(g => {
+    const rawName = g.name?.trim() ?? ''
+    // Normalize: "Group A" → "A", "A" → "A", "1" → keep as-is
+    const lm = rawName.match(/^(?:group\s+)?([a-l])/i)
+    const letter = lm ? lm[1].toUpperCase() : rawName.toUpperCase()
     if (!letter || !g.teams.length) return
+
     const gp = g.teams[0]?.gp ?? 0
+    if (gp === 0) return
     const thirdPts = g.teams[2]?.pts ?? 0
     const isConf = (team, i) =>
       (gp >= 3 && i < 2) ||
       (gp >= 2 && team.pts >= 6) ||
       (gp >= 2 && i < 2 && team.pts >= 4 && thirdPts === 0)
-    const leader   = g.teams[0] ? { ...g.teams[0], confirmed: isConf(g.teams[0], 0) } : null
-    const runnerUp = g.teams[1] ? { ...g.teams[1], confirmed: isConf(g.teams[1], 1) } : null
-    map[letter] = { w: gp > 0 ? leader : null, ru: gp > 0 ? runnerUp : null }
+
+    base[letter] = {
+      w:     g.teams[0] ? { ...g.teams[0], confirmed: isConf(g.teams[0], 0) } : null,
+      ru:    g.teams[1] ? { ...g.teams[1], confirmed: isConf(g.teams[1], 1) } : null,
+      third: g.teams[2] ?? null,
+    }
   })
-  return map
+
+  return base
 }
 
 // ── R32 projected pairings (left half indices 0-7, right half 8-15) ───────────
@@ -213,7 +291,7 @@ export default function Bracket({ allGames, groups, bracketRounds, liveMatches }
   const { t } = useLang()
   const scrollRef = useRef(null)
 
-  const groupMap = getGroupQualifiers(groups)
+  const groupMap = getGroupQualifiers(groups, allGames)
   const confirmedAbbrs = new Set()
   Object.values(groupMap).forEach(({ w, ru }) => {
     if (w?.confirmed)  confirmedAbbrs.add(w.abbr)
@@ -224,7 +302,7 @@ export default function Bracket({ allGames, groups, bracketRounds, liveMatches }
 
   const bd = useMemo(
     () => buildBracketData(bracketRounds, allGames, groupMap),
-    [bracketRounds, allGames, groups]
+    [bracketRounds, allGames, groups, groupMap]
   )
 
   // Scroll to center (Final column) on mount
@@ -302,7 +380,7 @@ export default function Bracket({ allGames, groups, bracketRounds, liveMatches }
         </div>
       </div>
 
-      <QualifiersSection groups={groups} groupMap={groupMap} />
+      <QualifiersSection groupMap={groupMap} />
     </div>
   )
 }
@@ -448,24 +526,21 @@ function ProjectedTeamRow({ ref_, team, confirmedAbbrs, t }) {
 }
 
 // ── Qualifiers mini grid ──────────────────────────────────────────────────────
-function QualifiersSection({ groups, groupMap }) {
+function QualifiersSection({ groupMap }) {
   const { t, tn } = useLang()
-  if (!groups.length) return null
+  const entries = Object.entries(groupMap).sort(([a], [b]) => a.localeCompare(b))
+  if (!entries.length) return null
   return (
     <div className="bk-qual-section">
       <div className="bk-qual-title">{t.qualifiers}</div>
       <div className="qualifiers-grid">
-        {groups.map(g => {
-          const letter = g.name?.trim().toUpperCase()
-          const q = groupMap[letter]
-          return (
-            <div key={letter} className="qual-mini">
-              <div className="qual-mini-header">{t.group} {letter}</div>
-              <QualRow team={q?.w}  label={t.confirmed} />
-              <QualRow team={q?.ru} label={t.runnerUp} />
-            </div>
-          )
-        })}
+        {entries.map(([letter, q]) => (
+          <div key={letter} className="qual-mini">
+            <div className="qual-mini-header">{t.group} {letter}</div>
+            <QualRow team={q?.w}  label={t.confirmed} />
+            <QualRow team={q?.ru} label={t.runnerUp} />
+          </div>
+        ))}
       </div>
     </div>
   )
