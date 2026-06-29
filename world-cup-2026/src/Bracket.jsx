@@ -206,87 +206,127 @@ function withLive(match, liveIdx) {
   }
 }
 
+// ── Bracket advancement helpers ───────────────────────────────────────────────
+
+// Extract the winning team from a completed match (clears score/winner for display in next round)
+function getWinner(match) {
+  if (!match) return null
+  const check = t => t?.winner && t.abbr && !isPlaceholder(t.abbr, t.team)
+    ? { abbr: t.abbr, team: t.team, logo: t.logo, score: null, winner: false }
+    : null
+  return check(match.home) ?? check(match.away)
+}
+
+// Given an array of N completed matches, return N/2 next-round matches
+// pairing winners: [0,1]→[0], [2,3]→[1], [4,5]→[2], [6,7]→[3]
+function advanceRound(matches) {
+  const next = []
+  for (let i = 0; i + 1 < matches.length; i += 2) {
+    const w1 = getWinner(matches[i])
+    const w2 = getWinner(matches[i + 1])
+    next.push((w1 || w2) ? { computed: true, home: w1, away: w2, statusType: '' } : null)
+  }
+  return next
+}
+
+// Prefer data from source A if it has real teams; fall back to source B
+function bestOf(a, b, n) {
+  const hasReal = arr => arr.some(m => m?.home?.abbr && !isPlaceholder(m.home.abbr, m.home.team))
+  return hasReal(a) ? a : (hasReal(b) ? b : Array(n).fill(null))
+}
+
 // ── Build unified bracket structure ─────────────────────────────────────────
 function buildBracketData(bracketRounds, allGames, groupMap) {
-  // Always classify allGames by round — this has the most up-to-date team
-  // assignments (ESPN updates fixtures with real teams as rounds advance)
+  const fill = (games, n) => Array.from({ length: n }, (_, i) => games[i] ?? null)
+
+  // Classify allGames by round
   const byRound = { r32:[], r16:[], qf:[], sf:[], f:[] }
   ;(allGames ?? []).forEach(m => {
     const k = getRoundKey(m)
     if (k && byRound[k]) byRound[k].push(m)
   })
 
-  const fill = (games, n) => Array.from({ length: n }, (_, i) => games[i] ?? null)
-
-  // ESPN bracket API: use it for R32 live scores, but prefer allGames for
-  // later rounds because ESPN bracket omits R16 and uses "RD16W1" placeholders
+  // ── Priority 1: ESPN bracket API has R32 live data ─────────────────────────
   if (bracketRounds.length > 0) {
-    const findSeeds = (keys) => {
+    const findSeeds = (...keys) => {
       for (const r of bracketRounds) {
         const name = (r.name ?? '').toLowerCase()
         if (keys.some(k => name.includes(k))) return r.seeds ?? []
       }
       return []
     }
-    const espnR32 = findSeeds(['32', 'round of 32'])
+    const espnR32seeds = findSeeds('32', 'round of 32')
 
-    if (espnR32.length) {
-      const toMatch = seed => seed ? {
-        id: seed.id, date: null,
-        home: seed.home ?? null,
-        away: seed.away ?? null,
-        statusType: seed.status ?? '',
-        isEspnSeed: true,
+    if (espnR32seeds.length) {
+      const toMatch = s => s ? {
+        id: s.id, date: null,
+        home: s.home ?? null, away: s.away ?? null,
+        statusType: s.status ?? '', isEspnSeed: true,
       } : null
       const mapSeeds = (seeds, n) => fill(seeds.map(toMatch), n)
 
-      // R32 from ESPN bracket (live scores), R16 onward from allGames
-      return {
-        leftR32:  mapSeeds(espnR32.slice(0, 8),  8),
-        leftR16:  fill(byRound.r16.slice(0, 4),  4),
-        leftQF:   fill(byRound.qf.slice(0, 2),   2),
-        leftSF:   fill(byRound.sf.slice(0, 1),   1),
-        final:    byRound.f[0] ?? null,
-        rightSF:  fill(byRound.sf.slice(1, 2),   1),
-        rightQF:  fill(byRound.qf.slice(2, 4),   2),
-        rightR16: fill(byRound.r16.slice(4, 8),  4),
-        rightR32: mapSeeds(espnR32.slice(8, 16), 8),
-      }
+      const leftR32  = mapSeeds(espnR32seeds.slice(0, 8),  8)
+      const rightR32 = mapSeeds(espnR32seeds.slice(8, 16), 8)
+
+      // Compute R16 from R32 winners; fall back to allGames R16 fixtures
+      const computedLeftR16  = advanceRound(leftR32)
+      const computedRightR16 = advanceRound(rightR32)
+      const leftR16  = bestOf(fill(byRound.r16.slice(0, 4), 4), fill(computedLeftR16, 4), 4)
+      const rightR16 = bestOf(fill(byRound.r16.slice(4, 8), 4), fill(computedRightR16, 4), 4)
+
+      // Compute QF from R16 winners; fall back to allGames QF fixtures
+      const computedLeftQF  = advanceRound(leftR16)
+      const computedRightQF = advanceRound(rightR16)
+      const leftQF  = bestOf(fill(byRound.qf.slice(0, 2), 2), fill(computedLeftQF, 2), 2)
+      const rightQF = bestOf(fill(byRound.qf.slice(2, 4), 2), fill(computedRightQF, 2), 2)
+
+      // Compute SF from QF winners
+      const computedLeftSF  = advanceRound(leftQF)
+      const computedRightSF = advanceRound(rightQF)
+      const leftSF  = bestOf(fill(byRound.sf.slice(0, 1), 1), fill(computedLeftSF, 1), 1)
+      const rightSF = bestOf(fill(byRound.sf.slice(1, 2), 1), fill(computedRightSF, 1), 1)
+
+      // Compute Final from SF winners
+      const computedFinal = advanceRound([...leftSF, ...rightSF])[0] ?? null
+      const final = byRound.f[0] ?? computedFinal
+
+      return { leftR32, leftR16, leftQF, leftSF, final, rightSF, rightQF, rightR16, rightR32 }
     }
   }
 
-  // allGames-only path (no ESPN bracket API)
+  // ── Priority 2: allGames has knockout data ─────────────────────────────────
   if (byRound.r32.length > 0 || byRound.r16.length > 0 || byRound.qf.length > 0) {
+    const leftR32  = fill(byRound.r32.slice(0, 8),  8)
+    const rightR32 = fill(byRound.r32.slice(8, 16), 8)
+
+    const computedLeftR16  = advanceRound(leftR32)
+    const computedRightR16 = advanceRound(rightR32)
+    const leftR16  = bestOf(fill(byRound.r16.slice(0, 4), 4), fill(computedLeftR16, 4), 4)
+    const rightR16 = bestOf(fill(byRound.r16.slice(4, 8), 4), fill(computedRightR16, 4), 4)
+
+    const leftQF  = fill(byRound.qf.slice(0, 2), 2)
+    const rightQF = fill(byRound.qf.slice(2, 4), 2)
+
     return {
-      leftR32:  fill(byRound.r32.slice(0, 8),  8),
-      leftR16:  fill(byRound.r16.slice(0, 4),  4),
-      leftQF:   fill(byRound.qf.slice(0, 2),   2),
-      leftSF:   fill(byRound.sf.slice(0, 1),   1),
-      final:    byRound.f[0] ?? null,
-      rightSF:  fill(byRound.sf.slice(1, 2),   1),
-      rightQF:  fill(byRound.qf.slice(2, 4),   2),
-      rightR16: fill(byRound.r16.slice(4, 8),  4),
-      rightR32: fill(byRound.r32.slice(8, 16), 8),
+      leftR32, leftR16, leftQF,
+      leftSF:  fill(byRound.sf.slice(0, 1), 1),
+      final:   byRound.f[0] ?? null,
+      rightSF: fill(byRound.sf.slice(1, 2), 1),
+      rightQF, rightR16, rightR32,
     }
   }
 
-  // Group-stage projected R32 pairings (before any knockout games are scheduled)
+  // ── Priority 3: Group-stage projected R32 pairings ─────────────────────────
   const projected = R32_PAIRS.map(pair => ({
     id: null, projected: true,
-    home: slotTeam(pair.home, groupMap),
-    away: slotTeam(pair.away, groupMap),
-    homeLabel: pair.home,
-    awayLabel: pair.away,
+    home: slotTeam(pair.home, groupMap), away: slotTeam(pair.away, groupMap),
+    homeLabel: pair.home, awayLabel: pair.away,
   }))
   return {
     leftR32:  projected.slice(0, 8),
-    leftR16:  fill([], 4),
-    leftQF:   fill([], 2),
-    leftSF:   fill([], 1),
+    leftR16:  fill([], 4), leftQF: fill([], 2), leftSF: fill([], 1),
     final:    null,
-    rightSF:  fill([], 1),
-    rightQF:  fill([], 2),
-    rightR16: fill([], 4),
+    rightSF:  fill([], 1), rightQF: fill([], 2), rightR16: fill([], 4),
     rightR32: projected.slice(8, 16),
   }
 }
@@ -455,6 +495,17 @@ function MatchCard({ match, confirmedAbbrs, t }) {
     )
   }
 
+  // Computed from bracket advancement (winner of previous round)
+  if (match.computed) {
+    return (
+      <div className="tb-match">
+        <AdvancedTeamRow team={match.home} confirmedAbbrs={confirmedAbbrs} />
+        <div className="tb-match-divider" />
+        <AdvancedTeamRow team={match.away} confirmedAbbrs={confirmedAbbrs} />
+      </div>
+    )
+  }
+
   const isFinal = match.statusType === 'STATUS_FINAL' || match.statusType === 'STATUS_FULL_TIME'
   const isLive  = match.statusType === 'STATUS_IN_PROGRESS'
 
@@ -507,6 +558,21 @@ function EspnTeamRow({ team, isFinal, confirmedAbbrs, score }) {
       <TeamFlag abbr={team.abbr} logo={team.logo} size={18} />
       <span className="tb-abbr">{team.abbr}</span>
       {score != null && <span className="tb-score">{score}</span>}
+    </div>
+  )
+}
+
+// Team that advanced from a previous round (confirmed, no score yet)
+function AdvancedTeamRow({ team, confirmedAbbrs }) {
+  const { tn } = useLang()
+  if (!team?.abbr || isPlaceholder(team.abbr, team.team)) {
+    return <div className="tb-team tb-team-tbd"><span className="tb-abbr tb-tbd-text">TBD</span></div>
+  }
+  const isConf = confirmedAbbrs?.has(team.abbr)
+  return (
+    <div className={`tb-team${isConf ? ' tb-confirmed' : ' tb-leading'}`}>
+      <TeamFlag abbr={team.abbr} logo={team.logo} size={18} />
+      <span className="tb-abbr">{team.abbr}</span>
     </div>
   )
 }
