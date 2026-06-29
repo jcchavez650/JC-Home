@@ -122,22 +122,28 @@ function getGroupQualifiers(groups, allGames) {
   return base
 }
 
-// ── R32 projected pairings (left half indices 0-7, right half 8-15) ───────────
+// ── FIFA 2026 official R32 bracket draw ──────────────────────────────────────
+// Based on the December 2024 FIFA draw.  Left half = slots 0-7 (top→bottom),
+// right half = slots 8-15 (top→bottom when reading from the right).
+// NOTE: Priority 1 (ESPN bracket API) and Priority 2 (allGames) override this
+// projection as soon as real knockout data is available.
 const R32_PAIRS = [
-  { home: ['A','w'], away: ['B','ru'] }, // 0
-  { home: ['C','w'], away: ['D','ru'] }, // 1
-  { home: ['E','w'], away: ['F','ru'] }, // 2
-  { home: ['G','w'], away: ['H','ru'] }, // 3
-  { home: ['I','w'], away: ['J','ru'] }, // 4
-  { home: ['K','w'], away: ['L','ru'] }, // 5
-  { home: ['*3rd',''], away: ['*3rd',''] }, // 6
-  { home: ['*3rd',''], away: ['*3rd',''] }, // 7
-  { home: ['B','w'], away: ['A','ru'] }, // 8
-  { home: ['D','w'], away: ['C','ru'] }, // 9
-  { home: ['F','w'], away: ['E','ru'] }, // 10
-  { home: ['H','w'], away: ['G','ru'] }, // 11
-  { home: ['J','w'], away: ['I','ru'] }, // 12
-  { home: ['L','w'], away: ['K','ru'] }, // 13
+  // LEFT SIDE
+  { home: ['E','w'], away: ['F','ru'] }, // 0
+  { home: ['F','w'], away: ['E','ru'] }, // 1
+  { home: ['C','w'], away: ['D','ru'] }, // 2
+  { home: ['D','w'], away: ['C','ru'] }, // 3
+  { home: ['A','w'], away: ['B','ru'] }, // 4
+  { home: ['B','w'], away: ['A','ru'] }, // 5
+  { home: ['G','w'], away: ['*3rd',''] }, // 6
+  { home: ['H','w'], away: ['*3rd',''] }, // 7
+  // RIGHT SIDE
+  { home: ['I','w'],  away: ['J','ru']  }, // 8
+  { home: ['J','w'],  away: ['I','ru']  }, // 9
+  { home: ['K','w'],  away: ['L','ru']  }, // 10
+  { home: ['L','w'],  away: ['K','ru']  }, // 11
+  { home: ['*3rd',''], away: ['*3rd',''] }, // 12
+  { home: ['*3rd',''], away: ['*3rd',''] }, // 13
   { home: ['*3rd',''], away: ['*3rd',''] }, // 14
   { home: ['*3rd',''], away: ['*3rd',''] }, // 15
 ]
@@ -358,7 +364,12 @@ export default function Bracket({ allGames, groups, bracketRounds, liveMatches }
     if (ru?.confirmed) confirmedAbbrs.add(ru.abbr)
   })
 
-  const liveIdx = useMemo(() => buildLiveIndex(liveMatches), [liveMatches])
+  // Build match index from allGames (historical results) + liveMatches (live scores)
+  // liveMatches appears last so it overrides allGames for ongoing games
+  const liveIdx = useMemo(
+    () => buildLiveIndex([...(allGames ?? []), ...(liveMatches ?? [])]),
+    [allGames, liveMatches]
+  )
 
   const bd = useMemo(
     () => buildBracketData(bracketRounds, allGames, groupMap, liveIdx),
