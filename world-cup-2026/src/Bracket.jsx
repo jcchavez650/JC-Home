@@ -211,10 +211,22 @@ function withLive(match, liveIdx) {
 // Extract the winning team from a completed match (clears score/winner for display in next round)
 function getWinner(match) {
   if (!match) return null
+  // Primary: explicit winner flag
   const check = t => t?.winner && t.abbr && !isPlaceholder(t.abbr, t.team)
     ? { abbr: t.abbr, team: t.team, logo: t.logo, score: null, winner: false }
     : null
-  return check(match.home) ?? check(match.away)
+  const byFlag = check(match.home) ?? check(match.away)
+  if (byFlag) return byFlag
+  // Fallback: completed match with scores (winner flag may not be set by ESPN API)
+  const done = /FINAL|FULL_TIME/i.test(match.statusType ?? '')
+  const hs = match.home?.score != null ? +match.home.score : NaN
+  const as = match.away?.score != null ? +match.away.score : NaN
+  if (done && !isNaN(hs) && !isNaN(as) && hs !== as) {
+    const w = hs > as ? match.home : match.away
+    if (w?.abbr && !isPlaceholder(w.abbr, w.team))
+      return { abbr: w.abbr, team: w.team, logo: w.logo, score: null, winner: false }
+  }
+  return null
 }
 
 // Given an array of N completed matches, return N/2 next-round matches
@@ -236,7 +248,7 @@ function bestOf(a, b, n) {
 }
 
 // ── Build unified bracket structure ─────────────────────────────────────────
-function buildBracketData(bracketRounds, allGames, groupMap) {
+function buildBracketData(bracketRounds, allGames, groupMap, liveIdx) {
   const fill = (games, n) => Array.from({ length: n }, (_, i) => games[i] ?? null)
 
   // Classify allGames by round
@@ -265,8 +277,11 @@ function buildBracketData(bracketRounds, allGames, groupMap) {
       } : null
       const mapSeeds = (seeds, n) => fill(seeds.map(toMatch), n)
 
-      const leftR32  = mapSeeds(espnR32seeds.slice(0, 8),  8)
-      const rightR32 = mapSeeds(espnR32seeds.slice(8, 16), 8)
+      // Apply live data so getWinner can detect completed matches
+      const overlay = m => withLive(m, liveIdx)
+
+      const leftR32  = mapSeeds(espnR32seeds.slice(0, 8),  8).map(m => m ? overlay(m) : m)
+      const rightR32 = mapSeeds(espnR32seeds.slice(8, 16), 8).map(m => m ? overlay(m) : m)
 
       // Compute R16 from R32 winners; fall back to allGames R16 fixtures
       const computedLeftR16  = advanceRound(leftR32)
@@ -346,8 +361,8 @@ export default function Bracket({ allGames, groups, bracketRounds, liveMatches }
   const liveIdx = useMemo(() => buildLiveIndex(liveMatches), [liveMatches])
 
   const bd = useMemo(
-    () => buildBracketData(bracketRounds, allGames, groupMap),
-    [bracketRounds, allGames, groups, groupMap]
+    () => buildBracketData(bracketRounds, allGames, groupMap, liveIdx),
+    [bracketRounds, allGames, groups, groupMap, liveIdx]
   )
 
   // Scroll to center (Final column) on mount
@@ -374,13 +389,13 @@ export default function Bracket({ allGames, groups, bracketRounds, liveMatches }
   return (
     <div className="tb-page">
       <div className="tb-scroll" ref={scrollRef}>
-        {/* Header row */}
+        {/* Header row: 9 round cols + 8 connector strips = 17 elements */}
         <div className="tb-header-row">
-          {[0,1,2,3,4,3,2,1,0].map((ri, col) => (
+          {[0,-1,1,-1,2,-1,3,-1,4,-1,3,-1,2,-1,1,-1,0].map((ri, col) => (
             <div key={col}
-              className={`tb-header${col === 4 ? ' tb-header-final' : ''}`}
-              style={{ width: col % 2 === 0 ? COL_W : CONN_W }}>
-              {col % 2 === 0 ? roundLabels[ri] : ''}
+              className={`tb-header${ri === 4 ? ' tb-header-final' : ''}`}
+              style={{ width: ri === -1 ? CONN_W : COL_W }}>
+              {ri >= 0 ? roundLabels[ri] : ''}
             </div>
           ))}
         </div>
@@ -459,9 +474,9 @@ function ConnSvg({ fromRound, toRound, count, side, single }) {
       const botY = cy(fromRound, i * 2 + 1)
       const midY = cy(toRound, i)
       if (side === 'left') {
-        paths.push(`M 0 ${topY} H ${CONN_W / 2} V ${botY} M ${CONN_W / 2} ${midY} H ${CONN_W}`)
+        paths.push(`M 0 ${topY} H ${CONN_W / 2} V ${botY} H 0 M ${CONN_W / 2} ${midY} H ${CONN_W}`)
       } else {
-        paths.push(`M ${CONN_W} ${topY} H ${CONN_W / 2} V ${botY} M ${CONN_W / 2} ${midY} H 0`)
+        paths.push(`M ${CONN_W} ${topY} H ${CONN_W / 2} V ${botY} H ${CONN_W} M ${CONN_W / 2} ${midY} H 0`)
       }
     }
   }
