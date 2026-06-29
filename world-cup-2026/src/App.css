@@ -1277,6 +1277,140 @@
   pointer-events: none;
 }
 
+/* ── Traditional bracket layout (tb-*) ──────────────────── */
+.tb-page {
+  overflow-x: hidden;
+}
+
+.tb-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 12px;
+}
+
+/* Header row above columns */
+.tb-header-row {
+  display: flex;
+  align-items: center;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.tb-header {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text2);
+  text-align: center;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 2px;
+}
+
+.tb-header-final {
+  color: var(--gold);
+}
+
+/* Main bracket area — flex row */
+.tb-main {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+/* A round column — absolute-positioned matches inside */
+.tb-col {
+  flex-shrink: 0;
+}
+
+/* Match card */
+.tb-match {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tb-match-empty {
+  opacity: 0.4;
+}
+
+.tb-match-live {
+  border-color: var(--red);
+  box-shadow: 0 0 0 1px rgba(231,76,60,0.3);
+}
+
+.tb-match-divider {
+  height: 1px;
+  background: var(--border);
+}
+
+/* Team row inside a match card */
+.tb-team {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px;
+  height: 26px;
+  min-width: 0;
+}
+
+.tb-team-tbd {
+  opacity: 0.45;
+}
+
+.tb-abbr {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+
+.tb-tbd-text {
+  color: var(--text2);
+  font-weight: 500;
+}
+
+.tb-score {
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* State colors */
+.tb-winner .tb-abbr,
+.tb-winner .tb-score {
+  color: var(--green);
+}
+
+.tb-confirmed .tb-abbr {
+  color: var(--green);
+}
+
+.tb-leading .tb-abbr {
+  color: var(--gold);
+}
+
+/* Flag placeholder for TBD projected slots */
+.tb-flag-ph {
+  width: 18px;
+  height: 13px;
+  background: var(--border);
+  border-radius: 2px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
 /* ── Bracket vertical card layout (bk-*) ─────────────────── */
 .bk-page {
   display: flex;

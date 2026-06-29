@@ -1,77 +1,83 @@
-import { useState } from 'react'
+import { useMemo, useRef, useEffect } from 'react'
 import TeamFlag from './TeamFlag.jsx'
 import { useLang } from './LangContext.jsx'
 
+// ── Layout constants ──────────────────────────────────────────────────────────
+const MATCH_H = 52   // px – height of one match card (2 team rows × 26px)
+const UNIT    = 64   // px – slot height at R32 level (must be ≥ MATCH_H)
+const COL_W   = 96   // px – width of a round column
+const CONN_W  = 20   // px – width of the SVG connector strip
+const HALF_H  = 8 * UNIT  // px – total height of each bracket half (512)
+
+// Center y of a match given its round index and position within that round
+function cy(roundIdx, matchIdx) {
+  const slotH = UNIT * Math.pow(2, roundIdx)
+  return matchIdx * slotH + slotH / 2
+}
+// Top y of the match card
+function ty(roundIdx, matchIdx) { return cy(roundIdx, matchIdx) - MATCH_H / 2 }
+
+// ── Group-stage qualifier data ────────────────────────────────────────────────
 function getGroupQualifiers(groups) {
   const map = {}
   groups.forEach(g => {
     const letter = g.name?.trim().toUpperCase()
     if (!letter || !g.teams.length) return
-
     const gp = g.teams[0]?.gp ?? 0
-    const complete = gp >= 3
     const thirdPts = g.teams[2]?.pts ?? 0
-
-    const isConfirmed = (team, i) =>
-      (complete && i < 2) ||
+    const isConf = (team, i) =>
+      (gp >= 3 && i < 2) ||
       (gp >= 2 && team.pts >= 6) ||
       (gp >= 2 && i < 2 && team.pts >= 4 && thirdPts === 0)
-
-    const leader   = g.teams[0] ? { ...g.teams[0], confirmed: isConfirmed(g.teams[0], 0) } : null
-    const runnerUp = g.teams[1] ? { ...g.teams[1], confirmed: isConfirmed(g.teams[1], 1) } : null
-
-    map[letter] = {
-      w:  gp > 0 ? leader   : null,
-      ru: gp > 0 ? runnerUp : null,
-    }
+    const leader   = g.teams[0] ? { ...g.teams[0], confirmed: isConf(g.teams[0], 0) } : null
+    const runnerUp = g.teams[1] ? { ...g.teams[1], confirmed: isConf(g.teams[1], 1) } : null
+    map[letter] = { w: gp > 0 ? leader : null, ru: gp > 0 ? runnerUp : null }
   })
   return map
 }
 
+// ── R32 projected pairings (left half indices 0-7, right half 8-15) ───────────
 const R32_PAIRS = [
-  { home: ['A','w'], away: ['B','ru'] },
-  { home: ['C','w'], away: ['D','ru'] },
-  { home: ['E','w'], away: ['F','ru'] },
-  { home: ['G','w'], away: ['H','ru'] },
-  { home: ['I','w'], away: ['J','ru'] },
-  { home: ['K','w'], away: ['L','ru'] },
-  { home: ['*3rd',''], away: ['*3rd',''] },
-  { home: ['*3rd',''], away: ['*3rd',''] },
-  { home: ['B','w'], away: ['A','ru'] },
-  { home: ['D','w'], away: ['C','ru'] },
-  { home: ['F','w'], away: ['E','ru'] },
-  { home: ['H','w'], away: ['G','ru'] },
-  { home: ['J','w'], away: ['I','ru'] },
-  { home: ['L','w'], away: ['K','ru'] },
-  { home: ['*3rd',''], away: ['*3rd',''] },
-  { home: ['*3rd',''], away: ['*3rd',''] },
+  { home: ['A','w'], away: ['B','ru'] }, // 0
+  { home: ['C','w'], away: ['D','ru'] }, // 1
+  { home: ['E','w'], away: ['F','ru'] }, // 2
+  { home: ['G','w'], away: ['H','ru'] }, // 3
+  { home: ['I','w'], away: ['J','ru'] }, // 4
+  { home: ['K','w'], away: ['L','ru'] }, // 5
+  { home: ['*3rd',''], away: ['*3rd',''] }, // 6
+  { home: ['*3rd',''], away: ['*3rd',''] }, // 7
+  { home: ['B','w'], away: ['A','ru'] }, // 8
+  { home: ['D','w'], away: ['C','ru'] }, // 9
+  { home: ['F','w'], away: ['E','ru'] }, // 10
+  { home: ['H','w'], away: ['G','ru'] }, // 11
+  { home: ['J','w'], away: ['I','ru'] }, // 12
+  { home: ['L','w'], away: ['K','ru'] }, // 13
+  { home: ['*3rd',''], away: ['*3rd',''] }, // 14
+  { home: ['*3rd',''], away: ['*3rd',''] }, // 15
 ]
 
-function resolveTeam(ref, groupMap) {
+function slotTeam(ref, groupMap) {
   const [g, pos] = ref
   if (g.startsWith('*')) return null
   return groupMap[g]?.[pos] ?? null
 }
 
-function labelFor([g, pos], t) {
+function slotLabel([g, pos], t) {
   if (g.startsWith('*')) return t?.thirdPlace ?? '3rd Place'
-  return `${pos === 'w' ? (t?.confirmed ?? '1st') : (t?.runnerUp ?? '2nd')} ${t?.group ?? 'Group'} ${g}`
+  return `${pos === 'w' ? '1st' : '2nd'} Group ${g}`
 }
 
+// ── Classify allGames match by round ─────────────────────────────────────────
 function getRoundKey(m) {
-  const slug = (m.group ?? '').toLowerCase()
-  const name = (m.name ?? '').toLowerCase()
-  const text = slug + ' ' + name
-
+  const text = ((m.group ?? '') + ' ' + (m.name ?? '')).toLowerCase()
   if (text.includes('round-of-32') || text.includes('round of 32')) return 'r32'
   if (text.includes('round-of-16') || text.includes('round of 16')) return 'r16'
   if (text.includes('quarter')) return 'qf'
-  if (text.includes('semi')) return 'sf'
   if (text.includes('third') || text.includes('3rd place')) return '3p'
+  if (text.includes('semi')) return 'sf'
   if (text.includes('final')) return 'f'
-
   const d = m.date
-  if (d && d.getFullYear() === 2026 && d.getMonth() === 6) {
+  if (d?.getFullYear() === 2026 && d.getMonth() === 6) {
     const day = d.getDate()
     if (day >= 4  && day <= 7)  return 'r32'
     if (day >= 10 && day <= 12) return 'r16'
@@ -83,265 +89,334 @@ function getRoundKey(m) {
   return null
 }
 
+// ── Build unified bracket structure ─────────────────────────────────────────
+function buildBracketData(bracketRounds, allGames, groupMap) {
+  // Classify allGames by round
+  const byRound = { r32:[], r16:[], qf:[], sf:[], f:[] }
+  ;(allGames ?? []).forEach(m => {
+    const k = getRoundKey(m)
+    if (k && byRound[k]) byRound[k].push(m)
+  })
+
+  // Helper: fill array of n entries from a games list
+  const fill = (games, n) => Array.from({ length: n }, (_, i) => games[i] ?? null)
+
+  // If ESPN bracket API returned data, map it to our structure
+  if (bracketRounds.length > 0) {
+    const findRound = (keys) => {
+      for (const r of bracketRounds) {
+        const name = (r.name ?? '').toLowerCase()
+        if (keys.some(k => name.includes(k))) return r.seeds ?? []
+      }
+      return []
+    }
+    const espnR32 = findRound(['32','round of 32'])
+    const espnR16 = findRound(['16','round of 16'])
+    const espnQF  = findRound(['quarter'])
+    const espnSF  = findRound(['semi'])
+    const espnF   = findRound(['final'])
+
+    if (espnR32.length || espnR16.length || espnQF.length || espnSF.length) {
+      const toMatch = seed => seed ? {
+        id: seed.id, date: null,
+        home: seed.home  ?? null,
+        away: seed.away  ?? null,
+        statusType: seed.status ?? '',
+        isEspnSeed: true,
+      } : null
+
+      const mapSeeds = (seeds, n) => fill(seeds.map(toMatch), n)
+      return {
+        leftR32:  mapSeeds(espnR32.slice(0, 8), 8),
+        leftR16:  mapSeeds(espnR16.slice(0, 4), 4),
+        leftQF:   mapSeeds(espnQF.slice(0, 2),  2),
+        leftSF:   mapSeeds(espnSF.slice(0, 1),  1),
+        final:    toMatch(espnF[0] ?? null),
+        rightSF:  mapSeeds(espnSF.slice(1, 2),  1),
+        rightQF:  mapSeeds(espnQF.slice(2, 4),  2),
+        rightR16: mapSeeds(espnR16.slice(4, 8), 4),
+        rightR32: mapSeeds(espnR32.slice(8, 16), 8),
+      }
+    }
+  }
+
+  // allGames knockout fallback
+  if (byRound.r32.length > 0 || byRound.r16.length > 0 || byRound.qf.length > 0) {
+    return {
+      leftR32:  fill(byRound.r32.slice(0, 8),   8),
+      leftR16:  fill(byRound.r16.slice(0, 4),   4),
+      leftQF:   fill(byRound.qf.slice(0, 2),    2),
+      leftSF:   fill(byRound.sf.slice(0, 1),    1),
+      final:    byRound.f[0] ?? null,
+      rightSF:  fill(byRound.sf.slice(1, 2),    1),
+      rightQF:  fill(byRound.qf.slice(2, 4),    2),
+      rightR16: fill(byRound.r16.slice(4, 8),   4),
+      rightR32: fill(byRound.r32.slice(8, 16),  8),
+    }
+  }
+
+  // Group-stage projected R32 pairings
+  const projected = R32_PAIRS.map(pair => ({
+    id: null,
+    projected: true,
+    home: slotTeam(pair.home, groupMap),
+    away: slotTeam(pair.away, groupMap),
+    homeLabel: pair.home,
+    awayLabel: pair.away,
+  }))
+  return {
+    leftR32:  projected.slice(0, 8),
+    leftR16:  fill([], 4),
+    leftQF:   fill([], 2),
+    leftSF:   fill([], 1),
+    final:    null,
+    rightSF:  fill([], 1),
+    rightQF:  fill([], 2),
+    rightR16: fill([], 4),
+    rightR32: projected.slice(8, 16),
+  }
+}
+
+// ── Root component ─────────────────────────────────────────────────────────
 export default function Bracket({ allGames, groups, bracketRounds }) {
   const { t } = useLang()
-  const groupMap = getGroupQualifiers(groups)
+  const scrollRef = useRef(null)
 
+  const groupMap = getGroupQualifiers(groups)
   const confirmedAbbrs = new Set()
   Object.values(groupMap).forEach(({ w, ru }) => {
     if (w?.confirmed)  confirmedAbbrs.add(w.abbr)
     if (ru?.confirmed) confirmedAbbrs.add(ru.abbr)
   })
 
-  const ROUNDS = [
-    { key: 'r32', label: t.roundOf32  ?? 'Round of 32',    full: t.roundOf32  ?? 'Round of 32',    count: 16 },
-    { key: 'r16', label: t.roundOf16  ?? 'Round of 16',    full: t.roundOf16  ?? 'Round of 16',    count: 8  },
-    { key: 'qf',  label: t.quarterfinals ?? 'Quarterfinals', full: t.quarterfinals ?? 'Quarterfinals', count: 4  },
-    { key: 'sf',  label: t.semifinals ?? 'Semifinals',     full: t.semifinals ?? 'Semifinals',     count: 2  },
-    { key: 'f',   label: t.final,                           full: t.final,                           count: 1  },
+  const bd = useMemo(
+    () => buildBracketData(bracketRounds, allGames, groupMap),
+    [bracketRounds, allGames, groups]
+  )
+
+  // Scroll to center (Final column) on mount
+  useEffect(() => {
+    if (!scrollRef.current) return
+    const el = scrollRef.current
+    // Center column is at position 4 out of 9 columns
+    const centerX = (COL_W + CONN_W) * 4 + COL_W / 2
+    el.scrollLeft = centerX - el.clientWidth / 2
+  }, [])
+
+  const roundLabels = [
+    t.roundOf32    ?? 'Round of 32',
+    t.roundOf16    ?? 'Round of 16',
+    t.quarterfinals ?? 'QF',
+    t.semifinals   ?? 'SF',
+    t.final        ?? 'Final',
   ]
 
-  // ── Priority 1: ESPN bracket API ─────────────────────────────────────────
-  if (bracketRounds.length > 0) {
-    return (
-      <div className="bk-page">
-        {bracketRounds.map((round, ri) => (
-          <RoundSection key={ri} title={round.name} defaultOpen={ri === 0}>
-            {round.seeds.map((seed, i) => (
-              <EspnMatchCard key={seed.id ?? i} seed={seed} confirmedAbbrs={confirmedAbbrs} />
-            ))}
-          </RoundSection>
-        ))}
-        <QualifiersSection groups={groups} groupMap={groupMap} />
-      </div>
-    )
-  }
-
-  // ── Priority 2: allGames classified by round ──────────────────────────────
-  const byRound = {}
-  ;(allGames ?? []).forEach(m => {
-    const key = getRoundKey(m)
-    if (!key) return
-    if (!byRound[key]) byRound[key] = []
-    byRound[key].push(m)
-  })
-  const hasKnockout = Object.keys(byRound).length > 0
+  // Columns: [r32L, conn, r16L, conn, qfL, conn, sfL, conn, F, conn, sfR, conn, qfR, conn, r16R, conn, r32R]
+  const leftMatches  = [bd.leftR32, bd.leftR16, bd.leftQF, bd.leftSF]
+  const rightMatches = [bd.rightSF, bd.rightQF, bd.rightR16, bd.rightR32]
 
   return (
-    <div className="bk-page">
-      {ROUNDS.map((round, ri) => {
-        const games = hasKnockout ? byRound[round.key] : null
-        const isFirst = ri === 0
-        return (
-          <RoundSection key={round.key} title={round.full} defaultOpen={isFirst || !!games?.some(m => m.home.score !== null)}>
-            {games
-              ? games.map(m => (
-                  <LiveMatchCard key={m.id} match={m} confirmedAbbrs={confirmedAbbrs} />
-                ))
-              : round.key === 'r32'
-              ? R32_PAIRS.map((pair, i) => (
-                  <SlotCard
-                    key={i}
-                    homeTeam={resolveTeam(pair.home, groupMap)}
-                    awayTeam={resolveTeam(pair.away, groupMap)}
-                    homeLabel={labelFor(pair.home, t)}
-                    awayLabel={labelFor(pair.away, t)}
-                  />
-                ))
-              : Array.from({ length: round.count }).map((_, i) => (
-                  <SlotCard key={i} />
-                ))
-            }
-          </RoundSection>
-        )
-      })}
+    <div className="tb-page">
+      <div className="tb-scroll" ref={scrollRef}>
+        {/* Header row */}
+        <div className="tb-header-row">
+          {[0,1,2,3,4,3,2,1,0].map((ri, col) => (
+            <div key={col}
+              className={`tb-header${col === 4 ? ' tb-header-final' : ''}`}
+              style={{ width: col % 2 === 0 ? COL_W : CONN_W }}>
+              {col % 2 === 0 ? roundLabels[ri] : ''}
+            </div>
+          ))}
+        </div>
+
+        {/* Bracket main area */}
+        <div className="tb-main" style={{ height: HALF_H }}>
+          {/* Left half columns */}
+          {leftMatches.map((matches, col) => (
+            <>
+              <RoundCol key={`lc${col}`} matches={matches} roundIdx={col} confirmedAbbrs={confirmedAbbrs} t={t} />
+              <ConnSvg key={`lv${col}`}
+                fromRound={col} toRound={col + 1}
+                count={matches.length / 2 || 1}
+                side="left"
+                single={col === 3}
+              />
+            </>
+          ))}
+
+          {/* Final */}
+          <div className="tb-col" style={{ width: COL_W, position: 'relative', height: HALF_H }}>
+            <div style={{ position: 'absolute', top: ty(3, 0), left: 0, width: COL_W }}>
+              <MatchCard match={bd.final} confirmedAbbrs={confirmedAbbrs} isFinal t={t} />
+            </div>
+          </div>
+
+          {/* Right half */}
+          {rightMatches.map((matches, col) => {
+            const roundIdx = 3 - col  // SF=3, QF=2, R16=1, R32=0
+            return (
+              <>
+                <ConnSvg key={`rv${col}`}
+                  fromRound={roundIdx} toRound={roundIdx + 1}
+                  count={col === 0 ? 1 : matches.length / 2}
+                  side="right"
+                  single={col === 0}
+                />
+                <RoundCol key={`rc${col}`} matches={matches} roundIdx={roundIdx} confirmedAbbrs={confirmedAbbrs} t={t} />
+              </>
+            )
+          })}
+        </div>
+      </div>
+
       <QualifiersSection groups={groups} groupMap={groupMap} />
     </div>
   )
 }
 
-// ── Collapsible round section ─────────────────────────────────────────────
-function RoundSection({ title, children, defaultOpen = false }) {
-  const [open, setOpen] = useState(defaultOpen)
-  const count = Array.isArray(children) ? children.length : 1
+// ── Round column ──────────────────────────────────────────────────────────────
+function RoundCol({ matches, roundIdx, confirmedAbbrs, t }) {
   return (
-    <div className="bk-round">
-      <button className="bk-round-header" onClick={() => setOpen(o => !o)}>
-        <span className="bk-round-title">{title}</span>
-        <span className="bk-round-meta">{count} {count === 1 ? 'match' : 'matches'}</span>
-        <span className="bk-chevron">{open ? '▲' : '▼'}</span>
-      </button>
-      {open && <div className="bk-round-body">{children}</div>}
-    </div>
-  )
-}
-
-// ── Match card used for Priority 2 (allGames) ────────────────────────────
-function LiveMatchCard({ match: m, confirmedAbbrs }) {
-  const { tn } = useLang()
-  const hasScore = m.home.score !== null
-  const isFinal  = m.statusType === 'STATUS_FINAL' || m.statusType === 'STATUS_FULL_TIME'
-  const isLive   = m.statusType === 'STATUS_IN_PROGRESS'
-
-  return (
-    <div className="bk-card">
-      <TeamSide
-        side={m.home}
-        score={hasScore ? m.home.score : null}
-        isWinner={!!m.home.winner}
-        confirmedAbbrs={confirmedAbbrs}
-        align="left"
-      />
-      <div className="bk-card-center">
-        {hasScore ? (
-          <>
-            <div className={`bk-score ${isLive ? 'bk-score-live' : ''}`}>
-              <span style={m.home.winner ? { color: 'var(--green)' } : {}}>{m.home.score}</span>
-              <span className="bk-score-dash">–</span>
-              <span style={m.away.winner ? { color: 'var(--green)' } : {}}>{m.away.score}</span>
-            </div>
-            <div className="bk-status">{isLive ? '🔴 Live' : isFinal ? 'FT' : ''}</div>
-          </>
-        ) : (
-          <>
-            <div className="bk-vs">vs</div>
-            <div className="bk-date">
-              {m.date.toLocaleDateString([], { month: 'short', day: 'numeric' })}
-            </div>
-          </>
-        )}
-      </div>
-      <TeamSide
-        side={m.away}
-        score={hasScore ? m.away.score : null}
-        isWinner={!!m.away.winner}
-        confirmedAbbrs={confirmedAbbrs}
-        align="right"
-      />
-    </div>
-  )
-}
-
-// ── Match card used for Priority 1 (ESPN bracket seeds) ──────────────────
-function EspnMatchCard({ seed, confirmedAbbrs }) {
-  const hasScore = seed.homeScore !== null
-  return (
-    <div className="bk-card">
-      <EspnSide side={seed.home} score={seed.homeScore} confirmedAbbrs={confirmedAbbrs} align="left" />
-      <div className="bk-card-center">
-        {hasScore ? (
-          <div className="bk-score">
-            <span style={seed.home?.winner ? { color: 'var(--green)' } : {}}>{seed.homeScore}</span>
-            <span className="bk-score-dash">–</span>
-            <span style={seed.away?.winner ? { color: 'var(--green)' } : {}}>{seed.awayScore}</span>
-          </div>
-        ) : (
-          <div className="bk-vs">vs</div>
-        )}
-      </div>
-      <EspnSide side={seed.away} score={seed.awayScore} confirmedAbbrs={confirmedAbbrs} align="right" />
-    </div>
-  )
-}
-
-// ── Pre-group-stage slot card (projected seedings) ────────────────────────
-function SlotCard({ homeTeam, awayTeam, homeLabel, awayLabel }) {
-  return (
-    <div className="bk-card">
-      <SlotSide team={homeTeam} label={homeLabel} align="left" />
-      <div className="bk-card-center"><div className="bk-vs">vs</div></div>
-      <SlotSide team={awayTeam} label={awayLabel} align="right" />
-    </div>
-  )
-}
-
-// ── Team side components ──────────────────────────────────────────────────
-function TeamSide({ side, isWinner, confirmedAbbrs, align }) {
-  const { tn } = useLang()
-  const isKnown = !!side?.abbr
-  const isGroupConfirmed = isKnown && confirmedAbbrs?.has(side.abbr)
-  const isConfirmed = isWinner || isGroupConfirmed
-  const isLeading   = isKnown && !isConfirmed
-  const right = align === 'right'
-
-  return (
-    <div className={`bk-side ${right ? 'bk-side-right' : ''} ${isWinner ? 'bk-side-winner' : ''} ${isConfirmed ? 'bk-side-confirmed' : ''} ${isLeading ? 'bk-side-leading' : ''}`}>
-      <TeamFlag abbr={side?.abbr} logo={side?.logo} size={32} />
-      <div className={`bk-side-info ${right ? 'bk-side-info-right' : ''}`}>
-        <span className="bk-side-name">{isKnown ? tn(side.team, side.abbr) : 'TBD'}</span>
-        <span className="bk-side-abbr">{side?.abbr || '—'}</span>
-      </div>
-      {isGroupConfirmed && <span className="bk-badge bk-badge-confirmed">✓</span>}
-      {isLeading         && <span className="bk-badge bk-badge-leading">~</span>}
-    </div>
-  )
-}
-
-function EspnSide({ side, confirmedAbbrs, align }) {
-  const { tn } = useLang()
-  if (!side) return <TbdSide align={align} />
-  const isGroupConfirmed = side.abbr && confirmedAbbrs?.has(side.abbr)
-  const isKnockoutWinner = !!side.winner
-  const isConfirmed = isKnockoutWinner || isGroupConfirmed
-  const isLeading   = side.abbr && !isConfirmed
-  const right = align === 'right'
-
-  return (
-    <div className={`bk-side ${right ? 'bk-side-right' : ''} ${isKnockoutWinner ? 'bk-side-winner' : ''} ${isConfirmed ? 'bk-side-confirmed' : ''} ${isLeading ? 'bk-side-leading' : ''}`}>
-      <TeamFlag abbr={side.abbr} logo={side.logo} size={32} />
-      <div className={`bk-side-info ${right ? 'bk-side-info-right' : ''}`}>
-        <span className="bk-side-name">{tn(side.team, side.abbr)}</span>
-        <span className="bk-side-abbr">{side.abbr || '—'}</span>
-      </div>
-      {isGroupConfirmed  && <span className="bk-badge bk-badge-confirmed">✓</span>}
-      {isLeading         && <span className="bk-badge bk-badge-leading">~</span>}
-    </div>
-  )
-}
-
-function SlotSide({ team, label, align }) {
-  const { tn } = useLang()
-  const right = align === 'right'
-  if (!team) {
-    return (
-      <div className={`bk-side bk-side-tbd ${right ? 'bk-side-right' : ''}`}>
-        <div className="bk-flag-ph" />
-        <div className={`bk-side-info ${right ? 'bk-side-info-right' : ''}`}>
-          <span className="bk-side-name bk-tbd-text">{label ?? 'TBD'}</span>
+    <div className="tb-col" style={{ width: COL_W, position: 'relative', height: HALF_H }}>
+      {matches.map((match, i) => (
+        <div key={match?.id ?? i} style={{ position: 'absolute', top: ty(roundIdx, i), left: 0, width: COL_W }}>
+          <MatchCard match={match} confirmedAbbrs={confirmedAbbrs} t={t} />
         </div>
+      ))}
+    </div>
+  )
+}
+
+// ── SVG connector between columns ─────────────────────────────────────────────
+// side='left': "from" column is left, lines go left→right
+// side='right': "from" column is right, lines go right→left
+// single=true: 1:1 horizontal connector (SF→Final)
+function ConnSvg({ fromRound, toRound, count, side, single }) {
+  const paths = []
+
+  if (single) {
+    const y = cy(fromRound, 0)
+    paths.push(`M 0 ${y} H ${CONN_W}`)
+  } else {
+    for (let i = 0; i < count; i++) {
+      const topY = cy(fromRound, i * 2)
+      const botY = cy(fromRound, i * 2 + 1)
+      const midY = cy(toRound, i)
+      if (side === 'left') {
+        paths.push(`M 0 ${topY} H ${CONN_W / 2} V ${botY} M ${CONN_W / 2} ${midY} H ${CONN_W}`)
+      } else {
+        paths.push(`M ${CONN_W} ${topY} H ${CONN_W / 2} V ${botY} M ${CONN_W / 2} ${midY} H 0`)
+      }
+    }
+  }
+
+  return (
+    <svg width={CONN_W} height={HALF_H} style={{ display: 'block', flexShrink: 0 }}>
+      <path d={paths.join(' ')} stroke="var(--border)" strokeWidth={1.5} fill="none" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+// ── Match card (two stacked team rows) ────────────────────────────────────────
+function MatchCard({ match, confirmedAbbrs, t }) {
+  if (!match) {
+    return (
+      <div className="tb-match tb-match-empty">
+        <div className="tb-team tb-team-tbd"><span className="tb-abbr tb-tbd-text">TBD</span></div>
+        <div className="tb-match-divider" />
+        <div className="tb-team tb-team-tbd"><span className="tb-abbr tb-tbd-text">TBD</span></div>
       </div>
     )
   }
-  return (
-    <div className={`bk-side ${right ? 'bk-side-right' : ''} ${team.confirmed ? 'bk-side-confirmed' : 'bk-side-leading'}`}>
-      <TeamFlag abbr={team.abbr} logo={team.logo} size={32} />
-      <div className={`bk-side-info ${right ? 'bk-side-info-right' : ''}`}>
-        <span className="bk-side-name">{tn(team.team, team.abbr)}</span>
-        <span className="bk-side-abbr">{team.abbr}</span>
+
+  if (match.projected) {
+    return (
+      <div className="tb-match">
+        <ProjectedTeamRow ref_={match.homeLabel} team={match.home} confirmedAbbrs={confirmedAbbrs} t={t} />
+        <div className="tb-match-divider" />
+        <ProjectedTeamRow ref_={match.awayLabel} team={match.away} confirmedAbbrs={confirmedAbbrs} t={t} />
       </div>
-      {team.confirmed
-        ? <span className="bk-badge bk-badge-confirmed">✓</span>
-        : <span className="bk-badge bk-badge-leading">~</span>
-      }
+    )
+  }
+
+  const isFinal = match.statusType === 'STATUS_FINAL' || match.statusType === 'STATUS_FULL_TIME'
+  const isLive  = match.statusType === 'STATUS_IN_PROGRESS'
+
+  if (match.isEspnSeed) {
+    return (
+      <div className={`tb-match${isLive ? ' tb-match-live' : ''}`}>
+        <EspnTeamRow team={match.home} isFinal={isFinal} confirmedAbbrs={confirmedAbbrs} score={match.home?.score} />
+        <div className="tb-match-divider" />
+        <EspnTeamRow team={match.away} isFinal={isFinal} confirmedAbbrs={confirmedAbbrs} score={match.away?.score} />
+      </div>
+    )
+  }
+
+  return (
+    <div className={`tb-match${isLive ? ' tb-match-live' : ''}`}>
+      <LiveTeamRow team={match.home} isFinal={isFinal} confirmedAbbrs={confirmedAbbrs} />
+      <div className="tb-match-divider" />
+      <LiveTeamRow team={match.away} isFinal={isFinal} confirmedAbbrs={confirmedAbbrs} />
     </div>
   )
 }
 
-function TbdSide({ align }) {
-  const right = align === 'right'
+// ── Team rows ─────────────────────────────────────────────────────────────────
+function LiveTeamRow({ team, isFinal, confirmedAbbrs }) {
+  const { tn } = useLang()
+  if (!team?.abbr) return <div className="tb-team tb-team-tbd"><span className="tb-abbr tb-tbd-text">TBD</span></div>
+  const isGroupConf = confirmedAbbrs?.has(team.abbr)
+  const isWinner = !!team.winner
+  const isConf = isWinner || isGroupConf
+  const cls = `tb-team${isWinner ? ' tb-winner' : ''}${isConf ? ' tb-confirmed' : (!isFinal ? ' tb-leading' : '')}`
   return (
-    <div className={`bk-side bk-side-tbd ${right ? 'bk-side-right' : ''}`}>
-      <div className="bk-flag-ph" />
-      <div className={`bk-side-info ${right ? 'bk-side-info-right' : ''}`}>
-        <span className="bk-side-name bk-tbd-text">TBD</span>
-      </div>
+    <div className={cls}>
+      <TeamFlag abbr={team.abbr} logo={team.logo} size={18} />
+      <span className="tb-abbr">{team.abbr}</span>
+      {team.score != null && <span className="tb-score">{team.score}</span>}
     </div>
   )
 }
 
-// ── Qualifiers grid (unchanged logic, refreshed style) ────────────────────
+function EspnTeamRow({ team, isFinal, confirmedAbbrs, score }) {
+  const { tn } = useLang()
+  if (!team?.abbr) return <div className="tb-team tb-team-tbd"><span className="tb-abbr tb-tbd-text">TBD</span></div>
+  const isGroupConf = confirmedAbbrs?.has(team.abbr)
+  const isWinner = !!team.winner
+  const isConf = isWinner || isGroupConf
+  const cls = `tb-team${isWinner ? ' tb-winner' : ''}${isConf ? ' tb-confirmed' : (!isFinal ? ' tb-leading' : '')}`
+  return (
+    <div className={cls}>
+      <TeamFlag abbr={team.abbr} logo={team.logo} size={18} />
+      <span className="tb-abbr">{team.abbr}</span>
+      {score != null && <span className="tb-score">{score}</span>}
+    </div>
+  )
+}
+
+function ProjectedTeamRow({ ref_, team, confirmedAbbrs, t }) {
+  const { tn } = useLang()
+  if (!team) {
+    const label = slotLabel(ref_, t)
+    return (
+      <div className="tb-team tb-team-tbd">
+        <div className="tb-flag-ph" />
+        <span className="tb-abbr tb-tbd-text" style={{ fontSize: 9 }}>{label}</span>
+      </div>
+    )
+  }
+  const isConf = team.confirmed || confirmedAbbrs?.has(team.abbr)
+  return (
+    <div className={`tb-team${isConf ? ' tb-confirmed' : ' tb-leading'}`}>
+      <TeamFlag abbr={team.abbr} logo={team.logo} size={18} />
+      <span className="tb-abbr">{team.abbr}</span>
+    </div>
+  )
+}
+
+// ── Qualifiers mini grid ──────────────────────────────────────────────────────
 function QualifiersSection({ groups, groupMap }) {
-  const { t } = useLang()
+  const { t, tn } = useLang()
   if (!groups.length) return null
   return (
     <div className="bk-qual-section">
@@ -365,25 +440,21 @@ function QualifiersSection({ groups, groupMap }) {
 
 function QualRow({ team, label }) {
   const { t, tn } = useLang()
-  if (!team) {
-    return (
-      <div className="qual-mini-row">
-        <span className="qual-mini-pos">{label}</span>
-        <div style={{ width: 22, height: 15, background: 'var(--border)', borderRadius: 2 }} />
-        <span className="tbd" style={{ fontSize: 11 }}>{t.tbd}</span>
-      </div>
-    )
-  }
-  if (team.confirmed) {
-    return (
-      <div className="qual-mini-row confirmed">
-        <span className="qual-mini-pos">{label}</span>
-        <TeamFlag abbr={team.abbr} logo={team.logo} size={22} />
-        <span className="qual-mini-name">{tn(team.team, team.abbr)}</span>
-        <span className="qual-check">✓</span>
-      </div>
-    )
-  }
+  if (!team) return (
+    <div className="qual-mini-row">
+      <span className="qual-mini-pos">{label}</span>
+      <div style={{ width: 22, height: 15, background: 'var(--border)', borderRadius: 2 }} />
+      <span className="tbd" style={{ fontSize: 11 }}>{t.tbd}</span>
+    </div>
+  )
+  if (team.confirmed) return (
+    <div className="qual-mini-row confirmed">
+      <span className="qual-mini-pos">{label}</span>
+      <TeamFlag abbr={team.abbr} logo={team.logo} size={22} />
+      <span className="qual-mini-name">{tn(team.team, team.abbr)}</span>
+      <span className="qual-check">✓</span>
+    </div>
+  )
   return (
     <div className="qual-mini-row leading">
       <span className="qual-mini-pos">{label}</span>
