@@ -122,13 +122,69 @@ function getGroupQualifiers(groups, allGames) {
   return base
 }
 
-// ── FIFA 2026 official R32 bracket draw ──────────────────────────────────────
-// Based on the December 2024 FIFA draw.  Left half = slots 0-7 (top→bottom),
-// right half = slots 8-15 (top→bottom when reading from the right).
-// NOTE: Priority 1 (ESPN bracket API) and Priority 2 (allGames) override this
-// projection as soon as real knockout data is available.
+// ── Official FIFA 2026 R32 bracket slots (from the December 2024 draw) ────────
+// Slots 0-7 = left half top→bottom, slots 8-15 = right half top→bottom (from right).
+// Used to correctly position each match regardless of ESPN API return order.
+const R32_SLOTS = [
+  ['GER','PAR'], // 0
+  ['FRA','SWE'], // 1
+  ['RSA','CAN'], // 2
+  ['NED','MAR'], // 3
+  ['POR','CRO'], // 4
+  ['ESP','AUT'], // 5
+  ['USA','BIH'], // 6  (Bosnia – ESPN may also send BiH/BOS)
+  ['BEL','SEN'], // 7
+  ['BRA','JPN'], // 8
+  ['CIV','NOR'], // 9
+  ['MEX','ECU'], // 10
+  ['ENG','COD'], // 11 (Congo DR)
+  ['ARG','CPV'], // 12 (Cape Verde – ESPN may send CV/CPV)
+  ['AUS','EGY'], // 13
+  ['SUI','ALG'], // 14
+  ['COL','GHA'], // 15
+]
+
+// Name fragments for teams whose ESPN abbreviation is uncertain
+const SLOT_ALT = {
+  BIH: ['bos','bih','bosnia'],
+  COD: ['cod','drc','congo'],
+  CPV: ['cpv','cap','verde','cape'],
+  CIV: ['civ','ivory','ivoire'],
+}
+
+function matchesSlot(match, [a, b]) {
+  const ha = (match.home?.abbr ?? '').toUpperCase()
+  const aa = (match.away?.abbr ?? '').toUpperCase()
+  const hn = (match.home?.team ?? '').toLowerCase()
+  const an = (match.away?.team ?? '').toLowerCase()
+  const fits = abbr => {
+    if (ha === abbr || aa === abbr) return true
+    return (SLOT_ALT[abbr] ?? []).some(f => hn.includes(f) || an.includes(f))
+  }
+  return fits(a) && fits(b)
+}
+
+// Map an unordered list of R32 matches into the 16 correct bracket slots
+function slotR32(matches) {
+  const slots = Array(16).fill(null)
+  const unmatched = []
+  matches.forEach(m => {
+    if (!m) return
+    const idx = R32_SLOTS.findIndex((pair, i) => !slots[i] && matchesSlot(m, pair))
+    if (idx >= 0) slots[idx] = m
+    else unmatched.push(m)
+  })
+  // Fill any remaining nulls with unmatched (preserves partial data)
+  let spare = 0
+  unmatched.forEach(m => {
+    while (spare < 16 && slots[spare] !== null) spare++
+    if (spare < 16) slots[spare] = m
+  })
+  return slots
+}
+
+// ── R32 projected group pairings (Priority 3: before any knockout data) ────────
 const R32_PAIRS = [
-  // LEFT SIDE
   { home: ['E','w'], away: ['F','ru'] }, // 0
   { home: ['F','w'], away: ['E','ru'] }, // 1
   { home: ['C','w'], away: ['D','ru'] }, // 2
@@ -137,7 +193,6 @@ const R32_PAIRS = [
   { home: ['B','w'], away: ['A','ru'] }, // 5
   { home: ['G','w'], away: ['*3rd',''] }, // 6
   { home: ['H','w'], away: ['*3rd',''] }, // 7
-  // RIGHT SIDE
   { home: ['I','w'],  away: ['J','ru']  }, // 8
   { home: ['J','w'],  away: ['I','ru']  }, // 9
   { home: ['K','w'],  away: ['L','ru']  }, // 10
@@ -281,13 +336,15 @@ function buildBracketData(bracketRounds, allGames, groupMap, liveIdx) {
         home: s.home ?? null, away: s.away ?? null,
         statusType: s.status ?? '', isEspnSeed: true,
       } : null
-      const mapSeeds = (seeds, n) => fill(seeds.map(toMatch), n)
 
-      // Apply live data so getWinner can detect completed matches
+      // Apply live/historical data so getWinner can detect completed matches
       const overlay = m => withLive(m, liveIdx)
 
-      const leftR32  = mapSeeds(espnR32seeds.slice(0, 8),  8).map(m => m ? overlay(m) : m)
-      const rightR32 = mapSeeds(espnR32seeds.slice(8, 16), 8).map(m => m ? overlay(m) : m)
+      // Slot seeds into correct bracket positions using the known FIFA draw
+      const allR32 = espnR32seeds.map(toMatch).map(m => m ? overlay(m) : m)
+      const ordered = slotR32(allR32)
+      const leftR32  = ordered.slice(0, 8)
+      const rightR32 = ordered.slice(8, 16)
 
       // Compute R16 from R32 winners; fall back to allGames R16 fixtures
       const computedLeftR16  = advanceRound(leftR32)
@@ -317,8 +374,9 @@ function buildBracketData(bracketRounds, allGames, groupMap, liveIdx) {
 
   // ── Priority 2: allGames has knockout data ─────────────────────────────────
   if (byRound.r32.length > 0 || byRound.r16.length > 0 || byRound.qf.length > 0) {
-    const leftR32  = fill(byRound.r32.slice(0, 8),  8)
-    const rightR32 = fill(byRound.r32.slice(8, 16), 8)
+    const ordered  = slotR32(byRound.r32.map(m => withLive(m, liveIdx)))
+    const leftR32  = ordered.slice(0, 8)
+    const rightR32 = ordered.slice(8, 16)
 
     const computedLeftR16  = advanceRound(leftR32)
     const computedRightR16 = advanceRound(rightR32)
