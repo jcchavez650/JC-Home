@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect } from 'react'
+import { Fragment, useMemo, useRef, useEffect } from 'react'
 import TeamFlag from './TeamFlag.jsx'
 import { useLang } from './LangContext.jsx'
 
@@ -311,6 +311,7 @@ function bestOf(a, b, n) {
 // ── Build unified bracket structure ─────────────────────────────────────────
 function buildBracketData(bracketRounds, allGames, groupMap, liveIdx) {
   const fill = (games, n) => Array.from({ length: n }, (_, i) => games[i] ?? null)
+  const overlay = m => (m ? withLive(m, liveIdx) : m)
 
   // Classify allGames by round
   const byRound = { r32:[], r16:[], qf:[], sf:[], f:[] }
@@ -319,83 +320,60 @@ function buildBracketData(bracketRounds, allGames, groupMap, liveIdx) {
     if (k && byRound[k]) byRound[k].push(m)
   })
 
-  // ── Priority 1: ESPN bracket API has R32 live data ─────────────────────────
+  // Collect R32 candidates from ESPN bracket API seeds too (fallback source)
+  let espnR32 = []
   if (bracketRounds.length > 0) {
-    const findSeeds = (...keys) => {
-      for (const r of bracketRounds) {
-        const name = (r.name ?? '').toLowerCase()
-        if (keys.some(k => name.includes(k))) return r.seeds ?? []
-      }
-      return []
-    }
-    const espnR32seeds = findSeeds('32', 'round of 32')
-
-    if (espnR32seeds.length) {
-      const toMatch = s => s ? {
-        id: s.id, date: null,
-        home: s.home ?? null, away: s.away ?? null,
-        statusType: s.status ?? '', isEspnSeed: true,
-      } : null
-
-      // Apply live/historical data so getWinner can detect completed matches
-      const overlay = m => withLive(m, liveIdx)
-
-      // Slot seeds into correct bracket positions using the known FIFA draw
-      const allR32 = espnR32seeds.map(toMatch).map(m => m ? overlay(m) : m)
-      const ordered = slotR32(allR32)
-      const leftR32  = ordered.slice(0, 8)
-      const rightR32 = ordered.slice(8, 16)
-
-      // Compute R16 from R32 winners; fall back to allGames R16 fixtures
-      const computedLeftR16  = advanceRound(leftR32)
-      const computedRightR16 = advanceRound(rightR32)
-      const leftR16  = bestOf(fill(byRound.r16.slice(0, 4), 4), fill(computedLeftR16, 4), 4)
-      const rightR16 = bestOf(fill(byRound.r16.slice(4, 8), 4), fill(computedRightR16, 4), 4)
-
-      // Compute QF from R16 winners; fall back to allGames QF fixtures
-      const computedLeftQF  = advanceRound(leftR16)
-      const computedRightQF = advanceRound(rightR16)
-      const leftQF  = bestOf(fill(byRound.qf.slice(0, 2), 2), fill(computedLeftQF, 2), 2)
-      const rightQF = bestOf(fill(byRound.qf.slice(2, 4), 2), fill(computedRightQF, 2), 2)
-
-      // Compute SF from QF winners
-      const computedLeftSF  = advanceRound(leftQF)
-      const computedRightSF = advanceRound(rightQF)
-      const leftSF  = bestOf(fill(byRound.sf.slice(0, 1), 1), fill(computedLeftSF, 1), 1)
-      const rightSF = bestOf(fill(byRound.sf.slice(1, 2), 1), fill(computedRightSF, 1), 1)
-
-      // Compute Final from SF winners
-      const computedFinal = advanceRound([...leftSF, ...rightSF])[0] ?? null
-      const final = byRound.f[0] ?? computedFinal
-
-      return { leftR32, leftR16, leftQF, leftSF, final, rightSF, rightQF, rightR16, rightR32 }
-    }
+    const round = bracketRounds.find(r => {
+      const name = (r.name ?? '').toLowerCase()
+      return name.includes('32') || name.includes('round of 32')
+    })
+    espnR32 = (round?.seeds ?? []).map(s => s ? {
+      id: s.id, date: null,
+      home: s.home ?? null, away: s.away ?? null,
+      statusType: s.status ?? '', isEspnSeed: true,
+    } : null).filter(Boolean)
   }
 
-  // ── Priority 2: allGames has knockout data ─────────────────────────────────
-  if (byRound.r32.length > 0 || byRound.r16.length > 0 || byRound.qf.length > 0) {
-    const ordered  = slotR32(byRound.r32.map(m => withLive(m, liveIdx)))
+  const knockoutStarted =
+    byRound.r32.length > 0 || byRound.r16.length > 0 ||
+    byRound.qf.length > 0 || espnR32.length > 0
+
+  // ── Knockout phase: slot every known R32 match into its FIFA bracket position
+  if (knockoutStarted) {
+    // Merge candidates: allGames first (clean scores), then ESPN seeds as fallback.
+    // slotR32 places each match by team identity and ignores duplicates.
+    const r32candidates = [
+      ...byRound.r32.map(overlay),
+      ...espnR32.map(overlay),
+    ]
+    const ordered  = slotR32(r32candidates)
     const leftR32  = ordered.slice(0, 8)
     const rightR32 = ordered.slice(8, 16)
 
+    // Compute each later round from the previous round's winners; prefer any
+    // explicit allGames fixtures (which carry real dates/scores) when present.
     const computedLeftR16  = advanceRound(leftR32)
     const computedRightR16 = advanceRound(rightR32)
-    const leftR16  = bestOf(fill(byRound.r16.slice(0, 4), 4), fill(computedLeftR16, 4), 4)
-    const rightR16 = bestOf(fill(byRound.r16.slice(4, 8), 4), fill(computedRightR16, 4), 4)
+    const leftR16  = bestOf(fill(byRound.r16.slice(0, 4).map(overlay), 4), fill(computedLeftR16, 4), 4)
+    const rightR16 = bestOf(fill(byRound.r16.slice(4, 8).map(overlay), 4), fill(computedRightR16, 4), 4)
 
-    const leftQF  = fill(byRound.qf.slice(0, 2), 2)
-    const rightQF = fill(byRound.qf.slice(2, 4), 2)
+    const computedLeftQF  = advanceRound(leftR16)
+    const computedRightQF = advanceRound(rightR16)
+    const leftQF  = bestOf(fill(byRound.qf.slice(0, 2).map(overlay), 2), fill(computedLeftQF, 2), 2)
+    const rightQF = bestOf(fill(byRound.qf.slice(2, 4).map(overlay), 2), fill(computedRightQF, 2), 2)
 
-    return {
-      leftR32, leftR16, leftQF,
-      leftSF:  fill(byRound.sf.slice(0, 1), 1),
-      final:   byRound.f[0] ?? null,
-      rightSF: fill(byRound.sf.slice(1, 2), 1),
-      rightQF, rightR16, rightR32,
-    }
+    const computedLeftSF  = advanceRound(leftQF)
+    const computedRightSF = advanceRound(rightQF)
+    const leftSF  = bestOf(fill(byRound.sf.slice(0, 1).map(overlay), 1), fill(computedLeftSF, 1), 1)
+    const rightSF = bestOf(fill(byRound.sf.slice(1, 2).map(overlay), 1), fill(computedRightSF, 1), 1)
+
+    const computedFinal = advanceRound([...leftSF, ...rightSF])[0] ?? null
+    const final = (byRound.f[0] ? overlay(byRound.f[0]) : null) ?? computedFinal
+
+    return { leftR32, leftR16, leftQF, leftSF, final, rightSF, rightQF, rightR16, rightR32 }
   }
 
-  // ── Priority 3: Group-stage projected R32 pairings ─────────────────────────
+  // ── Group stage: projected R32 pairings from group qualifiers ──────────────
   const projected = R32_PAIRS.map(pair => ({
     id: null, projected: true,
     home: slotTeam(pair.home, groupMap), away: slotTeam(pair.away, groupMap),
@@ -473,15 +451,15 @@ export default function Bracket({ allGames, groups, bracketRounds, liveMatches }
         <div className="tb-main" style={{ height: HALF_H }}>
           {/* Left half columns */}
           {leftMatches.map((matches, col) => (
-            <>
-              <RoundCol key={`lc${col}`} matches={matches} roundIdx={col} confirmedAbbrs={confirmedAbbrs} liveIdx={liveIdx} t={t} />
-              <ConnSvg key={`lv${col}`}
+            <Fragment key={`l${col}`}>
+              <RoundCol matches={matches} roundIdx={col} confirmedAbbrs={confirmedAbbrs} liveIdx={liveIdx} t={t} />
+              <ConnSvg
                 fromRound={col} toRound={col + 1}
                 count={matches.length / 2 || 1}
                 side="left"
                 single={col === 3}
               />
-            </>
+            </Fragment>
           ))}
 
           {/* Final */}
@@ -495,15 +473,15 @@ export default function Bracket({ allGames, groups, bracketRounds, liveMatches }
           {rightMatches.map((matches, col) => {
             const roundIdx = 3 - col  // SF=3, QF=2, R16=1, R32=0
             return (
-              <>
-                <ConnSvg key={`rv${col}`}
+              <Fragment key={`r${col}`}>
+                <ConnSvg
                   fromRound={roundIdx} toRound={roundIdx + 1}
                   count={col === 0 ? 1 : matches.length / 2}
                   side="right"
                   single={col === 0}
                 />
-                <RoundCol key={`rc${col}`} matches={matches} roundIdx={roundIdx} confirmedAbbrs={confirmedAbbrs} liveIdx={liveIdx} t={t} />
-              </>
+                <RoundCol matches={matches} roundIdx={roundIdx} confirmedAbbrs={confirmedAbbrs} liveIdx={liveIdx} t={t} />
+              </Fragment>
             )
           })}
         </div>
