@@ -164,21 +164,16 @@ function matchesSlot(match, [a, b]) {
   return fits(a) && fits(b)
 }
 
-// Map an unordered list of R32 matches into the 16 correct bracket slots
+// Map an unordered list of R32 matches into the 16 correct bracket slots.
+// Only matches whose BOTH teams belong to a known R32 slot are placed; anything
+// else (e.g. an R16 fixture that leaked into the candidate list) is dropped, so
+// later-round pairings can never be duplicated into an empty R32 slot.
 function slotR32(matches) {
   const slots = Array(16).fill(null)
-  const unmatched = []
   matches.forEach(m => {
     if (!m) return
     const idx = R32_SLOTS.findIndex((pair, i) => !slots[i] && matchesSlot(m, pair))
     if (idx >= 0) slots[idx] = m
-    else unmatched.push(m)
-  })
-  // Fill any remaining nulls with unmatched (preserves partial data)
-  let spare = 0
-  unmatched.forEach(m => {
-    while (spare < 16 && slots[spare] !== null) spare++
-    if (spare < 16) slots[spare] = m
   })
   return slots
 }
@@ -302,10 +297,26 @@ function advanceRound(matches) {
   return next
 }
 
-// Prefer data from source A if it has real teams; fall back to source B
-function bestOf(a, b, n) {
-  const hasReal = arr => arr.some(m => m?.home?.abbr && !isPlaceholder(m.home.abbr, m.home.team))
-  return hasReal(a) ? a : (hasReal(b) ? b : Array(n).fill(null))
+// Merge real allGames fixtures into a correctly-positioned computed round.
+// For each computed slot whose two teams are both known, find the real fixture
+// with the SAME two teams (by identity) and use it (so we get real scores,
+// status and winner flags). Slots that aren't fully decided keep the computed
+// placeholder. This positions matches by advancement, never by blind slicing,
+// so a right-side fixture can never leak into a left-side slot (or vice versa).
+function mergeRound(computed, realFixtures, liveIdx) {
+  const reals = (realFixtures ?? []).filter(Boolean).map(m => withLive(m, liveIdx))
+  const abbrsOf = m => [m?.home?.abbr, m?.away?.abbr]
+    .filter(Boolean).map(x => x.toUpperCase())
+  return computed.map(cm => {
+    if (!cm) return null
+    const want = abbrsOf(cm)
+    if (want.length < 2) return cm  // opponent still TBD — keep computed
+    const real = reals.find(r => {
+      const have = abbrsOf(r)
+      return want.every(w => have.includes(w))
+    })
+    return real ?? cm
+  })
 }
 
 // ── Build unified bracket structure ─────────────────────────────────────────
@@ -350,25 +361,20 @@ function buildBracketData(bracketRounds, allGames, groupMap, liveIdx) {
     const leftR32  = ordered.slice(0, 8)
     const rightR32 = ordered.slice(8, 16)
 
-    // Compute each later round from the previous round's winners; prefer any
-    // explicit allGames fixtures (which carry real dates/scores) when present.
-    const computedLeftR16  = advanceRound(leftR32)
-    const computedRightR16 = advanceRound(rightR32)
-    const leftR16  = bestOf(fill(byRound.r16.slice(0, 4).map(overlay), 4), fill(computedLeftR16, 4), 4)
-    const rightR16 = bestOf(fill(byRound.r16.slice(4, 8).map(overlay), 4), fill(computedRightR16, 4), 4)
+    // Compute each later round from the previous round's winners (correct
+    // positions), then merge in real allGames fixtures BY TEAM IDENTITY so a
+    // match is never placed on the wrong side by blind index slicing.
+    const leftR16  = mergeRound(advanceRound(leftR32),  byRound.r16, liveIdx)
+    const rightR16 = mergeRound(advanceRound(rightR32), byRound.r16, liveIdx)
 
-    const computedLeftQF  = advanceRound(leftR16)
-    const computedRightQF = advanceRound(rightR16)
-    const leftQF  = bestOf(fill(byRound.qf.slice(0, 2).map(overlay), 2), fill(computedLeftQF, 2), 2)
-    const rightQF = bestOf(fill(byRound.qf.slice(2, 4).map(overlay), 2), fill(computedRightQF, 2), 2)
+    const leftQF  = mergeRound(advanceRound(leftR16),  byRound.qf, liveIdx)
+    const rightQF = mergeRound(advanceRound(rightR16), byRound.qf, liveIdx)
 
-    const computedLeftSF  = advanceRound(leftQF)
-    const computedRightSF = advanceRound(rightQF)
-    const leftSF  = bestOf(fill(byRound.sf.slice(0, 1).map(overlay), 1), fill(computedLeftSF, 1), 1)
-    const rightSF = bestOf(fill(byRound.sf.slice(1, 2).map(overlay), 1), fill(computedRightSF, 1), 1)
+    const leftSF  = mergeRound(advanceRound(leftQF),  byRound.sf, liveIdx)
+    const rightSF = mergeRound(advanceRound(rightQF), byRound.sf, liveIdx)
 
-    const computedFinal = advanceRound([...leftSF, ...rightSF])[0] ?? null
-    const final = (byRound.f[0] ? overlay(byRound.f[0]) : null) ?? computedFinal
+    const computedFinal = advanceRound([...leftSF, ...rightSF])
+    const final = mergeRound(computedFinal, byRound.f, liveIdx)[0] ?? null
 
     return { leftR32, leftR16, leftQF, leftSF, final, rightSF, rightQF, rightR16, rightR32 }
   }
