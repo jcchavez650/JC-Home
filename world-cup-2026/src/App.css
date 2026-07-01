@@ -1030,6 +1030,22 @@
 }
 
 /* ── Eliminated tab ── */
+.elim-summary {
+  margin: 10px 12px 2px;
+  padding: 10px 14px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text2);
+}
+.elim-summary-out {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--red);
+}
+.elim-summary-alive { color: var(--green); font-weight: 600; }
+
 .elim-grid {
   display: flex;
   flex-direction: column;
@@ -1043,6 +1059,28 @@
   border-left: 4px solid var(--red);
   border-radius: 10px;
   padding: 12px;
+  transition: transform 0.12s ease;
+}
+.elim-card:active { transform: scale(0.99); }
+
+.elim-card-advanced {
+  border-left-color: var(--green) !important;
+}
+
+.elim-seed {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--green);
+  min-width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.elim-x-ok { color: var(--green) !important; opacity: 1 !important; }
+.elim-x-pending { color: var(--gold) !important; opacity: 1 !important; }
+
+.elim-stat-good {
+  background: rgba(46, 160, 67, 0.14);
 }
 
 .elim-card-top {
