@@ -117,6 +117,8 @@ const translations = {
     reasonThirdCut: 'Missed the 3rd-place cut',
     reasonPending: 'Group done — awaiting cut',
     reasonWildcardIn: 'Best 3rd place',
+    knockoutExits: '🏳️ Knockout Exits',
+    lostIn: 'Lost in', vs: 'vs',
   },
   es: {
     title: 'Copa del Mundo 2026',
@@ -177,6 +179,8 @@ const translations = {
     reasonThirdCut: 'Quedó fuera del corte',
     reasonPending: 'Grupo terminado — esperando corte',
     reasonWildcardIn: 'Mejor 3er lugar',
+    knockoutExits: '🏳️ Eliminados en Eliminatorias',
+    lostIn: 'Perdió en', vs: 'vs',
   },
 }
 

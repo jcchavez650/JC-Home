@@ -1114,6 +1114,31 @@
   background: rgba(46, 160, 67, 0.14);
 }
 
+/* Knockout-exit card — round badge + scoreline, no group stats */
+.elim-card-ko { border-left-color: var(--red); padding: 10px 12px; }
+.elim-ko-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.elim-ko-round {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--text2);
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 7px;
+}
+.elim-ko-score {
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
 .elim-card-top {
   display: flex;
   align-items: center;

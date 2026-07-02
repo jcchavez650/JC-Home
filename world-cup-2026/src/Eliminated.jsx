@@ -85,10 +85,81 @@ function dedupe(list) {
   })
 }
 
-export default function Eliminated({ groups }) {
+// ── Knockout-stage eliminations (live) ───────────────────────────────────────
+// The group standings freeze once the group stage ends, so knockout exits must
+// come from the match results (allGames + live scores), not the standings API.
+const KO_ORDER = { R32: 1, R16: 2, QF: 3, SF: 4, '3P': 5, F: 6 }
+const KO_LABEL = { R32: 'roundOf32', R16: 'roundOf16', QF: 'quarterfinals', SF: 'semifinals', '3P': 'thirdPlace', F: 'final' }
+
+function koRound(m) {
+  const text = ((m.group ?? '') + ' ' + (m.name ?? '')).toLowerCase()
+  if (/round.of.32|\br32\b|round.32/.test(text)) return 'R32'
+  if (/round.of.16|\br16\b|round.16/.test(text)) return 'R16'
+  if (/quarter/.test(text)) return 'QF'
+  if (/third|3rd.place/.test(text)) return '3P'
+  if (/semi/.test(text)) return 'SF'
+  if (/\bfinal\b/.test(text)) return 'F'
+  return null
+}
+
+// Overlay live scores/winner flags onto matches, keyed by team pair
+function liveIndex(liveMatches) {
+  const idx = new Map()
+  ;(liveMatches ?? []).forEach(m => {
+    if (!m.home?.abbr || !m.away?.abbr) return
+    idx.set(`${m.home.abbr}:${m.away.abbr}`, m)
+    idx.set(`${m.away.abbr}:${m.home.abbr}`, { ...m, home: m.away, away: m.home })
+  })
+  return idx
+}
+
+// Losers of completed knockout matches — each team appears once (first exit).
+export function getKnockoutEliminated(allGames, liveMatches) {
+  const live = liveIndex(liveMatches)
+  const out = []
+
+  ;(allGames ?? []).forEach(g => {
+    const round = koRound(g)
+    if (!round) return
+    const m = live.get(`${g.home?.abbr}:${g.away?.abbr}`) ?? g
+    const done = /FINAL|FULL_TIME|\bFT\b/i.test(m.statusType ?? '')
+    if (!done) return
+
+    const hs = m.home?.score != null ? +m.home.score : NaN
+    const as = m.away?.score != null ? +m.away.score : NaN
+    let loser = null, winner = null
+    if (m.home?.winner) { loser = m.away;  winner = m.home }
+    else if (m.away?.winner) { loser = m.home; winner = m.away }
+    else if (!isNaN(hs) && !isNaN(as) && hs !== as) {
+      const homeWon = hs > as
+      loser  = homeWon ? m.away : m.home
+      winner = homeWon ? m.home : m.away
+    }
+    if (!loser?.abbr) return
+
+    const ls = loser === m.home ? hs : as
+    const ws = loser === m.home ? as : hs
+    out.push({
+      ...loser, round, date: m.date,
+      koScore: (!isNaN(ls) && !isNaN(ws)) ? `${ls}–${ws}` : null,
+      koOpponent: winner?.abbr ?? null,
+    })
+  })
+
+  // A team can lose at most once; keep its exit, newest round/date first
+  const seen = new Set()
+  return out
+    .sort((a, b) => (KO_ORDER[b.round] - KO_ORDER[a.round]) ||
+                    ((b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0)))
+    .filter(t => { if (seen.has(t.abbr)) return false; seen.add(t.abbr); return true })
+}
+
+export default function Eliminated({ groups, allGames, liveMatches }) {
   const { t } = useLang()
 
-  if (!groups.length) {
+  const knockout = getKnockoutEliminated(allGames, liveMatches)
+
+  if (!groups.length && !knockout.length) {
     return <div className="empty"><div className="e">🏆</div>{t.eliminatedNone}</div>
   }
 
@@ -102,22 +173,26 @@ export default function Eliminated({ groups }) {
   const pending   = third.pending
 
   const totalTeams = groups.reduce((n, g) => n + g.teams.length, 0)
+  const totalOut   = out.length + knockout.length
 
-  if (!out.length && !pending.length && !advancing.length) {
+  if (!totalOut && !pending.length && !advancing.length) {
     return <div className="empty"><div className="e">✅</div>{t.eliminatedNone}</div>
   }
 
   return (
     <div style={{ paddingBottom: 24 }}>
-      {out.length > 0 && (
+      {totalOut > 0 && (
         <div className="elim-summary">
-          <span className="elim-summary-out">{out.length}</span> {t.outLabel}
+          <span className="elim-summary-out">{totalOut}</span> {t.outLabel}
           {totalTeams > 0 && (
-            <span className="elim-summary-alive"> · {totalTeams - out.length} {t.aliveLabel}</span>
+            <span className="elim-summary-alive"> · {Math.max(0, totalTeams - totalOut)} {t.aliveLabel}</span>
           )}
         </div>
       )}
 
+      {knockout.length > 0 && (
+        <KnockoutSection title={t.knockoutExits} teams={knockout} />
+      )}
       {advancing.length > 0 && (
         <Section title={t.wildcardIn} teams={advancing} variant="advanced" reason={t.reasonWildcardIn} />
       )}
@@ -130,6 +205,39 @@ export default function Eliminated({ groups }) {
       {mathElim.length > 0 && (
         <Section title={t.eliminatedMath} teams={mathElim} reason={t.reasonMath} />
       )}
+    </div>
+  )
+}
+
+// Knockout exits — compact cards showing the round and scoreline of the loss.
+function KnockoutSection({ title, teams }) {
+  const { t, tn } = useLang()
+  return (
+    <div>
+      <div className="section-header">{title} · {teams.length} {teams.length === 1 ? t.teamOne : t.teamMany}</div>
+      <div className="elim-grid">
+        {teams.map(team => {
+          const roundLabel = t[KO_LABEL[team.round]] ?? team.round
+          return (
+            <div key={team.abbr} className="elim-card elim-card-ko">
+              <div className="elim-card-top" style={{ marginBottom: 0 }}>
+                <TeamFlag abbr={team.abbr} logo={team.logo} size={34} />
+                <div className="elim-card-info">
+                  <div className="elim-team-name">{tn(team.team, team.abbr)}</div>
+                  <div className="elim-group-badge">
+                    {t.lostIn} {roundLabel}
+                    {team.koOpponent ? ` · ${t.vs} ${team.koOpponent}` : ''}
+                  </div>
+                </div>
+                <div className="elim-ko-right">
+                  <span className="elim-ko-round">{team.round}</span>
+                  {team.koScore && <span className="elim-ko-score">{team.koScore}</span>}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
