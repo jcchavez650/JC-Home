@@ -147,39 +147,70 @@
   justify-content: space-between;
 }
 
-/* Win probability bar */
+/* Win probability bar — data-viz proportion bar (diverging: blue↔gray↔red) */
 .prob-bar-wrap {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 12px 10px;
+  /* role colors (dark-surface steps, validated) */
+  --prob-home: #3987e5;   /* blue pole  */
+  --prob-draw: #6e7681;   /* neutral midpoint */
+  --prob-away: #e66767;   /* red pole   */
+  padding: 2px 12px 10px;
 }
 
-.prob-label {
+.prob-caption {
   font-size: 10px;
-  color: var(--text2);
-  width: 28px;
-  flex-shrink: 0;
   font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 5px;
 }
-.prob-label:last-child { text-align: right; }
 
 .prob-bar {
-  flex: 1;
   display: flex;
-  height: 6px;
-  border-radius: 4px;
-  overflow: hidden;
-  background: var(--border);
+  gap: 2px;                 /* 2px surface gap between fills */
+  height: 10px;
+  width: 100%;
 }
 
 .prob-seg {
   height: 100%;
+  min-width: 2px;
+  border-radius: 1px;
   transition: width 0.4s ease;
 }
-.prob-home { background: var(--gold); }
-.prob-draw { background: var(--text2); opacity: 0.5; }
-.prob-away { background: var(--accent, #5b8af5); }
+/* 4px rounded data-ends anchored to the bar ends */
+.prob-seg:first-child { border-radius: 4px 1px 1px 4px; }
+.prob-seg:last-child  { border-radius: 1px 4px 4px 1px; }
+
+.prob-home { background: var(--prob-home); }
+.prob-draw { background: var(--prob-draw); }
+.prob-away { background: var(--prob-away); }
+
+/* Legend — identity by color chip, text stays in ink tokens */
+.prob-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+}
+.prob-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text2);
+  white-space: nowrap;
+}
+.prob-chip {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.prob-chip-home { background: var(--prob-home); }
+.prob-chip-draw { background: var(--prob-draw); }
+.prob-chip-away { background: var(--prob-away); }
 
 /* Match card */
 .match-card {
@@ -1277,10 +1308,6 @@
 }
 
 .empty .e { font-size: 36px; margin-bottom: 10px; }
-
-/* ── Prob bar abbr label ─────────────────────────────────── */
-.prob-label { width: auto; min-width: 42px; }
-.prob-abbr { font-weight: 700; color: var(--text); margin-right: 2px; }
 
 /* ── Live score pulse ────────────────────────────────────── */
 @keyframes score-pulse {

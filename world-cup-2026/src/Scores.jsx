@@ -183,15 +183,24 @@ function MatchCard({ match: m }) {
 }
 
 export function WinProbBar({ home, draw, away, homeAbbr, awayAbbr }) {
+  // Proportion bar: home-win ↔ draw ↔ away-win. Colors follow the data-viz
+  // diverging pattern — blue pole / neutral gray midpoint / red pole — with
+  // direct labels + 2px surface gaps as secondary (non-color) encoding.
+  const d = draw ?? 0
+  const label = `${homeAbbr} ${home}% · Draw ${d}% · ${awayAbbr} ${away}%`
   return (
     <div className="prob-bar-wrap">
-      <span className="prob-label"><span className="prob-abbr">{homeAbbr}</span> {home}%</span>
-      <div className="prob-bar">
-        <div className="prob-seg prob-home" style={{ width: `${home}%` }} />
-        {draw > 0 && <div className="prob-seg prob-draw" style={{ width: `${draw}%` }} />}
-        <div className="prob-seg prob-away" style={{ width: `${away}%` }} />
+      <div className="prob-caption">Win probability</div>
+      <div className="prob-bar" role="img" aria-label={label}>
+        <div className="prob-seg prob-home" style={{ width: `${home}%` }} title={`${homeAbbr} ${home}%`} />
+        {d > 0 && <div className="prob-seg prob-draw" style={{ width: `${d}%` }} title={`Draw ${d}%`} />}
+        <div className="prob-seg prob-away" style={{ width: `${away}%` }} title={`${awayAbbr} ${away}%`} />
       </div>
-      <span className="prob-label">{away}% <span className="prob-abbr">{awayAbbr}</span></span>
+      <div className="prob-legend">
+        <span className="prob-key"><i className="prob-chip prob-chip-home" />{homeAbbr} {home}%</span>
+        <span className="prob-key"><i className="prob-chip prob-chip-draw" />Draw {d}%</span>
+        <span className="prob-key"><i className="prob-chip prob-chip-away" />{awayAbbr} {away}%</span>
+      </div>
     </div>
   )
 }
