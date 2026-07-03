@@ -148,7 +148,7 @@ export default function App() {
             {tab === 'games'   && <Games matches={allGames.length ? allGames : matches} allLoaded={allGames.length > 0} />}
             {tab === 'groups'  && <Groups groups={groups} />}
             {tab === 'bracket'    && <Bracket allGames={allGames} groups={groups} bracketRounds={bracketRounds} liveMatches={matches} />}
-            {tab === 'eliminated' && <Eliminated groups={groups} allGames={allGames} liveMatches={matches} />}
+            {tab === 'eliminated' && <Eliminated groups={groups} allGames={allGames} liveMatches={matches} bracketRounds={bracketRounds} />}
           </>
         )}
       </main>

@@ -118,6 +118,11 @@ function koRound(m) {
   return null
 }
 
+// ESPN uses placeholder codes like "RD16W1"/"QFW2" for undecided bracket slots
+const isPlaceholder = (abbr, name) =>
+  !abbr || /^(RD\d|QF[W\d]|SF[W\d]|[A-Z]{1,2}W\d|TBD)/i.test(abbr) ||
+  /\b(winner|rd\d|round of|semifinal|quarterfinal)\b/i.test(name ?? '')
+
 // Overlay live scores/winner flags onto matches, keyed by team pair
 function liveIndex(liveMatches) {
   const idx = new Map()
@@ -129,14 +134,52 @@ function liveIndex(liveMatches) {
   return idx
 }
 
+// Turn ESPN bracket-API seeds into match-like objects (a reliable knockout
+// source: the scoreboard date-range often omits completed knockout games, but
+// the bracket API carries their scores + winner flags).
+function bracketMatches(bracketRounds) {
+  const roundOf = name => {
+    const n = (name ?? '').toLowerCase()
+    if (n.includes('32')) return 'R32'
+    if (n.includes('16')) return 'R16'
+    if (n.includes('quarter')) return 'QF'
+    if (n.includes('semi')) return 'SF'
+    if (n.includes('third') || n.includes('3rd')) return '3P'
+    if (n.includes('final')) return 'F'
+    return null
+  }
+  const out = []
+  ;(bracketRounds ?? []).forEach(r => {
+    const round = roundOf(r.name)
+    ;(r.seeds ?? []).forEach(s => {
+      if (!s.home || !s.away) return
+      out.push({
+        _round: round, date: null, group: '', name: '',
+        statusType: (s.home.winner || s.away.winner) ? 'STATUS_FINAL' : (s.status ?? ''),
+        home: { ...s.home, score: s.home.score ?? s.homeScore },
+        away: { ...s.away, score: s.away.score ?? s.awayScore },
+      })
+    })
+  })
+  return out
+}
+
 // Losers of completed knockout matches — each team appears once (first exit).
-export function getKnockoutEliminated(allGames, liveMatches) {
+// Draws from every available source so a completed game is caught regardless of
+// which ESPN endpoint carries it.
+export function getKnockoutEliminated(allGames, liveMatches, bracketRounds) {
   const live = liveIndex(liveMatches)
+  const candidates = [
+    ...(allGames ?? []),
+    ...(liveMatches ?? []),
+    ...bracketMatches(bracketRounds),
+  ]
   const out = []
 
-  ;(allGames ?? []).forEach(g => {
-    const round = koRound(g)
+  candidates.forEach(g => {
+    const round = g._round ?? koRound(g)
     if (!round) return
+    // Prefer live scores/flags when we have a live copy of this fixture
     const m = live.get(`${g.home?.abbr}:${g.away?.abbr}`) ?? g
     const done = /FINAL|FULL_TIME|\bFT\b/i.test(m.statusType ?? '')
     if (!done) return
@@ -151,14 +194,14 @@ export function getKnockoutEliminated(allGames, liveMatches) {
       loser  = homeWon ? m.away : m.home
       winner = homeWon ? m.home : m.away
     }
-    if (!loser?.abbr) return
+    if (!loser?.abbr || isPlaceholder(loser.abbr, loser.team)) return
 
     const ls = loser === m.home ? hs : as
     const ws = loser === m.home ? as : hs
     out.push({
-      ...loser, round, date: m.date,
+      ...loser, round, date: m.date ?? null,
       koScore: (!isNaN(ls) && !isNaN(ws)) ? `${ls}–${ws}` : null,
-      koOpponent: winner?.abbr ?? null,
+      koOpponent: winner && !isPlaceholder(winner.abbr, winner.team) ? winner.abbr : null,
     })
   })
 
@@ -170,10 +213,10 @@ export function getKnockoutEliminated(allGames, liveMatches) {
     .filter(t => { if (seen.has(t.abbr)) return false; seen.add(t.abbr); return true })
 }
 
-export default function Eliminated({ groups, allGames, liveMatches }) {
+export default function Eliminated({ groups, allGames, liveMatches, bracketRounds }) {
   const { t } = useLang()
 
-  const knockout = getKnockoutEliminated(allGames, liveMatches)
+  const knockout = getKnockoutEliminated(allGames, liveMatches, bracketRounds)
 
   if (!groups.length && !knockout.length) {
     return <div className="empty"><div className="e">🏆</div>{t.eliminatedNone}</div>
