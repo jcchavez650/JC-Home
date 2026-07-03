@@ -93,12 +93,28 @@ const KO_LABEL = { R32: 'roundOf32', R16: 'roundOf16', QF: 'quarterfinals', SF: 
 
 function koRound(m) {
   const text = ((m.group ?? '') + ' ' + (m.name ?? '')).toLowerCase()
-  if (/round.of.32|\br32\b|round.32/.test(text)) return 'R32'
-  if (/round.of.16|\br16\b|round.16/.test(text)) return 'R16'
-  if (/quarter/.test(text)) return 'QF'
+  if (/round.of.32|\br32\b|round.32|last.32/.test(text)) return 'R32'
+  if (/round.of.16|\br16\b|round.16|last.16/.test(text)) return 'R16'
+  if (/quarter|\bqf\b/.test(text)) return 'QF'
   if (/third|3rd.place/.test(text)) return '3P'
-  if (/semi/.test(text)) return 'SF'
+  if (/semi|\bsf\b/.test(text)) return 'SF'
   if (/\bfinal\b/.test(text)) return 'F'
+
+  // Date fallback — ESPN's scoreboard slug/name often omits the round, so use
+  // the official 2026 knockout schedule (all times are calendar-date based).
+  const d = m.date
+  if (!(d instanceof Date) || isNaN(d)) return null
+  const y = d.getFullYear(), mo = d.getMonth(), day = d.getDate()
+  if (y !== 2026) return null
+  if (mo === 5 && day >= 28) return 'R32'          // Jun 28–30
+  if (mo === 6) {                                  // July
+    if (day <= 3)              return 'R32'         // Jul 1–3
+    if (day >= 4  && day <= 7) return 'R16'         // Jul 4–7
+    if (day >= 9  && day <= 11) return 'QF'         // Jul 9–11
+    if (day >= 14 && day <= 15) return 'SF'         // Jul 14–15
+    if (day === 18)            return '3P'          // Jul 18
+    if (day === 19)            return 'F'           // Jul 19
+  }
   return null
 }
 
