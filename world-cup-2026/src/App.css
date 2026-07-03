@@ -1138,6 +1138,11 @@
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
+.elim-ko-pens {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text2);
+}
 
 .elim-card-top {
   display: flex;

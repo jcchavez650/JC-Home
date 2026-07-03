@@ -201,15 +201,19 @@ export function getKnockoutEliminated(allGames, liveMatches, bracketRounds) {
     out.push({
       ...loser, round, date: m.date ?? null,
       koScore: (!isNaN(ls) && !isNaN(ws)) ? `${ls}–${ws}` : null,
+      // Level score but a decided winner ⇒ the tie went to penalties
+      koPens: !isNaN(ls) && ls === ws,
       koOpponent: winner && !isPlaceholder(winner.abbr, winner.team) ? winner.abbr : null,
     })
   })
 
-  // A team can lose at most once; keep its exit, newest round/date first
+  // A team can lose at most once; newest round first, then date, then name so
+  // the order is stable even for sources without dates (bracket API seeds)
   const seen = new Set()
   return out
     .sort((a, b) => (KO_ORDER[b.round] - KO_ORDER[a.round]) ||
-                    ((b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0)))
+                    ((b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0)) ||
+                    (a.team ?? a.abbr).localeCompare(b.team ?? b.abbr))
     .filter(t => { if (seen.has(t.abbr)) return false; seen.add(t.abbr); return true })
 }
 
@@ -231,7 +235,9 @@ export default function Eliminated({ groups, allGames, liveMatches, bracketRound
   const advancing = third.advancing
   const pending   = third.pending
 
-  const totalTeams = groups.reduce((n, g) => n + g.teams.length, 0)
+  // The 2026 field is always 48 teams — don't derive this from the standings
+  // API, which may return a partial group list.
+  const totalTeams = 48
   const totalOut   = out.length + knockout.length
 
   if (!totalOut && !pending.length && !advancing.length) {
@@ -290,7 +296,12 @@ function KnockoutSection({ title, teams }) {
                 </div>
                 <div className="elim-ko-right">
                   <span className="elim-ko-round">{team.round}</span>
-                  {team.koScore && <span className="elim-ko-score">{team.koScore}</span>}
+                  {team.koScore && (
+                    <span className="elim-ko-score">
+                      {team.koScore}
+                      {team.koPens && <span className="elim-ko-pens"> {t.pens}</span>}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

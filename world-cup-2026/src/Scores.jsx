@@ -4,16 +4,32 @@ import { useLang } from './LangContext.jsx'
 import HighlightsModal from './HighlightsModal.jsx'
 import { useLiveClock } from './useLiveClock.js'
 
-export function formatGroupLabel(slug) {
-  if (!slug) return 'World Cup 2026'
-  const g = slug.match(/group[-\s]([a-l])/i)
+export function formatGroupLabel(slug, date) {
+  const g = (slug ?? '').match(/group[-\s]([a-l])/i)
   if (g) return `Group ${g[1].toUpperCase()}`
-  if (slug.includes('round-of-32') || slug.includes('round of 32')) return 'Round of 32'
-  if (slug.includes('round-of-16') || slug.includes('round of 16')) return 'Round of 16'
-  if (slug.includes('quarter')) return 'Quarterfinal'
-  if (slug.includes('semi')) return 'Semifinal'
-  if (slug.includes('final')) return 'Final'
-  return slug.replace(/-/g, ' ').replace(/fifa\s*world(\s*cup)?/gi, '').trim().toUpperCase() || 'World Cup 2026'
+  if (slug) {
+    if (slug.includes('round-of-32') || slug.includes('round of 32')) return 'Round of 32'
+    if (slug.includes('round-of-16') || slug.includes('round of 16')) return 'Round of 16'
+    if (slug.includes('quarter')) return 'Quarterfinal'
+    if (slug.includes('semi')) return 'Semifinal'
+    if (slug.includes('final')) return 'Final'
+  }
+  // ESPN's slug is often just "fifa-world-cup" — derive the round from the
+  // official 2026 knockout calendar instead of showing a generic label.
+  if (date instanceof Date && !isNaN(date) && date.getFullYear() === 2026) {
+    const mo = date.getMonth(), day = date.getDate()
+    if (mo === 5 && day >= 28) return 'Round of 32'
+    if (mo === 6) {
+      if (day <= 3)               return 'Round of 32'
+      if (day >= 4  && day <= 7)  return 'Round of 16'
+      if (day >= 9  && day <= 11) return 'Quarterfinal'
+      if (day >= 14 && day <= 15) return 'Semifinal'
+      if (day === 18)             return '3rd Place'
+      if (day === 19)             return 'Final'
+    }
+  }
+  const cleaned = (slug ?? '').replace(/-/g, ' ').replace(/fifa\s*world(\s*cup)?/gi, '').trim().toUpperCase()
+  return cleaned || 'World Cup 2026'
 }
 
 export default function Scores({ matches }) {
@@ -107,7 +123,7 @@ function MatchCard({ match: m }) {
             {t.live}
           </span>
         )}
-        <span>{formatGroupLabel(m.group)}</span>
+        <span>{formatGroupLabel(m.group, m.date)}</span>
         {m.venue && <span>· {m.venue}</span>}
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
           {canHighlight && (

@@ -418,14 +418,33 @@ export default function Bracket({ allGames, groups, bracketRounds, liveMatches }
     [bracketRounds, allGames, groups, groupMap, liveIdx]
   )
 
-  // Scroll to center (Final column) on mount
+  // Initial scroll: land on the action, not on an empty Final column.
+  // Find the deepest round that has real teams and position the view there —
+  // during R32/R16 that means starting from the left edge where the games are.
+  const didScroll = useRef(false)
   useEffect(() => {
-    if (!scrollRef.current) return
+    if (!scrollRef.current || didScroll.current) return
     const el = scrollRef.current
-    // Center column is at position 4 out of 9 columns
-    const centerX = (COL_W + CONN_W) * 4 + COL_W / 2
-    el.scrollLeft = centerX - el.clientWidth / 2
-  }, [])
+    const hasReal = m => m && (
+      (m.home?.abbr && !isPlaceholder(m.home.abbr, m.home.team)) ||
+      (m.away?.abbr && !isPlaceholder(m.away.abbr, m.away.team))
+    )
+    let deepest = 0
+    if (hasReal(bd.final)) deepest = 4
+    else if ([...bd.leftSF, ...bd.rightSF].some(hasReal)) deepest = 3
+    else if ([...bd.leftQF, ...bd.rightQF].some(hasReal)) deepest = 2
+    else if ([...bd.leftR16, ...bd.rightR16].some(hasReal)) deepest = 1
+
+    if (deepest >= 3) {
+      // Late tournament — center on the Final
+      const centerX = (COL_W + CONN_W) * 4 + COL_W / 2
+      el.scrollLeft = centerX - el.clientWidth / 2
+    } else {
+      // Early knockout — start at the round before the deepest one
+      el.scrollLeft = Math.max(0, (COL_W + CONN_W) * (deepest - 1))
+    }
+    didScroll.current = true
+  }, [bd])
 
   const roundLabels = [
     t.roundOf32    ?? 'Round of 32',

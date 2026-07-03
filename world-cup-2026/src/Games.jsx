@@ -179,7 +179,7 @@ function GameRow({ match: m }) {
             {m.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         )}
-        <span className="game-group-label">{formatGroupLabel(m.group)}</span>
+        <span className="game-group-label">{formatGroupLabel(m.group, m.date)}</span>
       </div>
 
       {/* Teams + score */}

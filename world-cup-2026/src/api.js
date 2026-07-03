@@ -197,6 +197,7 @@ const ISO2 = {
   SCO: 'gb-sct', WAL: 'gb-wls', SVK: 'sk', CZE: 'cz', HUN: 'hu', ROM: 'ro', UKR: 'ua',
   TUR: 'tr', GRE: 'gr', ALB: 'al', GEO: 'ge', SLO: 'si',
   MAR: 'ma', SEN: 'sn', NGR: 'ng', EGY: 'eg', CMR: 'cm', CIV: 'ci', GHA: 'gh', TUN: 'tn', RSA: 'za', MLI: 'ml', COD: 'cd',
+  ALG: 'dz', BIH: 'ba', CPV: 'cv', BFA: 'bf',
   JPN: 'jp', KOR: 'kr', SAU: 'sa', IRN: 'ir', AUS: 'au', QAT: 'qa', UAE: 'ae', IRQ: 'iq', UZB: 'uz', JOR: 'jo', CHN: 'cn',
   NZL: 'nz', CRI: 'cr', HON: 'hn', GUA: 'gt', PAN: 'pa', JAM: 'jm', TRI: 'tt',
 }
