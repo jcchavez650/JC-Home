@@ -4,12 +4,15 @@ import db from '../database.js';
 const JWT_SECRET = process.env.JWT_SECRET || 'tote-tracker-dev-secret-change-in-prod';
 
 export function requireAuth(req, res, next) {
+  // Prefer the httpOnly cookie; fall back to a Bearer header for API clients
   const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) return res.status(401).json({ error: 'Authentication required' });
+  const token = req.cookies?.auth_token
+    || (header?.startsWith('Bearer ') ? header.slice(7) : null);
+  if (!token) return res.status(401).json({ error: 'Authentication required' });
 
   let payload;
   try {
-    payload = jwt.verify(header.slice(7), JWT_SECRET, { algorithms: ['HS256'] });
+    payload = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
   } catch {
     return res.status(401).json({ error: 'Token expired or invalid — please log in again' });
   }

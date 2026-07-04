@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import multer from 'multer';
@@ -20,6 +21,9 @@ mkdirSync(uploadsDir, { recursive: true });
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Behind Railway's proxy — needed for secure cookies to be recognised
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet({ contentSecurityPolicy: false }));
 
@@ -28,6 +32,7 @@ const allowedOrigin = process.env.ALLOWED_ORIGIN || 'http://localhost:5173';
 app.use(cors({ origin: allowedOrigin, credentials: true }));
 
 app.use(express.json({ limit: '16kb' }));
+app.use(cookieParser());
 
 // Rate limiters
 const authLimiter = rateLimit({

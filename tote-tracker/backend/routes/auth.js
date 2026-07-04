@@ -7,6 +7,21 @@ import { requireAuth, JWT_SECRET } from '../middleware/auth.js';
 
 const router = Router();
 
+// httpOnly cookie so client-side JS (and any XSS) cannot read the token.
+// sameSite:'strict' + the CORS lockdown provides CSRF protection since the
+// SPA and API are served from the same origin.
+const COOKIE_OPTS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  path: '/',
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+};
+
+function setAuthCookie(res, token) {
+  res.cookie('auth_token', token, COOKIE_OPTS);
+}
+
 function makeToken(user) {
   return jwt.sign(
     { id: user.id, email: user.email, name: user.name, role: user.role, tv: user.token_version ?? 0 },
@@ -16,7 +31,7 @@ function makeToken(user) {
 }
 
 function publicUser(u) {
-  const { password_hash, ...rest } = u;
+  const { password_hash, token_version, ...rest } = u;
   return rest;
 }
 
@@ -70,7 +85,8 @@ router.post('/register', async (req, res) => {
     .run(id, email.toLowerCase().trim(), name.trim(), password_hash, role);
 
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
-  res.status(201).json({ user: publicUser(user), token: makeToken(user) });
+  setAuthCookie(res, makeToken(user));
+  res.status(201).json({ user: publicUser(user) });
 });
 
 router.post('/login', async (req, res) => {
@@ -83,7 +99,13 @@ router.post('/login', async (req, res) => {
   const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) return res.status(401).json({ error: 'Invalid email or password' });
 
-  res.json({ user: publicUser(user), token: makeToken(user) });
+  setAuthCookie(res, makeToken(user));
+  res.json({ user: publicUser(user) });
+});
+
+router.post('/logout', (req, res) => {
+  res.clearCookie('auth_token', { ...COOKIE_OPTS, maxAge: undefined });
+  res.json({ success: true });
 });
 
 router.get('/me', requireAuth, (req, res) => {

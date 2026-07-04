@@ -113,21 +113,23 @@ export default function ToteList({ theme, onToggleTheme }) {
           <div className="status-dot" />
           <div className="status-item">Totes: <span className="status-val">{totes.length}</span></div>
           <div className="status-item">Items: <span className="status-val">{totalItems}</span></div>
-          <a href="/api/totes/export" className="status-export">↓ Export CSV</a>
+          {canEdit && <a href="/api/totes/export" className="status-export">↓ Export CSV</a>}
         </div>
       )}
 
-      {/* Search */}
-      <div className="search-wrap">
-        <span className="search-icon">⌕</span>
-        <input
-          className="search-input"
-          placeholder="Search items across all totes..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-        {search && <button className="search-clear" onClick={() => setSearch('')}>✕</button>}
-      </div>
+      {/* Search — editor/admin only (viewers browse the grid) */}
+      {canEdit && (
+        <div className="search-wrap">
+          <span className="search-icon">⌕</span>
+          <input
+            className="search-input"
+            placeholder="Search items across all totes..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          {search && <button className="search-clear" onClick={() => setSearch('')}>✕</button>}
+        </div>
+      )}
 
       {/* Search results */}
       {searchResults !== null && (

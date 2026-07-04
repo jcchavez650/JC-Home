@@ -25,7 +25,7 @@ router.get('/', (req, res) => {
   res.json(totes.map(parseTote));
 });
 
-router.get('/export', (req, res) => {
+router.get('/export', requireEditor, (req, res) => {
   const totes = db.prepare('SELECT * FROM totes ORDER BY label').all();
   const items = db.prepare('SELECT * FROM items ORDER BY tote_id, name').all();
 
@@ -52,7 +52,7 @@ router.get('/export', (req, res) => {
   res.send(csv);
 });
 
-router.get('/search', (req, res) => {
+router.get('/search', requireEditor, (req, res) => {
   const q = (req.query.q || '').trim();
   if (!q) return res.json([]);
 
