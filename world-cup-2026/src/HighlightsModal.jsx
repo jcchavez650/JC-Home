@@ -111,7 +111,7 @@ export default function HighlightsModal({ match, onClose }) {
                 className={`clip-thumb ${i === active ? 'active' : ''}`}
                 onClick={() => setActive(i)}
               >
-                {v.thumbnail ? (
+                {v.thumbnail && safeHttpsUrl(v.thumbnail) ? (
                   <img src={v.thumbnail} alt={v.title} />
                 ) : (
                   <div className="clip-thumb-placeholder">▶</div>
@@ -126,29 +126,42 @@ export default function HighlightsModal({ match, onClose }) {
   )
 }
 
+// Media URLs arrive via public CORS proxies, so treat them as untrusted:
+// only ever render https: URLs, and only embed iframes from an allowlist.
+function safeHttpsUrl(url) {
+  try {
+    const u = new URL(url)
+    return u.protocol === 'https:' ? u : null
+  } catch {
+    return null
+  }
+}
+
 function VideoPlayer({ clip }) {
-  if (clip.mp4) {
+  const mp4 = clip.mp4 && safeHttpsUrl(clip.mp4) ? clip.mp4 : null
+  const poster = clip.thumbnail && safeHttpsUrl(clip.thumbnail) ? clip.thumbnail : undefined
+  if (mp4) {
     return (
       <video
-        key={clip.mp4}
+        key={mp4}
         className="modal-video"
         controls
         autoPlay
         playsInline
-        poster={clip.thumbnail ?? undefined}
+        poster={poster}
       >
-        <source src={clip.mp4} type="video/mp4" />
+        <source src={mp4} type="video/mp4" />
       </video>
     )
   }
-  if (clip.embed) {
-    // Convert page URLs to embeddable URLs where possible
-    const embedSrc = toEmbedUrl(clip.embed)
+  const embedSrc = clip.embed ? toEmbedUrl(clip.embed) : null
+  if (embedSrc) {
     return (
       <iframe
         key={embedSrc}
         className="modal-video"
         src={embedSrc}
+        sandbox="allow-scripts allow-same-origin allow-presentation"
         allow="autoplay; fullscreen"
         allowFullScreen
         frameBorder="0"
@@ -159,13 +172,17 @@ function VideoPlayer({ clip }) {
   return <NoHighlights />
 }
 
+// Only allowlisted hosts may be iframed; anything else is dropped.
+const EMBED_HOSTS = /(^|\.)((youtube\.com)|(youtube-nocookie\.com)|(espn\.com))$/
 function toEmbedUrl(url) {
+  const u = safeHttpsUrl(url)
+  if (!u) return null
   // YouTube watch → embed
-  const yt = url.match(/youtube\.com\/watch\?v=([^&]+)/)
+  const yt = url.match(/youtube\.com\/watch\?v=([\w-]+)/)
   if (yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1`
-  const ytShort = url.match(/youtu\.be\/([^?]+)/)
+  const ytShort = url.match(/youtu\.be\/([\w-]+)/)
   if (ytShort) return `https://www.youtube.com/embed/${ytShort[1]}?autoplay=1`
-  return url
+  return EMBED_HOSTS.test(u.hostname) ? url : null
 }
 
 function NoHighlights({ isFinal, isLive }) {
