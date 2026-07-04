@@ -11,11 +11,11 @@ function isPlaceholder(abbr, name) {
 }
 
 // ── Layout constants ──────────────────────────────────────────────────────────
-const MATCH_H = 52   // px – height of one match card (2 team rows × 26px)
-const UNIT    = 64   // px – slot height at R32 level (must be ≥ MATCH_H)
+const MATCH_H = 65   // px – height of one match card (13px date strip + 2 team rows × 26px)
+const UNIT    = 74   // px – slot height at R32 level (must be ≥ MATCH_H)
 const COL_W   = 96   // px – width of a round column
 const CONN_W  = 20   // px – width of the SVG connector strip
-const HALF_H  = 8 * UNIT  // px – total height of each bracket half (512)
+const HALF_H  = 8 * UNIT  // px – total height of each bracket half
 
 // Center y of a match given its round index and position within that round
 function cy(roundIdx, matchIdx) {
@@ -219,16 +219,19 @@ function getRoundKey(m) {
   if (/third|3rd.place|third.place/.test(text)) return '3p'
   if (/semi/.test(text)) return 'sf'
   if (/\bfinal\b/.test(text)) return 'f'
-  // Date-based fallback (July 2026)
+  // Date-based fallback — official 2026 knockout calendar
   const d = m.date
-  if (d?.getFullYear() === 2026 && d.getMonth() === 6) {
-    const day = d.getDate()
-    if (day >= 4  && day <= 7)  return 'r32'
-    if (day >= 10 && day <= 12) return 'r16'
-    if (day >= 15 && day <= 16) return 'qf'
-    if (day >= 18 && day <= 19) return 'sf'
-    if (day === 21)              return '3p'
-    if (day >= 22)               return 'f'
+  if (d?.getFullYear() === 2026) {
+    const mo = d.getMonth(), day = d.getDate()
+    if (mo === 5 && day >= 28) return 'r32'   // Jun 28–30
+    if (mo === 6) {                            // July
+      if (day <= 3)               return 'r32' // Jul 1–3
+      if (day >= 4  && day <= 7)  return 'r16'
+      if (day >= 9  && day <= 11) return 'qf'
+      if (day >= 14 && day <= 15) return 'sf'
+      if (day === 18)             return '3p'
+      if (day === 19)             return 'f'
+    }
   }
   return null
 }
@@ -252,11 +255,12 @@ function withLive(match, liveIdx) {
   const key = `${match.home?.abbr}:${match.away?.abbr}`
   const live = liveIdx.get(key)
   if (!live) return match
-  // Merge live scores and status into the bracket match
+  // Merge live scores, status and kickoff date into the bracket match
   return {
     ...match,
     statusType: live.statusType,
     displayClock: live.displayClock,
+    date: match.date ?? live.date ?? null,
     home: { ...match.home, score: live.home.score ?? match.home?.score, winner: live.home.winner },
     away: { ...match.away, score: live.away.score ?? match.away?.score, winner: live.away.winner },
   }
@@ -560,11 +564,31 @@ function ConnSvg({ fromRound, toRound, count, side, single }) {
   )
 }
 
-// ── Match card (two stacked team rows) ────────────────────────────────────────
+// Date/status strip at the top of every card. Rendered on all variants (even
+// without a date) so card heights stay uniform and connectors line up.
+function MatchMeta({ match, t }) {
+  const date = match?.date instanceof Date && !isNaN(match.date) ? match.date : null
+  const isFinal = match?.statusType === 'STATUS_FINAL' || match?.statusType === 'STATUS_FULL_TIME'
+  const isLive  = match?.statusType === 'STATUS_IN_PROGRESS'
+  const left = date ? date.toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''
+  const right = isLive ? (match.displayClock || t?.live || 'Live')
+    : isFinal ? (t?.ft ?? 'FT')
+    : date ? date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    : ''
+  return (
+    <div className={`tb-match-meta${isLive ? ' tb-meta-live' : ''}`}>
+      <span>{left}</span>
+      <span>{right}</span>
+    </div>
+  )
+}
+
+// ── Match card (date strip + two stacked team rows) ───────────────────────────
 function MatchCard({ match, confirmedAbbrs, t }) {
   if (!match) {
     return (
       <div className="tb-match tb-match-empty">
+        <MatchMeta match={null} t={t} />
         <div className="tb-team tb-team-tbd"><span className="tb-abbr tb-tbd-text">TBD</span></div>
         <div className="tb-match-divider" />
         <div className="tb-team tb-team-tbd"><span className="tb-abbr tb-tbd-text">TBD</span></div>
@@ -575,6 +599,7 @@ function MatchCard({ match, confirmedAbbrs, t }) {
   if (match.projected) {
     return (
       <div className="tb-match">
+        <MatchMeta match={match} t={t} />
         <ProjectedTeamRow ref_={match.homeLabel} team={match.home} confirmedAbbrs={confirmedAbbrs} t={t} />
         <div className="tb-match-divider" />
         <ProjectedTeamRow ref_={match.awayLabel} team={match.away} confirmedAbbrs={confirmedAbbrs} t={t} />
@@ -586,6 +611,7 @@ function MatchCard({ match, confirmedAbbrs, t }) {
   if (match.computed) {
     return (
       <div className="tb-match">
+        <MatchMeta match={match} t={t} />
         <AdvancedTeamRow team={match.home} confirmedAbbrs={confirmedAbbrs} />
         <div className="tb-match-divider" />
         <AdvancedTeamRow team={match.away} confirmedAbbrs={confirmedAbbrs} />
@@ -599,6 +625,7 @@ function MatchCard({ match, confirmedAbbrs, t }) {
   if (match.isEspnSeed) {
     return (
       <div className={`tb-match${isLive ? ' tb-match-live' : ''}`}>
+        <MatchMeta match={match} t={t} />
         <EspnTeamRow team={match.home} isFinal={isFinal} confirmedAbbrs={confirmedAbbrs} score={match.home?.score} />
         <div className="tb-match-divider" />
         <EspnTeamRow team={match.away} isFinal={isFinal} confirmedAbbrs={confirmedAbbrs} score={match.away?.score} />
@@ -608,6 +635,7 @@ function MatchCard({ match, confirmedAbbrs, t }) {
 
   return (
     <div className={`tb-match${isLive ? ' tb-match-live' : ''}`}>
+      <MatchMeta match={match} t={t} />
       <LiveTeamRow team={match.home} isFinal={isFinal} confirmedAbbrs={confirmedAbbrs} />
       <div className="tb-match-divider" />
       <LiveTeamRow team={match.away} isFinal={isFinal} confirmedAbbrs={confirmedAbbrs} />

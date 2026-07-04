@@ -1444,6 +1444,22 @@
   background: var(--border);
 }
 
+/* Date/status strip at the top of each match card */
+.tb-match-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 13px;
+  padding: 0 6px;
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--text2);
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.tb-meta-live { color: var(--red); }
+
 /* Team row inside a match card */
 .tb-team {
   display: flex;
