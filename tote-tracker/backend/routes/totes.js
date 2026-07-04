@@ -41,7 +41,12 @@ router.get('/export', (req, res) => {
     }
   }
 
-  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+  // Prefix formula characters to prevent CSV injection in Excel/Sheets
+  function csvCell(v) {
+    const s = String(v ?? '').replace(/"/g, '""');
+    return /^[=+\-@\t\r]/.test(s) ? `"'${s}"` : `"${s}"`;
+  }
+  const csv = rows.map(r => r.map(csvCell).join(',')).join('\n');
   res.setHeader('Content-Type', 'text/csv');
   res.setHeader('Content-Disposition', 'attachment; filename="tote-inventory.csv"');
   res.send(csv);
@@ -74,6 +79,8 @@ router.get('/:id', (req, res) => {
 router.post('/', requireEditor, async (req, res) => {
   const { label, location, tags } = req.body;
   if (!label) return res.status(400).json({ error: 'Label is required' });
+  if (label.length > 200) return res.status(400).json({ error: 'Label must be 200 characters or fewer' });
+  if (location && location.length > 200) return res.status(400).json({ error: 'Location must be 200 characters or fewer' });
 
   const id = uuidv4();
   const qrData = JSON.stringify({ tote_id: id, label });
@@ -125,6 +132,8 @@ router.delete('/:id', requireEditor, (req, res) => {
 router.post('/:id/items', requireEditor, (req, res) => {
   const { name, quantity, notes } = req.body;
   if (!name) return res.status(400).json({ error: 'Item name is required' });
+  if (name.length > 200) return res.status(400).json({ error: 'Item name must be 200 characters or fewer' });
+  if (notes && notes.length > 1000) return res.status(400).json({ error: 'Notes must be 1000 characters or fewer' });
   const tote = db.prepare('SELECT id FROM totes WHERE id = ?').get(req.params.id);
   if (!tote) return res.status(404).json({ error: 'Tote not found' });
 

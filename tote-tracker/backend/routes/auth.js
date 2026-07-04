@@ -11,7 +11,7 @@ function makeToken(user) {
   return jwt.sign(
     { id: user.id, email: user.email, name: user.name, role: user.role },
     JWT_SECRET,
-    { expiresIn: '30d' }
+    { algorithm: 'HS256', expiresIn: '30d' }
   );
 }
 
@@ -20,9 +20,13 @@ function publicUser(u) {
   return rest;
 }
 
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 function isRegistrationOpen() {
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
-  if (userCount === 0) return true; // always open for first user (admin setup)
+  if (userCount === 0) return true;
   const setting = db.prepare("SELECT value FROM settings WHERE key = 'open_registration'").get();
   return setting?.value === 'true';
 }
@@ -43,14 +47,19 @@ router.post('/register', async (req, res) => {
   if (!email || !name || !password) {
     return res.status(400).json({ error: 'Email, name and password are required' });
   }
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ error: 'Invalid email address' });
+  }
+  if (name.trim().length > 100) {
+    return res.status(400).json({ error: 'Name must be 100 characters or fewer' });
+  }
+  if (password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
   }
 
   const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase().trim());
   if (existing) return res.status(400).json({ error: 'Email already registered' });
 
-  // First user becomes admin
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
   const role = userCount === 0 ? 'admin' : 'viewer';
 

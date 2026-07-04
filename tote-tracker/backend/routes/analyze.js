@@ -62,10 +62,20 @@ Be specific and descriptive. If you see multiple of the same item, use the quant
 
     const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
-      parsedItems = JSON.parse(jsonMatch[0]);
+      const raw = JSON.parse(jsonMatch[0]);
+      parsedItems = raw
+        .filter(item => item && typeof item === 'object')
+        .map(item => ({
+          name: typeof item.name === 'string' ? item.name.trim().slice(0, 200) : null,
+          quantity: Number.isInteger(item.quantity) && item.quantity > 0 && item.quantity <= 9999
+            ? item.quantity : 1,
+          notes: typeof item.notes === 'string' ? item.notes.trim().slice(0, 1000) : null,
+        }))
+        .filter(item => item.name);
     }
   } catch (err) {
-    return res.status(500).json({ error: 'AI analysis failed', details: err.message });
+    console.error('AI analysis error:', err);
+    return res.status(500).json({ error: 'AI analysis failed' });
   }
 
   const photoId = uuidv4();

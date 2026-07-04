@@ -57,8 +57,13 @@ db.exec(`
 // Default settings — INSERT OR IGNORE so existing values are never overwritten
 db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('open_registration', 'false')").run();
 
-// Migrations for existing databases
-try { db.exec(`ALTER TABLE totes ADD COLUMN tags TEXT DEFAULT '[]'`); } catch {}
-try { db.exec(`ALTER TABLE totes ADD COLUMN share_token TEXT`); } catch {}
+// Migrations for existing databases — only swallow "duplicate column" errors
+function migrate(sql) {
+  try { db.exec(sql); } catch (err) {
+    if (!err.message?.includes('duplicate column name')) throw err;
+  }
+}
+migrate(`ALTER TABLE totes ADD COLUMN tags TEXT DEFAULT '[]'`);
+migrate(`ALTER TABLE totes ADD COLUMN share_token TEXT`);
 
 export default db;

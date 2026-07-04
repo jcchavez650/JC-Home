@@ -5,6 +5,7 @@ import db from '../database.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 
 const router = Router();
+// Auth enforced at mount point (server.js) — kept here for defence-in-depth
 router.use(requireAuth, requireAdmin);
 
 // List all users
@@ -21,8 +22,8 @@ router.post('/', async (req, res) => {
   if (!email || !name || !password) {
     return res.status(400).json({ error: 'Email, name and password are required' });
   }
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
   }
 
   const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase().trim());
@@ -53,7 +54,7 @@ router.put('/:id', async (req, res) => {
   }
 
   if (password !== undefined && password !== '') {
-    if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
   }
 
   const validRoles = ['admin', 'editor', 'viewer'];
