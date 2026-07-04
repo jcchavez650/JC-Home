@@ -62,8 +62,9 @@ router.put('/:id', async (req, res) => {
   const newName = name?.trim() || user.name;
 
   if (password) {
+    // Bump token_version to revoke all existing sessions for this user
     const password_hash = await bcrypt.hash(password, 12);
-    db.prepare('UPDATE users SET role = ?, name = ?, password_hash = ? WHERE id = ?')
+    db.prepare('UPDATE users SET role = ?, name = ?, password_hash = ?, token_version = token_version + 1 WHERE id = ?')
       .run(newRole, newName, password_hash, req.params.id);
   } else {
     db.prepare('UPDATE users SET role = ?, name = ? WHERE id = ?')

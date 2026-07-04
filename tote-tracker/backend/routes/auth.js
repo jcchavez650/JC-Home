@@ -9,9 +9,9 @@ const router = Router();
 
 function makeToken(user) {
   return jwt.sign(
-    { id: user.id, email: user.email, name: user.name, role: user.role },
+    { id: user.id, email: user.email, name: user.name, role: user.role, tv: user.token_version ?? 0 },
     JWT_SECRET,
-    { algorithm: 'HS256', expiresIn: '30d' }
+    { algorithm: 'HS256', expiresIn: '7d' }
   );
 }
 

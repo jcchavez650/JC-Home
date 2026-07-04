@@ -16,6 +16,7 @@ db.exec(`
     name TEXT NOT NULL,
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'viewer',
+    token_version INTEGER NOT NULL DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now'))
   );
 
@@ -65,5 +66,6 @@ function migrate(sql) {
 }
 migrate(`ALTER TABLE totes ADD COLUMN tags TEXT DEFAULT '[]'`);
 migrate(`ALTER TABLE totes ADD COLUMN share_token TEXT`);
+migrate(`ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 0`);
 
 export default db;
