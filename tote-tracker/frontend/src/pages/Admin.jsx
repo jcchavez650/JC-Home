@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useLang } from '../context/LangContext.jsx';
+import LangToggle from '../components/LangToggle.jsx';
 
 const ROLES = ['viewer', 'editor', 'admin'];
 
 const ROLE_INFO = {
-  admin:  { label: 'Admin',  color: '#8f6f34', bg: 'rgba(143,111,52,0.13)' },
-  editor: { label: 'Editor', color: '#b07d2a', bg: 'rgba(176,125,42,0.13)' },
-  viewer: { label: 'Viewer', color: '#9a9080', bg: 'rgba(154,144,128,0.14)' },
+  admin:  { color: '#8f6f34', bg: 'rgba(143,111,52,0.13)' },
+  editor: { color: '#b07d2a', bg: 'rgba(176,125,42,0.13)' },
+  viewer: { color: '#9a9080', bg: 'rgba(154,144,128,0.14)' },
 };
 
 const BLANK_USER = { email: '', name: '', password: '', role: 'viewer' };
 
 export default function Admin({ theme, onToggleTheme }) {
   const { user, apiFetch } = useAuth();
+  const { t } = useLang();
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -91,7 +94,7 @@ export default function Admin({ theme, onToggleTheme }) {
   }
 
   async function deleteUser(id) {
-    if (!confirm('Remove this user? They will lose access immediately.')) return;
+    if (!confirm(t('admin.confirmRemove'))) return;
     setError('');
     const res = await apiFetch(`/api/users/${id}`, { method: 'DELETE' });
     const data = await res.json();
@@ -119,25 +122,28 @@ export default function Admin({ theme, onToggleTheme }) {
   return (
     <div className="page">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div className="back-nav" style={{ marginBottom: 0 }} onClick={() => navigate('/')}>← Back</div>
-        <button className="theme-toggle mobile-only" onClick={onToggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button>
+        <div className="back-nav" style={{ marginBottom: 0 }} onClick={() => navigate('/')}>{t('common.back')}</div>
+        <div className="mobile-only" style={{ display: 'flex', gap: 8 }}>
+          <button className="theme-toggle" onClick={onToggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button>
+          <LangToggle />
+        </div>
       </div>
 
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.4px' }}>User Management</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.4px' }}>{t('admin.title')}</h1>
         <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>
-          Manage who can access Tote Tracker and what they can do.
+          {t('admin.subtitle')}
         </p>
       </div>
 
       {/* Registration toggle */}
       <div className="section" style={{ marginBottom: 16 }}>
-        <div className="section-label">Registration</div>
+        <div className="section-label">{t('admin.registration')}</div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>Open Registration</div>
+            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>{t('admin.openRegistration')}</div>
             <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
-              {registrationOpen ? 'Anyone can create an account' : 'Only admins can add new users'}
+              {registrationOpen ? t('admin.regOpenDesc') : t('admin.regClosedDesc')}
             </div>
           </div>
           <button
@@ -146,24 +152,24 @@ export default function Admin({ theme, onToggleTheme }) {
             disabled={settingsLoading}
             style={{ minWidth: 72 }}
           >
-            {settingsLoading ? '…' : registrationOpen ? 'Close' : 'Open'}
+            {settingsLoading ? '…' : registrationOpen ? t('admin.close') : t('admin.open')}
           </button>
         </div>
       </div>
 
       {/* Role legend */}
       <div className="section" style={{ marginBottom: 16 }}>
-        <div className="section-label">Roles</div>
+        <div className="section-label">{t('admin.roles')}</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {Object.entries(ROLE_INFO).map(([key, info]) => (
             <div key={key} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
               <span className="role-badge" style={{ background: info.bg, color: info.color, marginTop: 1 }}>
-                {info.label}
+                {t(`role.${key}`)}
               </span>
               <span style={{ fontSize: 13, color: 'var(--text-2)' }}>
-                {key === 'admin' && 'Full access — manage users, create/edit/delete totes'}
-                {key === 'editor' && 'Create, edit, and delete totes and items'}
-                {key === 'viewer' && 'View totes and items only — cannot make changes'}
+                {key === 'admin' && t('admin.roleAdminDesc')}
+                {key === 'editor' && t('admin.roleEditorDesc')}
+                {key === 'viewer' && t('admin.roleViewerDesc')}
               </span>
             </div>
           ))}
@@ -175,9 +181,9 @@ export default function Admin({ theme, onToggleTheme }) {
       {/* User list */}
       <div className="section">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-          <div className="section-label" style={{ marginBottom: 0 }}>{users.length} {users.length === 1 ? 'User' : 'Users'}</div>
+          <div className="section-label" style={{ marginBottom: 0 }}>{t('admin.nUsers', { n: users.length, s: users.length === 1 ? '' : 's' })}</div>
           <button className="btn btn-primary btn-sm" onClick={() => { setShowAddUser(v => !v); setAddError(''); setEditingId(null); }}>
-            {showAddUser ? 'Cancel' : '+ Add User'}
+            {showAddUser ? t('common.cancel') : t('admin.addUser')}
           </button>
         </div>
 
@@ -188,22 +194,22 @@ export default function Admin({ theme, onToggleTheme }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', gap: 8 }}>
                 <div className="field" style={{ flex: 1, marginBottom: 0 }}>
-                  <label>Full Name</label>
+                  <label>{t('admin.fullName')}</label>
                   <input className="input input-full" placeholder="Jane Smith" value={newUser.name}
                     onChange={e => setNewUser(u => ({ ...u, name: e.target.value }))} required />
                 </div>
                 <div className="field" style={{ flex: 1, marginBottom: 0 }}>
-                  <label>Email</label>
+                  <label>{t('admin.email')}</label>
                   <input className="input input-full" type="email" placeholder="jane@example.com" value={newUser.email}
                     onChange={e => setNewUser(u => ({ ...u, email: e.target.value }))} required />
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <div className="field" style={{ flex: 1, marginBottom: 0 }}>
-                  <label>Password</label>
+                  <label>{t('admin.password')}</label>
                   <div style={{ position: 'relative' }}>
                     <input className="input input-full" type={showNewPass ? 'text' : 'password'}
-                      placeholder="Min. 6 characters" value={newUser.password}
+                      placeholder={t('login.passwordPlaceholder')} value={newUser.password}
                       onChange={e => setNewUser(u => ({ ...u, password: e.target.value }))}
                       style={{ paddingRight: 36 }} required />
                     <button type="button" onClick={() => setShowNewPass(v => !v)}
@@ -213,22 +219,22 @@ export default function Admin({ theme, onToggleTheme }) {
                   </div>
                 </div>
                 <div className="field" style={{ minWidth: 110, marginBottom: 0 }}>
-                  <label>Role</label>
+                  <label>{t('admin.role')}</label>
                   <select className="input input-full role-select" value={newUser.role}
                     onChange={e => setNewUser(u => ({ ...u, role: e.target.value }))}>
-                    {ROLES.map(r => <option key={r} value={r}>{ROLE_INFO[r].label}</option>)}
+                    {ROLES.map(r => <option key={r} value={r}>{t(`role.${r}`)}</option>)}
                   </select>
                 </div>
               </div>
               <button type="submit" className="btn btn-primary btn-sm" disabled={addLoading} style={{ alignSelf: 'flex-end' }}>
-                {addLoading ? 'Creating…' : 'Create User'}
+                {addLoading ? t('admin.creating') : t('admin.createUser')}
               </button>
             </div>
           </form>
         )}
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-3)' }}>Loading…</div>
+          <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-3)' }}>{t('common.loading')}</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {users.map((u, i) => {
@@ -243,24 +249,24 @@ export default function Admin({ theme, onToggleTheme }) {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <div className="field" style={{ flex: 1, marginBottom: 0 }}>
-                            <label>Full Name</label>
+                            <label>{t('admin.fullName')}</label>
                             <input className="input input-full" value={editForm.name}
                               onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} required />
                           </div>
                           <div className="field" style={{ minWidth: 110, marginBottom: 0 }}>
-                            <label>Role</label>
+                            <label>{t('admin.role')}</label>
                             <select className="input input-full role-select" value={editForm.role}
                               onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))}
                               disabled={isSelf}>
-                              {ROLES.map(r => <option key={r} value={r}>{ROLE_INFO[r].label}</option>)}
+                              {ROLES.map(r => <option key={r} value={r}>{t(`role.${r}`)}</option>)}
                             </select>
                           </div>
                         </div>
                         <div className="field" style={{ marginBottom: 0 }}>
-                          <label>New Password <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>(leave blank to keep current)</span></label>
+                          <label>{t('admin.newPassword')} <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>{t('admin.keepBlank')}</span></label>
                           <div style={{ position: 'relative' }}>
                             <input className="input input-full" type={showEditPass ? 'text' : 'password'}
-                              placeholder="Enter new password…" value={editForm.password}
+                              placeholder={t('admin.newPasswordPlaceholder')} value={editForm.password}
                               onChange={e => setEditForm(f => ({ ...f, password: e.target.value }))}
                               style={{ paddingRight: 36 }} />
                             <button type="button" onClick={() => setShowEditPass(v => !v)}
@@ -270,9 +276,9 @@ export default function Admin({ theme, onToggleTheme }) {
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingId(null)}>Cancel</button>
+                          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingId(null)}>{t('common.cancel')}</button>
                           <button type="submit" className="btn btn-primary btn-sm" disabled={editLoading}>
-                            {editLoading ? 'Saving…' : 'Save Changes'}
+                            {editLoading ? t('common.saving') : t('common.save')}
                           </button>
                         </div>
                       </div>
@@ -286,13 +292,13 @@ export default function Admin({ theme, onToggleTheme }) {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 8 }}>
                           {u.name}
-                          {isSelf && <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 500 }}>(you)</span>}
+                          {isSelf && <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 500 }}>{t('admin.you')}</span>}
                         </div>
                         <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>{u.email}</div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                         <span className="role-badge" style={{ background: ROLE_INFO[u.role]?.bg, color: ROLE_INFO[u.role]?.color }}>
-                          {ROLE_INFO[u.role]?.label || u.role}
+                          {t(`role.${u.role}`)}
                         </span>
                         <button className="edit-item-btn" onClick={() => { startEdit(u); setShowAddUser(false); }} title="Edit user">✎</button>
                         {!isSelf && (

@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import { LangProvider } from './context/LangContext.jsx';
 import ToteList from './pages/ToteList.jsx';
 import ToteDetail from './pages/ToteDetail.jsx';
 import ShareView from './pages/ShareView.jsx';
@@ -59,10 +60,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </AuthProvider>
+    <LangProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
+    </LangProvider>
   );
 }

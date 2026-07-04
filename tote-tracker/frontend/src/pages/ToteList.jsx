@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ToteIcon from '../components/ToteIcon.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useLang } from '../context/LangContext.jsx';
+import LangToggle from '../components/LangToggle.jsx';
 
 const ALL_TAGS = ['Garage', 'Kitchen', 'Bedroom', 'Office', 'Holiday', 'Tools', 'Clothes', 'Sports', 'Electronics', 'Other'];
 
 export default function ToteList({ theme, onToggleTheme }) {
   const { user, logout, apiFetch } = useAuth();
+  const { t } = useLang();
   const [totes, setTotes] = useState([]);
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState(null);
@@ -22,11 +25,11 @@ export default function ToteList({ theme, onToggleTheme }) {
 
   useEffect(() => {
     if (!search.trim()) { setSearchResults(null); return; }
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       const res = await apiFetch(`/api/totes/search?q=${encodeURIComponent(search)}`);
       setSearchResults(await res.json());
     }, 300);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [search]);
 
   async function fetchTotes() {
@@ -72,15 +75,16 @@ export default function ToteList({ theme, onToggleTheme }) {
           <div className="logo-icon"><ToteIcon size={24} /></div>
           <div>
             <div className="app-title">Tote Tracker</div>
-            <div className="app-subtitle">Inventory Management</div>
+            <div className="app-subtitle">{t('app.subtitle')}</div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button className="theme-toggle" onClick={onToggleTheme} title="Toggle theme">
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
+          <LangToggle />
           {canEdit && (
-            <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>+ New Tote</button>
+            <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>{t('list.newTote')}</button>
           )}
         </div>
       </div>
@@ -88,8 +92,8 @@ export default function ToteList({ theme, onToggleTheme }) {
       {/* Desktop page title row */}
       {canEdit && (
         <div className="desktop-only" style={{ display: 'none', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.4px' }}>My Totes</h1>
-          <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>+ New Tote</button>
+          <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.4px' }}>{t('list.myTotes')}</h1>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>{t('list.newTote')}</button>
         </div>
       )}
 
@@ -98,22 +102,22 @@ export default function ToteList({ theme, onToggleTheme }) {
         <div className="user-bar-info">
           <div className="user-avatar-sm">{user?.name?.[0]?.toUpperCase()}</div>
           <span className="user-bar-name">{user?.name}</span>
-          <span className={`role-badge role-${user?.role}`}>{user?.role}</span>
+          <span className={`role-badge role-${user?.role}`}>{t(`role.${user?.role}`)}</span>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           {user?.role === 'admin' && (
-            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/admin')}>⚙ Users</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/admin')}>{t('list.users')}</button>
           )}
-          <button className="btn btn-ghost btn-sm" onClick={logout}>Sign Out</button>
+          <button className="btn btn-ghost btn-sm" onClick={logout}>{t('common.signOut')}</button>
         </div>
       </div>
 
       {totes.length > 0 && (
         <div className="status-bar">
           <div className="status-dot" />
-          <div className="status-item">Totes: <span className="status-val">{totes.length}</span></div>
-          <div className="status-item">Items: <span className="status-val">{totalItems}</span></div>
-          {canEdit && <a href="/api/totes/export" className="status-export">↓ Export CSV</a>}
+          <div className="status-item">{t('list.totes')}: <span className="status-val">{totes.length}</span></div>
+          <div className="status-item">{t('common.items')}: <span className="status-val">{totalItems}</span></div>
+          {canEdit && <a href="/api/totes/export" className="status-export">{t('list.exportCsv')}</a>}
         </div>
       )}
 
@@ -123,7 +127,7 @@ export default function ToteList({ theme, onToggleTheme }) {
           <span className="search-icon">⌕</span>
           <input
             className="search-input"
-            placeholder="Search items across all totes..."
+            placeholder={t('list.searchPlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -136,13 +140,13 @@ export default function ToteList({ theme, onToggleTheme }) {
         <div className="search-results">
           <div className="search-results-header">
             {searchResults.length === 0
-              ? `No results for "${search}"`
-              : `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''} for "${search}"`}
+              ? t('list.noResults', { q: search })
+              : t('list.results', { n: searchResults.length, s: searchResults.length !== 1 ? 's' : '', q: search })}
           </div>
           {searchResults.map(item => (
             <div key={item.id} className="search-result-row" onClick={() => navigate(`/tote/${item.tote_id}`)}>
               <div className="search-result-item">{item.name}</div>
-              <div className="search-result-tote">in {item.tote_label}</div>
+              <div className="search-result-tote">{t('list.inTote', { tote: item.tote_label })}</div>
               {item.tote_location && <div className="search-result-loc">📍 {item.tote_location}</div>}
             </div>
           ))}
@@ -152,7 +156,7 @@ export default function ToteList({ theme, onToggleTheme }) {
       {/* Tag filter */}
       {allUsedTags.length > 0 && !searchResults && (
         <div className="tag-filter">
-          <button className={`tag-chip ${!activeTag ? 'active' : ''}`} onClick={() => setActiveTag(null)}>All</button>
+          <button className={`tag-chip ${!activeTag ? 'active' : ''}`} onClick={() => setActiveTag(null)}>{t('list.all')}</button>
           {allUsedTags.map(tag => (
             <button
               key={tag}
@@ -167,34 +171,32 @@ export default function ToteList({ theme, onToggleTheme }) {
         visibleTotes.length === 0 ? (
           <div className="empty">
             <span className="empty-icon"><ToteIcon size={52} /></span>
-            <div className="empty-title">{activeTag ? `No ${activeTag} totes` : 'No totes yet'}</div>
+            <div className="empty-title">{activeTag ? t('list.noTaggedTotes', { tag: activeTag }) : t('list.noTotesYet')}</div>
             <div className="empty-sub">
-              {canEdit
-                ? 'Create your first tote and use AI\nto automatically catalog its contents'
-                : 'No totes have been created yet.'}
+              {canEdit ? t('list.emptyEdit') : t('list.emptyView')}
             </div>
             {!activeTag && canEdit && (
-              <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ Create First Tote</button>
+              <button className="btn btn-primary" onClick={() => setShowModal(true)}>{t('list.createFirst')}</button>
             )}
           </div>
         ) : (
           <div className="tote-grid">
-            {visibleTotes.map(t => (
-              <div key={t.id} className="tote-card" onClick={() => navigate(`/tote/${t.id}`)}>
+            {visibleTotes.map(tote => (
+              <div key={tote.id} className="tote-card" onClick={() => navigate(`/tote/${tote.id}`)}>
                 <div className="tote-card-inner">
                   <div className="tote-card-icon"><ToteIcon size={22} /></div>
                   <div className="tote-card-content">
-                    <div className="tote-card-label">{t.label}</div>
-                    <div className="tote-card-loc">{t.location ? `📍 ${t.location}` : 'No location set'}</div>
-                    {t.tags?.length > 0 && (
+                    <div className="tote-card-label">{tote.label}</div>
+                    <div className="tote-card-loc">{tote.location ? `📍 ${tote.location}` : t('list.noLocation')}</div>
+                    {tote.tags?.length > 0 && (
                       <div className="tote-tags">
-                        {t.tags.map(tag => <span key={tag} className="tote-tag">{tag}</span>)}
+                        {tote.tags.map(tag => <span key={tag} className="tote-tag">{tag}</span>)}
                       </div>
                     )}
                   </div>
                   <div className="tote-card-right">
-                    <div className="item-count">{t.item_count}</div>
-                    <div className="item-count-label">items</div>
+                    <div className="item-count">{tote.item_count}</div>
+                    <div className="item-count-label">{t('common.itemsLower')}</div>
                   </div>
                 </div>
               </div>
@@ -206,20 +208,20 @@ export default function ToteList({ theme, onToggleTheme }) {
       {showModal && canEdit && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
           <div className="modal-box">
-            <div className="modal-title">New Tote</div>
+            <div className="modal-title">{t('list.modalTitle')}</div>
             <form onSubmit={createTote}>
               <div className="field">
-                <label>Tote Label *</label>
-                <input className="input input-full" placeholder="e.g. Kitchen Supplies"
+                <label>{t('list.toteLabel')}</label>
+                <input className="input input-full" placeholder={t('list.toteLabelPlaceholder')}
                   value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))} autoFocus />
               </div>
               <div className="field">
-                <label>Storage Location</label>
-                <input className="input input-full" placeholder="e.g. Garage Shelf 3"
+                <label>{t('list.storageLocation')}</label>
+                <input className="input input-full" placeholder={t('list.locationPlaceholder')}
                   value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
               </div>
               <div className="field">
-                <label>Categories</label>
+                <label>{t('list.categories')}</label>
                 <div className="tag-picker">
                   {ALL_TAGS.map(tag => (
                     <button key={tag} type="button"
@@ -230,9 +232,9 @@ export default function ToteList({ theme, onToggleTheme }) {
                 </div>
               </div>
               <div className="modal-actions">
-                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>{t('common.cancel')}</button>
                 <button type="submit" className="btn btn-primary" disabled={loading}>
-                  {loading ? 'Creating…' : 'Create Tote'}
+                  {loading ? t('list.creating') : t('list.createTote')}
                 </button>
               </div>
             </form>

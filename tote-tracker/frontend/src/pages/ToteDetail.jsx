@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ToteIcon from '../components/ToteIcon.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useLang } from '../context/LangContext.jsx';
+import LangToggle from '../components/LangToggle.jsx';
 
 const ALL_TAGS = ['Garage', 'Kitchen', 'Bedroom', 'Office', 'Holiday', 'Tools', 'Clothes', 'Sports', 'Electronics', 'Other'];
 
@@ -9,6 +11,7 @@ export default function ToteDetail({ theme, onToggleTheme }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, apiFetch } = useAuth();
+  const { t } = useLang();
 
   const canEdit = user?.role === 'editor' || user?.role === 'admin';
 
@@ -43,8 +46,8 @@ export default function ToteDetail({ theme, onToggleTheme }) {
     try {
       const res = await apiFetch(`/api/analyze/${id}`, { method: 'POST', body: fd });
       if (res.ok) { await fetchTote(); setTab('items'); }
-      else { const err = await res.json(); alert('Analysis failed: ' + (err.error || 'Unknown')); }
-    } catch (e) { alert('Upload failed: ' + e.message); }
+      else { const err = await res.json(); alert(t('detail.analysisFailed') + (err.error || t('detail.unknown'))); }
+    } catch (e) { alert(t('detail.uploadFailed') + e.message); }
     setUploading(false);
   }
 
@@ -87,7 +90,7 @@ export default function ToteDetail({ theme, onToggleTheme }) {
   }
 
   async function deleteTote() {
-    if (!confirm('Delete this tote and all its contents?')) return;
+    if (!confirm(t('detail.confirmDelete'))) return;
     await apiFetch(`/api/totes/${id}`, { method: 'DELETE' });
     navigate('/');
   }
@@ -132,7 +135,7 @@ export default function ToteDetail({ theme, onToggleTheme }) {
       <div className="loader-dots">
         <div className="loader-dot" /><div className="loader-dot" /><div className="loader-dot" />
       </div>
-      <span>Loading…</span>
+      <span>{t('common.loading')}</span>
     </div>
   );
 
@@ -153,26 +156,29 @@ export default function ToteDetail({ theme, onToggleTheme }) {
 
       <div className="page">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <div className="back-nav" style={{ marginBottom: 0 }} onClick={() => navigate('/')}>← Back</div>
-          <button className="theme-toggle mobile-only" onClick={onToggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button>
+          <div className="back-nav" style={{ marginBottom: 0 }} onClick={() => navigate('/')}>{t('common.back')}</div>
+          <div className="mobile-only" style={{ display: 'flex', gap: 8 }}>
+            <button className="theme-toggle" onClick={onToggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button>
+            <LangToggle />
+          </div>
         </div>
 
         {/* Header */}
         {editingTote && canEdit ? (
           <form onSubmit={saveTote} className="edit-tote-form">
             <div className="field">
-              <label>Label</label>
+              <label>{t('detail.label')}</label>
               <input className="input input-full" value={editForm.label}
                 onChange={e => setEditForm(f => ({ ...f, label: e.target.value }))} autoFocus />
             </div>
             <div className="field">
-              <label>Location</label>
-              <input className="input input-full" placeholder="Storage location"
+              <label>{t('detail.location')}</label>
+              <input className="input input-full" placeholder={t('detail.locationPlaceholder')}
                 value={editForm.location}
                 onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))} />
             </div>
             <div className="field">
-              <label>Categories</label>
+              <label>{t('detail.categories')}</label>
               <div className="tag-picker">
                 {ALL_TAGS.map(tag => (
                   <button key={tag} type="button"
@@ -183,17 +189,17 @@ export default function ToteDetail({ theme, onToggleTheme }) {
               </div>
             </div>
             <div className="modal-actions" style={{ marginTop: 12, marginBottom: 4 }}>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingTote(false)}>Cancel</button>
-              <button type="submit" className="btn btn-primary btn-sm">Save Changes</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingTote(false)}>{t('common.cancel')}</button>
+              <button type="submit" className="btn btn-primary btn-sm">{t('common.save')}</button>
             </div>
           </form>
         ) : (
           <div className="detail-header">
             <div className="detail-tag">
-              <span style={{ color: 'var(--text-3)' }}>Tote</span>
+              <span style={{ color: 'var(--text-3)' }}>{t('detail.tote')}</span>
               {id.slice(0, 8).toUpperCase()}
               {canEdit && (
-                <button className="edit-link" onClick={() => setEditingTote(true)}>✎ Edit</button>
+                <button className="edit-link" onClick={() => setEditingTote(true)}>{t('detail.edit')}</button>
               )}
             </div>
             <div className="detail-title">{tote.label}</div>
@@ -206,11 +212,11 @@ export default function ToteDetail({ theme, onToggleTheme }) {
             <div className="detail-stats">
               <div className="stat">
                 <div className="stat-val">{tote.items?.length || 0}</div>
-                <div className="stat-label">Items</div>
+                <div className="stat-label">{t('common.items')}</div>
               </div>
               <div className="stat">
                 <div className="stat-val">{tote.photos?.length || 0}</div>
-                <div className="stat-label">Scans</div>
+                <div className="stat-label">{t('detail.scans')}</div>
               </div>
             </div>
           </div>
@@ -219,20 +225,20 @@ export default function ToteDetail({ theme, onToggleTheme }) {
         {/* AI Scanner — editors and admins only */}
         {canEdit && (
           <div className="camera-section">
-            <div className="section-label">AI Scan</div>
+            <div className="section-label">{t('detail.aiScan')}</div>
             {uploading ? (
               <div className="analyzing">
                 <div className="scan-animation">
                   <div className="scan-icon"><ToteIcon size={24} /></div>
                   <div className="scan-line" />
                 </div>
-                <div className="analyzing-title">Scanning contents…</div>
-                <div className="analyzing-sub">AI is identifying all items</div>
+                <div className="analyzing-title">{t('detail.scanning')}</div>
+                <div className="analyzing-sub">{t('detail.scanningSub')}</div>
               </div>
             ) : (
               <>
                 <button className="btn btn-camera btn-full" onClick={() => cameraRef.current.click()}>
-                  📷 Scan with Camera
+                  {t('detail.scanCamera')}
                 </button>
                 <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
                   onChange={e => e.target.files[0] && analyzePhoto(e.target.files[0])} />
@@ -243,8 +249,8 @@ export default function ToteDetail({ theme, onToggleTheme }) {
                   onClick={() => fileRef.current.click()}
                 >
                   <div className="upload-icon">🖼️</div>
-                  <div className="upload-text">Upload from Library</div>
-                  <div className="upload-hint">Drag & drop or tap to select</div>
+                  <div className="upload-text">{t('detail.uploadLibrary')}</div>
+                  <div className="upload-hint">{t('detail.uploadHint')}</div>
                 </div>
                 <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}
                   onChange={e => e.target.files[0] && analyzePhoto(e.target.files[0])} />
@@ -256,13 +262,13 @@ export default function ToteDetail({ theme, onToggleTheme }) {
         {/* Tabs */}
         <div className="tabs">
           {[
-            { key: 'items', label: `Items (${tote.items?.length || 0})` },
-            { key: 'qr', label: 'QR Label' },
-            { key: 'photos', label: `Scans (${tote.photos?.length || 0})` },
-            { key: 'share', label: 'Share' },
-          ].map(t => (
-            <button key={t.key} className={`tab ${tab === t.key ? 'active' : ''}`} onClick={() => setTab(t.key)}>
-              {t.label}
+            { key: 'items', label: t('detail.tabItems', { n: tote.items?.length || 0 }) },
+            { key: 'qr', label: t('detail.tabQr') },
+            { key: 'photos', label: t('detail.tabScans', { n: tote.photos?.length || 0 }) },
+            { key: 'share', label: t('detail.tabShare') },
+          ].map(tb => (
+            <button key={tb.key} className={`tab ${tab === tb.key ? 'active' : ''}`} onClick={() => setTab(tb.key)}>
+              {tb.label}
             </button>
           ))}
         </div>
@@ -270,10 +276,10 @@ export default function ToteDetail({ theme, onToggleTheme }) {
         {/* Items */}
         {tab === 'items' && (
           <div className="section">
-            <div className="section-label">Item Manifest</div>
+            <div className="section-label">{t('detail.itemManifest')}</div>
             {tote.items?.length === 0 ? (
               <div className="empty-items">
-                {canEdit ? 'No items logged — scan or add manually' : 'No items logged'}
+                {canEdit ? t('detail.noItemsEdit') : t('detail.noItemsView')}
               </div>
             ) : (
               tote.items.map(item => (
@@ -307,9 +313,9 @@ export default function ToteDetail({ theme, onToggleTheme }) {
             )}
             {canEdit && (
               <form onSubmit={addItem} className="add-item-row">
-                <input className="input" placeholder="Add item manually..." value={newItem}
+                <input className="input" placeholder={t('detail.addItemPlaceholder')} value={newItem}
                   onChange={e => setNewItem(e.target.value)} />
-                <button type="submit" className="btn btn-primary btn-sm">Add</button>
+                <button type="submit" className="btn btn-primary btn-sm">{t('detail.add')}</button>
               </form>
             )}
           </div>
@@ -318,20 +324,20 @@ export default function ToteDetail({ theme, onToggleTheme }) {
         {/* QR */}
         {tab === 'qr' && (
           <div className="section qr-box">
-            <div className="section-label">Tote QR Label</div>
+            <div className="section-label">{t('detail.qrTitle')}</div>
             {tote.qr_code && (
               <>
                 <div className="qr-wrap">
                   <img src={tote.qr_code} alt="QR Code" className="qr-img" />
                 </div>
-                <div className="qr-label">Scan to access tote manifest</div>
+                <div className="qr-label">{t('detail.scanToAccess')}</div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <a href={tote.qr_code} download={`tote-${tote.label}-qr.png`}
                     className="btn btn-ghost btn-sm" style={{ textDecoration: 'none', flex: 1 }}>
-                    ↓ Download
+                    {t('detail.download')}
                   </a>
                   <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => window.print()}>
-                    🖨 Print Label
+                    {t('detail.printLabel')}
                   </button>
                 </div>
               </>
@@ -342,9 +348,9 @@ export default function ToteDetail({ theme, onToggleTheme }) {
         {/* Photos */}
         {tab === 'photos' && (
           <div className="section">
-            <div className="section-label">Scan History</div>
+            <div className="section-label">{t('detail.scanHistory')}</div>
             {tote.photos?.length === 0 ? (
-              <div className="empty-items">No scans on record</div>
+              <div className="empty-items">{t('detail.noScans')}</div>
             ) : (
               <div className="photo-grid">
                 {tote.photos.map(photo => (
@@ -362,28 +368,28 @@ export default function ToteDetail({ theme, onToggleTheme }) {
         {/* Share */}
         {tab === 'share' && (
           <div className="section">
-            <div className="section-label">Share Tote</div>
+            <div className="section-label">{t('detail.shareTote')}</div>
             {shareUrl || tote.share_token ? (
               <>
                 <div className="share-url">{shareUrl || `${window.location.origin}/share/${tote.share_token}`}</div>
-                <div className="share-hint">Anyone with this link can view this tote's manifest</div>
+                <div className="share-hint">{t('detail.shareHint')}</div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                   <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={copyShareUrl}>
-                    {copied ? '✓ Copied' : '⎘ Copy Link'}
+                    {copied ? t('detail.copied') : t('detail.copyLink')}
                   </button>
                   {canEdit && (
                     <button className="btn btn-danger btn-sm" style={{ flex: 1 }} onClick={revokeShare}>
-                      Revoke
+                      {t('detail.revoke')}
                     </button>
                   )}
                 </div>
               </>
             ) : (
               <>
-                <div className="empty-items">No share link generated yet</div>
+                <div className="empty-items">{t('detail.noShareLink')}</div>
                 {canEdit && (
                   <button className="btn btn-primary btn-full" style={{ marginTop: 12 }} onClick={getShareLink}>
-                    Generate Share Link
+                    {t('detail.generateShareLink')}
                   </button>
                 )}
               </>
@@ -393,7 +399,7 @@ export default function ToteDetail({ theme, onToggleTheme }) {
 
         {canEdit && (
           <div style={{ marginTop: 8 }}>
-            <button className="btn btn-danger btn-full btn-sm" onClick={deleteTote}>Delete Tote</button>
+            <button className="btn btn-danger btn-full btn-sm" onClick={deleteTote}>{t('detail.deleteTote')}</button>
           </div>
         )}
       </div>

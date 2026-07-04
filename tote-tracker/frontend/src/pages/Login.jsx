@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useLang } from '../context/LangContext.jsx';
+import LangToggle from '../components/LangToggle.jsx';
 import ToteIcon from '../components/ToteIcon.jsx';
 import useTheme from '../hooks/useTheme.js';
 
 export default function Login() {
   const { login, register } = useAuth();
+  const { t } = useLang();
   const navigate = useNavigate();
   const { theme, toggle } = useTheme();
 
@@ -42,9 +45,12 @@ export default function Login() {
 
   return (
     <div className="auth-page">
-      <button className="theme-toggle" onClick={toggle} style={{ position: 'fixed', top: 16, right: 16 }}>
-        {theme === 'dark' ? '☀️' : '🌙'}
-      </button>
+      <div style={{ position: 'fixed', top: 16, right: 16, display: 'flex', gap: 8 }}>
+        <button className="theme-toggle" onClick={toggle}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+        <LangToggle />
+      </div>
 
       <div className="auth-card">
         <div className="auth-logo">
@@ -52,19 +58,19 @@ export default function Login() {
             <ToteIcon size={28} />
           </div>
           <div className="app-title" style={{ fontSize: 22, marginTop: 12 }}>Tote Tracker</div>
-          <div className="app-subtitle" style={{ marginTop: 4 }}>Inventory Management</div>
+          <div className="app-subtitle" style={{ marginTop: 4 }}>{t('app.subtitle')}</div>
         </div>
 
         <div className="auth-tabs">
           <button
             className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
             onClick={() => { setMode('login'); setError(''); }}
-          >Sign In</button>
+          >{t('login.signIn')}</button>
           {registrationOpen && (
             <button
               className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
               onClick={() => { setMode('register'); setError(''); }}
-            >Create Account</button>
+            >{t('login.createAccount')}</button>
           )}
         </div>
 
@@ -72,7 +78,7 @@ export default function Login() {
 
         <form onSubmit={handleSubmit}>
           <div className="field">
-            <label>Email</label>
+            <label>{t('login.email')}</label>
             <input
               className="input input-full"
               type="email"
@@ -86,11 +92,11 @@ export default function Login() {
 
           {mode === 'register' && (
             <div className="field">
-              <label>Full Name</label>
+              <label>{t('login.fullName')}</label>
               <input
                 className="input input-full"
                 type="text"
-                placeholder="Your name"
+                placeholder={t('login.namePlaceholder')}
                 value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                 required
@@ -99,11 +105,11 @@ export default function Login() {
           )}
 
           <div className="field">
-            <label>Password</label>
+            <label>{t('login.password')}</label>
             <input
               className="input input-full"
               type="password"
-              placeholder="Min. 8 characters"
+              placeholder={t('login.passwordPlaceholder')}
               value={form.password}
               onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
               required
@@ -111,19 +117,19 @@ export default function Login() {
           </div>
 
           <button type="submit" className="btn btn-primary btn-full" style={{ marginTop: 8 }} disabled={loading}>
-            {loading ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}
+            {loading ? t('login.pleaseWait') : mode === 'login' ? t('login.signIn') : t('login.createAccount')}
           </button>
         </form>
 
         {mode === 'register' && (
           <p className="auth-note">
-            The first account created becomes the admin.
+            {t('login.firstAdminNote')}
           </p>
         )}
 
         {registrationOpen === false && (
           <p className="auth-note" style={{ textAlign: 'center' }}>
-            Registration is closed. Contact an admin to get access.
+            {t('login.regClosed')}
           </p>
         )}
       </div>
