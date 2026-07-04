@@ -103,7 +103,7 @@ export default function Login() {
             <input
               className="input input-full"
               type="password"
-              placeholder="Min. 6 characters"
+              placeholder="Min. 8 characters"
               value={form.password}
               onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
               required

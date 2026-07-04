@@ -5,9 +5,9 @@ import { useAuth } from '../context/AuthContext.jsx';
 const ROLES = ['viewer', 'editor', 'admin'];
 
 const ROLE_INFO = {
-  admin:  { label: 'Admin',  color: '#0d9488', bg: 'rgba(13,148,136,0.12)' },
-  editor: { label: 'Editor', color: '#d97706', bg: 'rgba(217,119,6,0.12)' },
-  viewer: { label: 'Viewer', color: '#9ca3b0', bg: 'rgba(156,163,176,0.12)' },
+  admin:  { label: 'Admin',  color: '#8f6f34', bg: 'rgba(143,111,52,0.13)' },
+  editor: { label: 'Editor', color: '#b07d2a', bg: 'rgba(176,125,42,0.13)' },
+  viewer: { label: 'Viewer', color: '#9a9080', bg: 'rgba(154,144,128,0.14)' },
 };
 
 const BLANK_USER = { email: '', name: '', password: '', role: 'viewer' };
