@@ -67,7 +67,7 @@ export default function ToteList({ theme, onToggleTheme }) {
 
   return (
     <div className="page">
-      <div className="app-header">
+      <div className="app-header mobile-only">
         <div className="app-logo">
           <div className="logo-icon"><ToteIcon size={24} /></div>
           <div>
@@ -85,8 +85,16 @@ export default function ToteList({ theme, onToggleTheme }) {
         </div>
       </div>
 
+      {/* Desktop page title row */}
+      {canEdit && (
+        <div className="desktop-only" style={{ display: 'none', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.4px' }}>My Totes</h1>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>+ New Tote</button>
+        </div>
+      )}
+
       {/* User bar */}
-      <div className="user-bar">
+      <div className="user-bar mobile-only">
         <div className="user-bar-info">
           <div className="user-avatar-sm">{user?.name?.[0]?.toUpperCase()}</div>
           <span className="user-bar-name">{user?.name}</span>

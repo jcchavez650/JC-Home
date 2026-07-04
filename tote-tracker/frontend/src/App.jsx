@@ -6,6 +6,7 @@ import ToteDetail from './pages/ToteDetail.jsx';
 import ShareView from './pages/ShareView.jsx';
 import Login from './pages/Login.jsx';
 import Admin from './pages/Admin.jsx';
+import PageLayout from './components/PageLayout.jsx';
 import useTheme from './hooks/useTheme.js';
 
 function ProtectedRoute({ children }) {
@@ -31,9 +32,27 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/share/:token" element={<ShareView {...themeProps} />} />
-      <Route path="/" element={<ProtectedRoute><ToteList {...themeProps} /></ProtectedRoute>} />
-      <Route path="/tote/:id" element={<ProtectedRoute><ToteDetail {...themeProps} /></ProtectedRoute>} />
-      <Route path="/admin" element={<ProtectedRoute><Admin {...themeProps} /></ProtectedRoute>} />
+      <Route path="/" element={
+        <ProtectedRoute>
+          <PageLayout {...themeProps}>
+            <ToteList {...themeProps} />
+          </PageLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/tote/:id" element={
+        <ProtectedRoute>
+          <PageLayout {...themeProps}>
+            <ToteDetail {...themeProps} />
+          </PageLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin" element={
+        <ProtectedRoute>
+          <PageLayout {...themeProps}>
+            <Admin {...themeProps} />
+          </PageLayout>
+        </ProtectedRoute>
+      } />
     </Routes>
   );
 }

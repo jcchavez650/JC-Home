@@ -120,7 +120,7 @@ export default function Admin({ theme, onToggleTheme }) {
     <div className="page">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div className="back-nav" style={{ marginBottom: 0 }} onClick={() => navigate('/')}>← Back</div>
-        <button className="theme-toggle" onClick={onToggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button>
+        <button className="theme-toggle mobile-only" onClick={onToggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button>
       </div>
 
       <div style={{ marginBottom: 24 }}>
