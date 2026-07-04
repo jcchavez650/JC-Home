@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import ToteIcon from '../components/ToteIcon.jsx';
@@ -10,9 +10,17 @@ export default function Login() {
   const { theme, toggle } = useTheme();
 
   const [mode, setMode] = useState('login');
+  const [registrationOpen, setRegistrationOpen] = useState(null);
   const [form, setForm] = useState({ email: '', name: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/auth/registration-status')
+      .then(r => r.json())
+      .then(d => setRegistrationOpen(d.open))
+      .catch(() => setRegistrationOpen(false));
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -52,10 +60,12 @@ export default function Login() {
             className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
             onClick={() => { setMode('login'); setError(''); }}
           >Sign In</button>
-          <button
-            className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
-            onClick={() => { setMode('register'); setError(''); }}
-          >Create Account</button>
+          {registrationOpen && (
+            <button
+              className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
+              onClick={() => { setMode('register'); setError(''); }}
+            >Create Account</button>
+          )}
         </div>
 
         {error && <div className="auth-error">{error}</div>}
@@ -108,6 +118,12 @@ export default function Login() {
         {mode === 'register' && (
           <p className="auth-note">
             The first account created becomes the admin.
+          </p>
+        )}
+
+        {registrationOpen === false && (
+          <p className="auth-note" style={{ textAlign: 'center' }}>
+            Registration is closed. Contact an admin to get access.
           </p>
         )}
       </div>

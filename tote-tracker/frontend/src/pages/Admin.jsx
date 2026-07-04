@@ -10,22 +10,53 @@ const ROLE_INFO = {
   viewer: { label: 'Viewer', color: '#9ca3b0', bg: 'rgba(156,163,176,0.1)' },
 };
 
+const BLANK_USER = { email: '', name: '', password: '', role: 'viewer' };
+
 export default function Admin({ theme, onToggleTheme }) {
   const { user, apiFetch } = useAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newUser, setNewUser] = useState(BLANK_USER);
+  const [addError, setAddError] = useState('');
+  const [addLoading, setAddLoading] = useState(false);
 
   useEffect(() => {
     if (user?.role !== 'admin') { navigate('/'); return; }
     fetchUsers();
+    fetchSettings();
   }, [user]);
 
   async function fetchUsers() {
     const res = await apiFetch('/api/users');
     if (res.ok) setUsers(await res.json());
     setLoading(false);
+  }
+
+  async function fetchSettings() {
+    const res = await apiFetch('/api/users/settings');
+    if (res.ok) {
+      const data = await res.json();
+      setRegistrationOpen(data.open_registration === 'true');
+    }
+  }
+
+  async function toggleRegistration() {
+    setSettingsLoading(true);
+    const res = await apiFetch('/api/users/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ open_registration: !registrationOpen }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setRegistrationOpen(data.open_registration === 'true');
+    }
+    setSettingsLoading(false);
   }
 
   async function updateRole(id, role) {
@@ -49,6 +80,23 @@ export default function Admin({ theme, onToggleTheme }) {
     setUsers(u => u.filter(x => x.id !== id));
   }
 
+  async function addUser(e) {
+    e.preventDefault();
+    setAddError('');
+    setAddLoading(true);
+    const res = await apiFetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newUser),
+    });
+    const data = await res.json();
+    if (!res.ok) { setAddError(data.error); setAddLoading(false); return; }
+    setUsers(u => [...u, data]);
+    setNewUser(BLANK_USER);
+    setShowAddUser(false);
+    setAddLoading(false);
+  }
+
   return (
     <div className="page">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
@@ -63,6 +111,28 @@ export default function Admin({ theme, onToggleTheme }) {
         </p>
       </div>
 
+      {/* Registration toggle */}
+      <div className="section" style={{ marginBottom: 16 }}>
+        <div className="section-label">Registration</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>Open Registration</div>
+            <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
+              {registrationOpen ? 'Anyone can create an account' : 'Only admins can add new users'}
+            </div>
+          </div>
+          <button
+            className={`btn btn-sm ${registrationOpen ? 'btn-danger' : 'btn-primary'}`}
+            onClick={toggleRegistration}
+            disabled={settingsLoading}
+            style={{ minWidth: 72 }}
+          >
+            {settingsLoading ? '…' : registrationOpen ? 'Close' : 'Open'}
+          </button>
+        </div>
+      </div>
+
+      {/* Role legend */}
       <div className="section" style={{ marginBottom: 16 }}>
         <div className="section-label">Roles</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -83,8 +153,51 @@ export default function Admin({ theme, onToggleTheme }) {
 
       {error && <div className="auth-error" style={{ marginBottom: 12 }}>{error}</div>}
 
+      {/* User list */}
       <div className="section">
-        <div className="section-label">{users.length} {users.length === 1 ? 'User' : 'Users'}</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+          <div className="section-label" style={{ marginBottom: 0 }}>{users.length} {users.length === 1 ? 'User' : 'Users'}</div>
+          <button className="btn btn-primary btn-sm" onClick={() => { setShowAddUser(v => !v); setAddError(''); }}>
+            {showAddUser ? 'Cancel' : '+ Add User'}
+          </button>
+        </div>
+
+        {showAddUser && (
+          <form onSubmit={addUser} style={{ padding: '14px 0 10px', borderBottom: '1px solid var(--border)' }}>
+            {addError && <div className="auth-error" style={{ marginBottom: 10 }}>{addError}</div>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div className="field" style={{ flex: 1, marginBottom: 0 }}>
+                  <label>Full Name</label>
+                  <input className="input input-full" placeholder="Jane Smith" value={newUser.name}
+                    onChange={e => setNewUser(u => ({ ...u, name: e.target.value }))} required />
+                </div>
+                <div className="field" style={{ flex: 1, marginBottom: 0 }}>
+                  <label>Email</label>
+                  <input className="input input-full" type="email" placeholder="jane@example.com" value={newUser.email}
+                    onChange={e => setNewUser(u => ({ ...u, email: e.target.value }))} required />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div className="field" style={{ flex: 1, marginBottom: 0 }}>
+                  <label>Password</label>
+                  <input className="input input-full" type="password" placeholder="Min. 6 characters" value={newUser.password}
+                    onChange={e => setNewUser(u => ({ ...u, password: e.target.value }))} required />
+                </div>
+                <div className="field" style={{ minWidth: 110, marginBottom: 0 }}>
+                  <label>Role</label>
+                  <select className="input input-full role-select" value={newUser.role}
+                    onChange={e => setNewUser(u => ({ ...u, role: e.target.value }))}>
+                    {ROLES.map(r => <option key={r} value={r}>{ROLE_INFO[r].label}</option>)}
+                  </select>
+                </div>
+              </div>
+              <button type="submit" className="btn btn-primary btn-sm" disabled={addLoading} style={{ alignSelf: 'flex-end' }}>
+                {addLoading ? 'Creating…' : 'Create User'}
+              </button>
+            </div>
+          </form>
+        )}
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-3)' }}>Loading…</div>

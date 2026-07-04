@@ -20,7 +20,25 @@ function publicUser(u) {
   return rest;
 }
 
+function isRegistrationOpen() {
+  const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
+  if (userCount === 0) return true; // always open for first user (admin setup)
+  const setting = db.prepare("SELECT value FROM settings WHERE key = 'open_registration'").get();
+  return setting?.value === 'true';
+}
+
+// Public — frontend checks this to show/hide the register tab
+router.get('/registration-status', (req, res) => {
+  res.json({ open: isRegistrationOpen() });
+});
+
 router.post('/register', async (req, res) => {
+  if (!isRegistrationOpen()) {
+    return res.status(403).json({
+      error: 'Registration is currently closed. Ask an admin to create an account for you.',
+    });
+  }
+
   const { email, name, password } = req.body;
   if (!email || !name || !password) {
     return res.status(400).json({ error: 'Email, name and password are required' });
@@ -32,7 +50,7 @@ router.post('/register', async (req, res) => {
   const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase().trim());
   if (existing) return res.status(400).json({ error: 'Email already registered' });
 
-  // First user in the system becomes admin
+  // First user becomes admin
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
   const role = userCount === 0 ? 'admin' : 'viewer';
 

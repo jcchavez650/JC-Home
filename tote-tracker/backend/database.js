@@ -19,6 +19,11 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS totes (
     id TEXT PRIMARY KEY,
     label TEXT NOT NULL,
@@ -48,6 +53,9 @@ db.exec(`
     FOREIGN KEY (tote_id) REFERENCES totes(id) ON DELETE CASCADE
   );
 `);
+
+// Default settings — INSERT OR IGNORE so existing values are never overwritten
+db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('open_registration', 'false')").run();
 
 // Migrations for existing databases
 try { db.exec(`ALTER TABLE totes ADD COLUMN tags TEXT DEFAULT '[]'`); } catch {}
