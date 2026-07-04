@@ -41,9 +41,9 @@ router.post('/', async (req, res) => {
   );
 });
 
-// Update a user's role or name
-router.put('/:id', (req, res) => {
-  const { role, name } = req.body;
+// Update a user's role, name, and/or password
+router.put('/:id', async (req, res) => {
+  const { role, name, password } = req.body;
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -52,11 +52,22 @@ router.put('/:id', (req, res) => {
     if (adminCount <= 1) return res.status(400).json({ error: 'Cannot remove the last admin' });
   }
 
+  if (password !== undefined && password !== '') {
+    if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
+
   const validRoles = ['admin', 'editor', 'viewer'];
   const newRole = role && validRoles.includes(role) ? role : user.role;
+  const newName = name?.trim() || user.name;
 
-  db.prepare('UPDATE users SET role = ?, name = ? WHERE id = ?')
-    .run(newRole, name?.trim() || user.name, req.params.id);
+  if (password) {
+    const password_hash = await bcrypt.hash(password, 12);
+    db.prepare('UPDATE users SET role = ?, name = ?, password_hash = ? WHERE id = ?')
+      .run(newRole, newName, password_hash, req.params.id);
+  } else {
+    db.prepare('UPDATE users SET role = ?, name = ? WHERE id = ?')
+      .run(newRole, newName, req.params.id);
+  }
 
   res.json(
     db.prepare('SELECT id, email, name, role, created_at FROM users WHERE id = ?').get(req.params.id)

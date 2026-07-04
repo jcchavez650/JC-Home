@@ -24,6 +24,12 @@ export default function Admin({ theme, onToggleTheme }) {
   const [newUser, setNewUser] = useState(BLANK_USER);
   const [addError, setAddError] = useState('');
   const [addLoading, setAddLoading] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [editError, setEditError] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
+  const [showEditPass, setShowEditPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
 
   useEffect(() => {
     if (user?.role !== 'admin') { navigate('/'); return; }
@@ -59,16 +65,29 @@ export default function Admin({ theme, onToggleTheme }) {
     setSettingsLoading(false);
   }
 
-  async function updateRole(id, role) {
-    setError('');
-    const res = await apiFetch(`/api/users/${id}`, {
+  function startEdit(u) {
+    setEditingId(u.id);
+    setEditForm({ name: u.name, role: u.role, password: '' });
+    setEditError('');
+    setShowEditPass(false);
+  }
+
+  async function saveEdit(e) {
+    e.preventDefault();
+    setEditError('');
+    setEditLoading(true);
+    const body = { name: editForm.name, role: editForm.role };
+    if (editForm.password) body.password = editForm.password;
+    const res = await apiFetch(`/api/users/${editingId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role }),
+      body: JSON.stringify(body),
     });
     const data = await res.json();
-    if (!res.ok) { setError(data.error); return; }
-    setUsers(u => u.map(x => x.id === id ? data : x));
+    if (!res.ok) { setEditError(data.error); setEditLoading(false); return; }
+    setUsers(u => u.map(x => x.id === editingId ? data : x));
+    setEditingId(null);
+    setEditLoading(false);
   }
 
   async function deleteUser(id) {
@@ -157,11 +176,12 @@ export default function Admin({ theme, onToggleTheme }) {
       <div className="section">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
           <div className="section-label" style={{ marginBottom: 0 }}>{users.length} {users.length === 1 ? 'User' : 'Users'}</div>
-          <button className="btn btn-primary btn-sm" onClick={() => { setShowAddUser(v => !v); setAddError(''); }}>
+          <button className="btn btn-primary btn-sm" onClick={() => { setShowAddUser(v => !v); setAddError(''); setEditingId(null); }}>
             {showAddUser ? 'Cancel' : '+ Add User'}
           </button>
         </div>
 
+        {/* Add user form */}
         {showAddUser && (
           <form onSubmit={addUser} style={{ padding: '14px 0 10px', borderBottom: '1px solid var(--border)' }}>
             {addError && <div className="auth-error" style={{ marginBottom: 10 }}>{addError}</div>}
@@ -181,8 +201,16 @@ export default function Admin({ theme, onToggleTheme }) {
               <div style={{ display: 'flex', gap: 8 }}>
                 <div className="field" style={{ flex: 1, marginBottom: 0 }}>
                   <label>Password</label>
-                  <input className="input input-full" type="password" placeholder="Min. 6 characters" value={newUser.password}
-                    onChange={e => setNewUser(u => ({ ...u, password: e.target.value }))} required />
+                  <div style={{ position: 'relative' }}>
+                    <input className="input input-full" type={showNewPass ? 'text' : 'password'}
+                      placeholder="Min. 6 characters" value={newUser.password}
+                      onChange={e => setNewUser(u => ({ ...u, password: e.target.value }))}
+                      style={{ paddingRight: 36 }} required />
+                    <button type="button" onClick={() => setShowNewPass(v => !v)}
+                      style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--text-3)', padding: 0 }}>
+                      {showNewPass ? '🙈' : '👁'}
+                    </button>
+                  </div>
                 </div>
                 <div className="field" style={{ minWidth: 110, marginBottom: 0 }}>
                   <label>Role</label>
@@ -204,35 +232,75 @@ export default function Admin({ theme, onToggleTheme }) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {users.map((u, i) => {
-              const info = ROLE_INFO[u.role] || ROLE_INFO.viewer;
               const isSelf = u.id === user.id;
+              const isEditing = editingId === u.id;
               return (
-                <div key={u.id} className="user-row" style={{ borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
-                  <div className="user-avatar">
-                    {u.name?.[0]?.toUpperCase() || '?'}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      {u.name}
-                      {isSelf && <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 500 }}>(you)</span>}
+                <div key={u.id} style={{ borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
+                  {isEditing ? (
+                    /* Inline edit form */
+                    <form onSubmit={saveEdit} style={{ padding: '14px 0' }}>
+                      {editError && <div className="auth-error" style={{ marginBottom: 10 }}>{editError}</div>}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <div className="field" style={{ flex: 1, marginBottom: 0 }}>
+                            <label>Full Name</label>
+                            <input className="input input-full" value={editForm.name}
+                              onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} required />
+                          </div>
+                          <div className="field" style={{ minWidth: 110, marginBottom: 0 }}>
+                            <label>Role</label>
+                            <select className="input input-full role-select" value={editForm.role}
+                              onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))}
+                              disabled={isSelf}>
+                              {ROLES.map(r => <option key={r} value={r}>{ROLE_INFO[r].label}</option>)}
+                            </select>
+                          </div>
+                        </div>
+                        <div className="field" style={{ marginBottom: 0 }}>
+                          <label>New Password <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>(leave blank to keep current)</span></label>
+                          <div style={{ position: 'relative' }}>
+                            <input className="input input-full" type={showEditPass ? 'text' : 'password'}
+                              placeholder="Enter new password…" value={editForm.password}
+                              onChange={e => setEditForm(f => ({ ...f, password: e.target.value }))}
+                              style={{ paddingRight: 36 }} />
+                            <button type="button" onClick={() => setShowEditPass(v => !v)}
+                              style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--text-3)', padding: 0 }}>
+                              {showEditPass ? '🙈' : '👁'}
+                            </button>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingId(null)}>Cancel</button>
+                          <button type="submit" className="btn btn-primary btn-sm" disabled={editLoading}>
+                            {editLoading ? 'Saving…' : 'Save Changes'}
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  ) : (
+                    /* User row */
+                    <div className="user-row">
+                      <div className="user-avatar">
+                        {u.name?.[0]?.toUpperCase() || '?'}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                          {u.name}
+                          {isSelf && <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 500 }}>(you)</span>}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>{u.email}</div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                        <span className="role-badge" style={{ background: ROLE_INFO[u.role]?.bg, color: ROLE_INFO[u.role]?.color }}>
+                          {ROLE_INFO[u.role]?.label || u.role}
+                        </span>
+                        <button className="edit-item-btn" onClick={() => { startEdit(u); setShowAddUser(false); }} title="Edit user">✎</button>
+                        {!isSelf && (
+                          <button className="delete-btn" onClick={() => deleteUser(u.id)} title="Remove user">✕</button>
+                        )}
+                      </div>
                     </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>{u.email}</div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                    <select
-                      className="role-select"
-                      value={u.role}
-                      onChange={e => updateRole(u.id, e.target.value)}
-                      disabled={isSelf}
-                    >
-                      {ROLES.map(r => (
-                        <option key={r} value={r}>{ROLE_INFO[r].label}</option>
-                      ))}
-                    </select>
-                    {!isSelf && (
-                      <button className="delete-btn" onClick={() => deleteUser(u.id)} title="Remove user">✕</button>
-                    )}
-                  </div>
+                  )}
                 </div>
               );
             })}
