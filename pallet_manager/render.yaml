@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: pallet-manager
+    runtime: python
+    rootDir: pallet_manager
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: DATA_DIR
+        value: /data
+      - key: SECRET_KEY
+        generateValue: true
+    disk:
+      name: pallet-db
+      mountPath: /data
+      sizeGB: 1

@@ -6,9 +6,12 @@ import io
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'pallet_mgr_secret_2024'
+app.secret_key = os.environ.get('SECRET_KEY', 'pallet_mgr_secret_2024')
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'pallets.db')
+# On Render, store DB on the persistent disk mounted at /data
+_data_dir = os.environ.get('DATA_DIR', os.path.dirname(__file__))
+os.makedirs(_data_dir, exist_ok=True)
+DB_PATH = os.path.join(_data_dir, 'pallets.db')
 
 STATUSES = ['Available', 'In Use', 'Damaged', 'Quarantine', 'Pending Inspection', 'Retired']
 LOCATIONS = []  # Populated dynamically from DB
