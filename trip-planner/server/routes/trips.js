@@ -4,6 +4,20 @@ import { requireTripMember } from '../auth.js'
 
 export const tripsRouter = Router()
 
+// Normalizes the tailoring questionnaire into a stored JSON string (or null).
+export function serializePreferences(prefs) {
+  if (!prefs || typeof prefs !== 'object') return null
+  const clean = {}
+  if (typeof prefs.vibe === 'string' && prefs.vibe.trim()) clean.vibe = prefs.vibe.trim()
+  if (typeof prefs.group_type === 'string' && prefs.group_type.trim()) clean.group_type = prefs.group_type.trim()
+  if (Array.isArray(prefs.interests)) {
+    const interests = prefs.interests.filter((i) => typeof i === 'string' && i.trim()).map((i) => i.trim())
+    if (interests.length) clean.interests = interests
+  }
+  if (typeof prefs.notes === 'string' && prefs.notes.trim()) clean.notes = prefs.notes.trim().slice(0, 500)
+  return Object.keys(clean).length ? JSON.stringify(clean) : null
+}
+
 const tripSummary = db.prepare(`
   SELECT t.*, tm.role AS my_role,
     (SELECT COUNT(*) FROM trip_members m WHERE m.trip_id = t.id) AS member_count,
@@ -18,15 +32,15 @@ tripsRouter.get('/', (req, res) => {
 })
 
 tripsRouter.post('/', (req, res) => {
-  const { name, destination, start_date, end_date, budget, currency } = req.body || {}
+  const { name, destination, start_date, end_date, budget, currency, preferences } = req.body || {}
   if (!name?.trim() || !destination?.trim()) {
     return res.status(400).json({ error: 'name and destination are required' })
   }
   const create = db.transaction(() => {
     const info = db
       .prepare(
-        `INSERT INTO trips (name, destination, start_date, end_date, budget, currency, created_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO trips (name, destination, start_date, end_date, budget, currency, preferences, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         name.trim(),
@@ -35,6 +49,7 @@ tripsRouter.post('/', (req, res) => {
         end_date || null,
         budget != null && budget !== '' ? Number(budget) : null,
         currency?.trim() || 'USD',
+        serializePreferences(preferences),
         req.user.id
       )
     db.prepare('INSERT INTO trip_members (trip_id, user_id, role) VALUES (?, ?, ?)').run(
@@ -57,7 +72,7 @@ tripsRouter.get('/:id', requireTripMember, (req, res) => {
 })
 
 tripsRouter.put('/:id', requireTripMember, (req, res) => {
-  const { name, destination, start_date, end_date, budget, currency } = req.body || {}
+  const { name, destination, start_date, end_date, budget, currency, preferences } = req.body || {}
   db.prepare(
     `UPDATE trips SET
        name = COALESCE(?, name),
@@ -76,6 +91,12 @@ tripsRouter.put('/:id', requireTripMember, (req, res) => {
     currency?.trim() || null,
     req.trip.id
   )
+  if (preferences !== undefined) {
+    db.prepare('UPDATE trips SET preferences = ? WHERE id = ?').run(
+      serializePreferences(preferences),
+      req.trip.id
+    )
+  }
   const trip = db.prepare('SELECT * FROM trips WHERE id = ?').get(req.trip.id)
   res.json({ trip })
 })

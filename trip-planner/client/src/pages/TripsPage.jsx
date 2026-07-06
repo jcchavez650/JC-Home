@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api.js'
+import PreferencesFields, { EMPTY_PREFS } from '../components/PreferencesFields.jsx'
 
 const fmtMoney = (n, c = 'USD') =>
   n == null ? '—' : new Intl.NumberFormat('en-US', { style: 'currency', currency: c }).format(n)
@@ -8,6 +9,7 @@ export default function TripsPage() {
   const [trips, setTrips] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: '', destination: '', start_date: '', end_date: '', budget: '', currency: 'USD' })
+  const [prefs, setPrefs] = useState(EMPTY_PREFS)
   const [error, setError] = useState('')
 
   const load = () => api('/trips').then((d) => setTrips(d.trips)).catch((e) => setError(e.message))
@@ -19,8 +21,9 @@ export default function TripsPage() {
     e.preventDefault()
     setError('')
     try {
-      await api('/trips', { method: 'POST', body: form })
+      await api('/trips', { method: 'POST', body: { ...form, preferences: prefs } })
       setForm({ name: '', destination: '', start_date: '', end_date: '', budget: '', currency: 'USD' })
+      setPrefs(EMPTY_PREFS)
       setShowForm(false)
       load()
     } catch (err) {
@@ -47,6 +50,11 @@ export default function TripsPage() {
           <label>End date<input type="date" value={form.end_date} onChange={set('end_date')} /></label>
           <label>Total budget<input type="number" min="0" step="0.01" value={form.budget} onChange={set('budget')} placeholder="2000" /></label>
           <label>Currency<input value={form.currency} onChange={set('currency')} maxLength={3} /></label>
+          <div className="span-2 prefs-section">
+            <h3>✨ Tailor your suggestions</h3>
+            <p className="muted small">A few quick questions so the ideas we suggest actually fit your trip.</p>
+          </div>
+          <PreferencesFields value={prefs} onChange={setPrefs} />
           {error && <p className="error">{error}</p>}
           <button className="btn btn-primary">Create trip</button>
         </form>
