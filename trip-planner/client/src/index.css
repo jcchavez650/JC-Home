@@ -292,6 +292,88 @@ input:focus, select:focus {
 .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--green)); border-radius: 999px; }
 .progress-fill.over { background: linear-gradient(90deg, #d8843a, var(--danger)); }
 
+/* Segmented control */
+.seg { display: inline-flex; background: var(--card-2); border: 1px solid var(--border); border-radius: 999px; padding: 3px; }
+.seg-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.seg-btn.active {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  box-shadow: 0 6px 14px -8px rgba(16, 85, 63, 0.8);
+}
+
+/* Timeline view */
+.tl-day { margin-top: 1.3rem; }
+.tl-day-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+.tl-day-badge {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--primary);
+}
+.tl-node { display: grid; grid-template-columns: 62px 34px 1fr; column-gap: 0.5rem; }
+.tl-time {
+  text-align: right;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  padding-top: 1rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tl-rail { position: relative; display: flex; justify-content: center; }
+.tl-rail::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: -0.7rem;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: var(--hairline);
+}
+.tl-node:last-child .tl-rail::before { bottom: auto; height: 1.9rem; }
+.tl-dot {
+  position: relative;
+  z-index: 1;
+  margin-top: 0.55rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 2px solid var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  box-shadow: var(--shadow);
+}
+.tl-card { margin-bottom: 0.7rem; }
+.tl-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.6rem; }
+.tl-card-head strong { font-family: var(--serif); font-size: 1.05rem; font-weight: 600; }
+.tl-card p { margin: 0.2rem 0 0; }
+
+@media (max-width: 560px) {
+  .tl-node { grid-template-columns: 48px 28px 1fr; }
+  .tl-time { font-size: 0.72rem; }
+}
+
 /* ---- Itinerary & expenses ---- */
 .day-group h3 {
   margin: 1.4rem 0 0.6rem;
@@ -425,9 +507,23 @@ body.trip-theme {
   z-index: 1;
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.28));
 }
+.trip-hero-edit {
+  position: absolute;
+  right: 1.2rem;
+  bottom: 1.1rem;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(4px);
+}
+.trip-hero-edit:hover { background: rgba(255, 255, 255, 0.28); border-color: rgba(255, 255, 255, 0.6); }
+.form-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+
 @media (max-width: 560px) {
-  .trip-hero-emoji { font-size: 3rem; right: 0.9rem; opacity: 0.85; }
+  .trip-hero-emoji { font-size: 3rem; right: 0.9rem; top: 34%; opacity: 0.85; }
   .trip-hero p { max-width: 26ch; }
+  .trip-hero-edit { position: static; margin-top: 0.9rem; display: inline-block; }
 }
 
 @media (max-width: 720px) {

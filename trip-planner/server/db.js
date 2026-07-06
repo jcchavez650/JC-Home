@@ -96,5 +96,11 @@ const tripCols = db.prepare('PRAGMA table_info(trips)').all()
 if (!tripCols.some((c) => c.name === 'preferences')) {
   db.exec('ALTER TABLE trips ADD COLUMN preferences TEXT')
 }
+if (!tripCols.some((c) => c.name === 'party_size')) {
+  db.exec('ALTER TABLE trips ADD COLUMN party_size INTEGER')
+}
+if (!tripCols.some((c) => c.name === 'cost_plan')) {
+  db.exec('ALTER TABLE trips ADD COLUMN cost_plan TEXT')
+}
 
 export default db

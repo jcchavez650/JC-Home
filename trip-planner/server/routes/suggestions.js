@@ -82,11 +82,13 @@ suggestionsRouter.get('/', async (req, res) => {
   const prefs = parsePreferences(trip)
   const memberCount =
     db.prepare('SELECT COUNT(*) AS n FROM trip_members WHERE trip_id = ?').get(trip.id).n || 1
+  // Prefer the trip's headcount (party_size) over the number of app members.
+  const headcount = trip.party_size && trip.party_size > 0 ? trip.party_size : memberCount
   const budgetPerPerson =
     req.query.budget != null && req.query.budget !== ''
       ? Number(req.query.budget)
       : trip.budget != null
-        ? trip.budget / memberCount
+        ? trip.budget / headcount
         : null
 
   const maxTier = maxTierFor(budgetPerPerson)

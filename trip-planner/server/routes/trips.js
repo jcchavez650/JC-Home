@@ -18,6 +18,27 @@ export function serializePreferences(prefs) {
   return Object.keys(clean).length ? JSON.stringify(clean) : null
 }
 
+// Categories that can carry a planned budget amount, shared with the client.
+export const COST_CATEGORIES = ['flights', 'hotel', 'transport', 'food', 'activities', 'shopping', 'other']
+
+// Normalizes the planned cost breakdown ({category: amount}) into a JSON string.
+export function serializeCostPlan(plan) {
+  if (!plan || typeof plan !== 'object') return null
+  const clean = {}
+  for (const cat of COST_CATEGORIES) {
+    const val = Number(plan[cat])
+    if (Number.isFinite(val) && val > 0) clean[cat] = Math.round(val * 100) / 100
+  }
+  return Object.keys(clean).length ? JSON.stringify(clean) : null
+}
+
+function normalizePartySize(value) {
+  if (value == null || value === '') return null
+  const n = Math.floor(Number(value))
+  if (!Number.isFinite(n) || n < 1) return null
+  return Math.min(n, 100)
+}
+
 const tripSummary = db.prepare(`
   SELECT t.*, tm.role AS my_role,
     (SELECT COUNT(*) FROM trip_members m WHERE m.trip_id = t.id) AS member_count,
@@ -32,15 +53,16 @@ tripsRouter.get('/', (req, res) => {
 })
 
 tripsRouter.post('/', (req, res) => {
-  const { name, destination, start_date, end_date, budget, currency, preferences } = req.body || {}
+  const { name, destination, start_date, end_date, budget, currency, preferences, party_size, cost_plan } =
+    req.body || {}
   if (!name?.trim() || !destination?.trim()) {
     return res.status(400).json({ error: 'name and destination are required' })
   }
   const create = db.transaction(() => {
     const info = db
       .prepare(
-        `INSERT INTO trips (name, destination, start_date, end_date, budget, currency, preferences, created_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO trips (name, destination, start_date, end_date, budget, currency, preferences, party_size, cost_plan, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         name.trim(),
@@ -50,6 +72,8 @@ tripsRouter.post('/', (req, res) => {
         budget != null && budget !== '' ? Number(budget) : null,
         currency?.trim() || 'USD',
         serializePreferences(preferences),
+        normalizePartySize(party_size),
+        serializeCostPlan(cost_plan),
         req.user.id
       )
     db.prepare('INSERT INTO trip_members (trip_id, user_id, role) VALUES (?, ?, ?)').run(
@@ -72,7 +96,14 @@ tripsRouter.get('/:id', requireTripMember, (req, res) => {
 })
 
 tripsRouter.put('/:id', requireTripMember, (req, res) => {
-  const { name, destination, start_date, end_date, budget, currency, preferences } = req.body || {}
+  const { name, destination, start_date, end_date, budget, currency, preferences, party_size, cost_plan } =
+    req.body || {}
+  if (name !== undefined && !name?.trim()) {
+    return res.status(400).json({ error: 'name cannot be empty' })
+  }
+  if (destination !== undefined && !destination?.trim()) {
+    return res.status(400).json({ error: 'destination cannot be empty' })
+  }
   db.prepare(
     `UPDATE trips SET
        name = COALESCE(?, name),
@@ -96,6 +127,12 @@ tripsRouter.put('/:id', requireTripMember, (req, res) => {
       serializePreferences(preferences),
       req.trip.id
     )
+  }
+  if (party_size !== undefined) {
+    db.prepare('UPDATE trips SET party_size = ? WHERE id = ?').run(normalizePartySize(party_size), req.trip.id)
+  }
+  if (cost_plan !== undefined) {
+    db.prepare('UPDATE trips SET cost_plan = ? WHERE id = ?').run(serializeCostPlan(cost_plan), req.trip.id)
   }
   const trip = db.prepare('SELECT * FROM trips WHERE id = ?').get(req.trip.id)
   res.json({ trip })

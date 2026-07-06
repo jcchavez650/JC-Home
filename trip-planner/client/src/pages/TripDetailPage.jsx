@@ -3,16 +3,19 @@ import { api } from '../api.js'
 import { destinationTheme } from '../destinationTheme.js'
 import ItineraryTab from '../components/ItineraryTab.jsx'
 import ExpensesTab from '../components/ExpensesTab.jsx'
+import BudgetTab from '../components/BudgetTab.jsx'
 import BalancesTab from '../components/BalancesTab.jsx'
 import SuggestionsTab from '../components/SuggestionsTab.jsx'
 import MembersTab from '../components/MembersTab.jsx'
+import EditTripForm from '../components/EditTripForm.jsx'
 
-const TABS = ['Itinerary', 'Expenses', 'Balances', 'Suggestions', 'Members']
+const TABS = ['Itinerary', 'Budget', 'Expenses', 'Balances', 'Suggestions', 'Members']
 
 export default function TripDetailPage({ tripId }) {
   const [trip, setTrip] = useState(null)
   const [members, setMembers] = useState([])
   const [tab, setTab] = useState('Itinerary')
+  const [editing, setEditing] = useState(false)
   const [error, setError] = useState('')
 
   const load = useCallback(() => {
@@ -56,9 +59,21 @@ export default function TripDetailPage({ tripId }) {
         <p>
           📍 {trip.destination}
           {trip.start_date && ` · 📅 ${trip.start_date}${trip.end_date ? ` → ${trip.end_date}` : ''}`}
+          {trip.party_size ? ` · 👥 ${trip.party_size} ${trip.party_size === 1 ? 'person' : 'people'}` : ''}
           {trip.budget != null && ` · 💰 budget $${trip.budget}`}
         </p>
+        <button className="btn trip-hero-edit" onClick={() => setEditing((s) => !s)}>
+          {editing ? 'Close' : '✎ Edit trip'}
+        </button>
       </div>
+
+      {editing && (
+        <EditTripForm
+          trip={trip}
+          onSaved={() => { setEditing(false); load() }}
+          onCancel={() => setEditing(false)}
+        />
+      )}
 
       <div className="tabs">
         {TABS.map((t) => (
@@ -69,6 +84,7 @@ export default function TripDetailPage({ tripId }) {
       </div>
 
       {tab === 'Itinerary' && <ItineraryTab {...tabProps} />}
+      {tab === 'Budget' && <BudgetTab {...tabProps} />}
       {tab === 'Expenses' && <ExpensesTab {...tabProps} />}
       {tab === 'Balances' && <BalancesTab {...tabProps} />}
       {tab === 'Suggestions' && <SuggestionsTab {...tabProps} goToItinerary={() => setTab('Itinerary')} />}
