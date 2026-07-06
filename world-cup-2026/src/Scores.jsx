@@ -80,7 +80,7 @@ export default function Scores({ matches }) {
   return (
     <div>
       {sections.map(sec => (
-        <div key={sec.label}>
+        <div key={sec.label} className="match-section">
           <div className="section-header">{sec.label}</div>
           {sec.games.map(m => <MatchCard key={m.id} match={m} />)}
         </div>

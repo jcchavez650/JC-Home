@@ -14,7 +14,9 @@ export default function Groups({ groups }) {
 
   return (
     <div style={{ paddingTop: 12 }}>
-      {groups.map(g => <GroupTable key={g.name} group={g} />)}
+      <div className="groups-grid">
+        {groups.map(g => <GroupTable key={g.name} group={g} />)}
+      </div>
       <div className="third-place-note">
         🔶 {t.thirdPlaceNote ?? 'Best 8 third-place teams also advance to the Round of 32'}
       </div>

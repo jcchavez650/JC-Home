@@ -141,7 +141,7 @@ export default function Games({ matches, allLoaded }) {
         <div className="empty"><div className="e">📅</div>{t.noGamesFound}</div>
       ) : (
         Object.entries(grouped).map(([date, games]) => (
-          <div key={date}>
+          <div key={date} className="match-section">
             <div className="section-header">{date}</div>
             {games.map(m => <GameRow key={m.id} match={m} />)}
           </div>

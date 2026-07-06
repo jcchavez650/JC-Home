@@ -1743,3 +1743,48 @@
   letter-spacing: 0.04em;
   margin-bottom: 6px;
 }
+
+/* ── Desktop layout (≥900px): the app widens to 1080px and lists become
+     multi-column; phones keep the single-column layout above ─────────── */
+@media (min-width: 900px) {
+  /* Scores & Games: two cards per row, section titles span the full row */
+  .match-section {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0 12px;
+    padding: 0 12px;
+    align-items: start;
+  }
+  .match-section .section-header { grid-column: 1 / -1; }
+  .match-section .match-card,
+  .match-section .game-row { margin-left: 0; margin-right: 0; }
+
+  /* Groups: three tables per row */
+  .groups-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 0 12px;
+  }
+  .groups-grid .group-card { margin: 0; }
+
+  /* Eliminated: two cards per row */
+  .elim-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .elim-grid .elim-card { margin: 0; }
+
+  /* Bracket qualifiers: four mini-tables per row */
+  .qualifiers-grid { grid-template-columns: repeat(4, 1fr) !important; }
+
+  /* A little more breathing room for text */
+  .header { padding: 14px 20px; }
+  .nav-tab { font-size: 12px; }
+}
+
+/* Very wide screens: groups four-up */
+@media (min-width: 1280px) {
+  .groups-grid { grid-template-columns: repeat(4, 1fr); }
+}

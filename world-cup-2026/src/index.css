@@ -52,6 +52,13 @@ body {
   box-shadow: 0 0 48px rgba(0, 0, 0, 0.65);
 }
 
+/* Desktop: use the width — multi-column layouts kick in via App.css */
+@media (min-width: 900px) {
+  #root {
+    max-width: 1080px;
+  }
+}
+
 button {
   cursor: pointer;
   border: none;
