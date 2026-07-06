@@ -1,0 +1,154 @@
+{
+  "destinations": {
+    "paris": {
+      "label": "Paris, France",
+      "aliases": ["paris"],
+      "suggestions": [
+        { "title": "Louvre Museum", "category": "sightseeing", "tier": "moderate", "est_cost": 25, "notes": "Book timed entry online; free first Friday evenings" },
+        { "title": "Eiffel Tower summit", "category": "sightseeing", "tier": "moderate", "est_cost": 30, "notes": "Cheaper if you take the stairs to level 2" },
+        { "title": "Seine river walk & Pont Neuf", "category": "activity", "tier": "free", "est_cost": 0, "notes": "Best at sunset" },
+        { "title": "Montmartre & Sacré-Cœur", "category": "sightseeing", "tier": "free", "est_cost": 0, "notes": "Basilica is free; climb the dome for ~8€" },
+        { "title": "Bistro dinner in Le Marais", "category": "food", "tier": "moderate", "est_cost": 40, "notes": "Prix fixe menus are the best value" },
+        { "title": "Boulangerie breakfast crawl", "category": "food", "tier": "budget", "est_cost": 10, "notes": "Croissant + café stand-up at the bar is cheapest" },
+        { "title": "Versailles day trip", "category": "activity", "tier": "moderate", "est_cost": 32, "notes": "RER C train + palace ticket; gardens free most days" },
+        { "title": "Michelin-star tasting menu", "category": "food", "tier": "splurge", "est_cost": 200, "notes": "Lunch menus are far cheaper than dinner" }
+      ]
+    },
+    "tokyo": {
+      "label": "Tokyo, Japan",
+      "aliases": ["tokyo"],
+      "suggestions": [
+        { "title": "Senso-ji Temple, Asakusa", "category": "sightseeing", "tier": "free", "est_cost": 0, "notes": "Go early morning to beat crowds" },
+        { "title": "Shibuya Crossing & Hachiko", "category": "sightseeing", "tier": "free", "est_cost": 0, "notes": "View from Shibuya Sky costs ~¥2500" },
+        { "title": "Conveyor-belt sushi lunch", "category": "food", "tier": "budget", "est_cost": 12, "notes": "Plates from ¥120 at big chains" },
+        { "title": "teamLab Planets", "category": "activity", "tier": "moderate", "est_cost": 25, "notes": "Book weeks ahead" },
+        { "title": "Tsukiji Outer Market food crawl", "category": "food", "tier": "budget", "est_cost": 20, "notes": "Go hungry, before 10am" },
+        { "title": "Day trip to Hakone (Mt. Fuji views)", "category": "activity", "tier": "moderate", "est_cost": 45, "notes": "Hakone Free Pass covers most transport" },
+        { "title": "Omakase sushi dinner", "category": "food", "tier": "splurge", "est_cost": 150, "notes": "Lunch omakase is roughly half price" },
+        { "title": "Meiji Shrine & Harajuku", "category": "sightseeing", "tier": "free", "est_cost": 0, "notes": "Pair with Takeshita Street snacks" }
+      ]
+    },
+    "new york": {
+      "label": "New York City, USA",
+      "aliases": ["new york", "nyc", "new york city", "manhattan"],
+      "suggestions": [
+        { "title": "Walk the High Line + Chelsea Market", "category": "activity", "tier": "free", "est_cost": 0, "notes": "Enter at Gansevoort St, exit at Hudson Yards" },
+        { "title": "Central Park bike loop", "category": "activity", "tier": "budget", "est_cost": 15, "notes": "Rentals near Columbus Circle" },
+        { "title": "Broadway show (lottery/rush)", "category": "activity", "tier": "moderate", "est_cost": 60, "notes": "Digital lotteries can get $10-50 seats" },
+        { "title": "Staten Island Ferry (Statue of Liberty views)", "category": "sightseeing", "tier": "free", "est_cost": 0, "notes": "Free, runs 24/7" },
+        { "title": "Dollar-slice pizza tour", "category": "food", "tier": "budget", "est_cost": 8, "notes": "Joe's Pizza for the classic slice" },
+        { "title": "Top of the Rock at sunset", "category": "sightseeing", "tier": "moderate", "est_cost": 43, "notes": "Better skyline photos than Empire State" },
+        { "title": "Omakase or steakhouse night", "category": "food", "tier": "splurge", "est_cost": 175, "notes": "Book 2-4 weeks out" },
+        { "title": "Brooklyn Bridge walk + DUMBO", "category": "sightseeing", "tier": "free", "est_cost": 0, "notes": "Walk toward Manhattan for the skyline ahead of you" }
+      ]
+    },
+    "cancun": {
+      "label": "Cancún, Mexico",
+      "aliases": ["cancun", "cancún", "riviera maya", "playa del carmen", "tulum"],
+      "suggestions": [
+        { "title": "Chichén Itzá day trip", "category": "activity", "tier": "moderate", "est_cost": 65, "notes": "Leave early; combo tours include cenote stop" },
+        { "title": "Cenote swimming (Dos Ojos / Ik Kil)", "category": "activity", "tier": "budget", "est_cost": 20, "notes": "Bring biodegradable sunscreen only" },
+        { "title": "Isla Mujeres ferry + golf cart day", "category": "activity", "tier": "moderate", "est_cost": 45, "notes": "Punta Sur views are worth it" },
+        { "title": "Playa Delfines (free public beach)", "category": "activity", "tier": "free", "est_cost": 0, "notes": "No beach clubs, bring your own everything" },
+        { "title": "Street tacos in downtown Cancún", "category": "food", "tier": "budget", "est_cost": 8, "notes": "Parque de las Palapas at night" },
+        { "title": "Beachfront dinner in the Hotel Zone", "category": "food", "tier": "splurge", "est_cost": 90, "notes": "Reserve a sunset table" },
+        { "title": "Snorkel the MUSA underwater museum", "category": "activity", "tier": "moderate", "est_cost": 55, "notes": "Calm-water days only" },
+        { "title": "Xcaret or Xel-Há park day", "category": "activity", "tier": "splurge", "est_cost": 130, "notes": "All-inclusive; book online for discounts" }
+      ]
+    },
+    "london": {
+      "label": "London, UK",
+      "aliases": ["london"],
+      "suggestions": [
+        { "title": "British Museum", "category": "sightseeing", "tier": "free", "est_cost": 0, "notes": "Free entry; special exhibits cost extra" },
+        { "title": "Borough Market food crawl", "category": "food", "tier": "budget", "est_cost": 15, "notes": "Closed Sundays; go hungry" },
+        { "title": "Tower of London & Crown Jewels", "category": "sightseeing", "tier": "moderate", "est_cost": 35, "notes": "Yeoman Warder tours included" },
+        { "title": "West End show", "category": "activity", "tier": "moderate", "est_cost": 50, "notes": "TKTS booth in Leicester Square for same-day deals" },
+        { "title": "South Bank Thames walk", "category": "activity", "tier": "free", "est_cost": 0, "notes": "Westminster to Tower Bridge, ~90 min" },
+        { "title": "Afternoon tea", "category": "food", "tier": "splurge", "est_cost": 70, "notes": "Hotel teas need booking; museum cafés do cheaper versions" },
+        { "title": "Camden Market + Regent's Canal", "category": "activity", "tier": "budget", "est_cost": 10, "notes": "Walk the canal to Little Venice" },
+        { "title": "Sky Garden (free skyscraper view)", "category": "sightseeing", "tier": "free", "est_cost": 0, "notes": "Free but book tickets ~1 week ahead" }
+      ]
+    },
+    "rome": {
+      "label": "Rome, Italy",
+      "aliases": ["rome", "roma"],
+      "suggestions": [
+        { "title": "Colosseum + Forum + Palatine", "category": "sightseeing", "tier": "moderate", "est_cost": 18, "notes": "One combined ticket; book a time slot" },
+        { "title": "Vatican Museums & Sistine Chapel", "category": "sightseeing", "tier": "moderate", "est_cost": 20, "notes": "Skip-the-line slots sell out; St. Peter's is free" },
+        { "title": "Trevi Fountain & Pantheon walk", "category": "sightseeing", "tier": "free", "est_cost": 0, "notes": "Pantheon now ~5€; go at 7am for empty photos" },
+        { "title": "Trastevere trattoria dinner", "category": "food", "tier": "moderate", "est_cost": 35, "notes": "Cacio e pepe + house wine" },
+        { "title": "Gelato & espresso crawl", "category": "food", "tier": "budget", "est_cost": 10, "notes": "Look for covered metal tins = artisanal" },
+        { "title": "Borghese Gallery", "category": "sightseeing", "tier": "moderate", "est_cost": 15, "notes": "Timed 2-hour entry, must reserve" },
+        { "title": "Aperitivo on a rooftop terrace", "category": "food", "tier": "splurge", "est_cost": 60, "notes": "Many hotel rooftops open to non-guests" },
+        { "title": "Appian Way bike ride", "category": "activity", "tier": "budget", "est_cost": 15, "notes": "Sundays are car-free" }
+      ]
+    },
+    "barcelona": {
+      "label": "Barcelona, Spain",
+      "aliases": ["barcelona"],
+      "suggestions": [
+        { "title": "Sagrada Família", "category": "sightseeing", "tier": "moderate", "est_cost": 26, "notes": "Book tower access in advance" },
+        { "title": "Park Güell", "category": "sightseeing", "tier": "budget", "est_cost": 10, "notes": "Monumental zone needs timed ticket" },
+        { "title": "Gothic Quarter wander", "category": "activity", "tier": "free", "est_cost": 0, "notes": "Free walking tours run daily (tip-based)" },
+        { "title": "La Boqueria market lunch", "category": "food", "tier": "budget", "est_cost": 12, "notes": "Stand-up counters at the back are cheapest" },
+        { "title": "Tapas crawl in El Born", "category": "food", "tier": "moderate", "est_cost": 30, "notes": "Order vermut like a local" },
+        { "title": "Barceloneta beach day", "category": "activity", "tier": "free", "est_cost": 0, "notes": "Watch your bags" },
+        { "title": "Michelin tasting menu", "category": "food", "tier": "splurge", "est_cost": 160, "notes": "Book 1-2 months ahead" },
+        { "title": "Montjuïc cable car + castle", "category": "activity", "tier": "moderate", "est_cost": 25, "notes": "Magic Fountain show is free (check schedule)" }
+      ]
+    },
+    "las vegas": {
+      "label": "Las Vegas, USA",
+      "aliases": ["las vegas", "vegas"],
+      "suggestions": [
+        { "title": "Bellagio Fountains + Strip walk", "category": "sightseeing", "tier": "free", "est_cost": 0, "notes": "Shows every 15-30 min in the evening" },
+        { "title": "Cirque du Soleil show", "category": "activity", "tier": "splurge", "est_cost": 120, "notes": "Tix4Vegas booths for same-day discounts" },
+        { "title": "Buffet brunch", "category": "food", "tier": "moderate", "est_cost": 45, "notes": "Wicked Spoon or Bacchanal" },
+        { "title": "Red Rock Canyon scenic drive", "category": "activity", "tier": "budget", "est_cost": 20, "notes": "13-mile loop; reserve entry Oct-May" },
+        { "title": "Fremont Street Experience", "category": "activity", "tier": "free", "est_cost": 0, "notes": "Light show hourly after dark" },
+        { "title": "High Roller observation wheel", "category": "sightseeing", "tier": "moderate", "est_cost": 25, "notes": "Happy half-hour cabins include open bar" },
+        { "title": "In-N-Out off-strip run", "category": "food", "tier": "budget", "est_cost": 10, "notes": "Animal style" },
+        { "title": "Hoover Dam day trip", "category": "activity", "tier": "budget", "est_cost": 15, "notes": "45 min drive; walk across the bypass bridge free" }
+      ]
+    },
+    "miami": {
+      "label": "Miami, USA",
+      "aliases": ["miami", "miami beach", "south beach"],
+      "suggestions": [
+        { "title": "South Beach + Art Deco walk", "category": "activity", "tier": "free", "est_cost": 0, "notes": "Ocean Drive people-watching is the show" },
+        { "title": "Wynwood Walls street art", "category": "sightseeing", "tier": "budget", "est_cost": 12, "notes": "Surrounding free murals are just as good" },
+        { "title": "Cuban lunch in Little Havana", "category": "food", "tier": "budget", "est_cost": 15, "notes": "Versailles or Sanguich; cafecito at the ventanita" },
+        { "title": "Everglades airboat tour", "category": "activity", "tier": "moderate", "est_cost": 40, "notes": "30-40 min from downtown" },
+        { "title": "Key Biscayne beach + lighthouse", "category": "activity", "tier": "budget", "est_cost": 10, "notes": "Bill Baggs State Park entry per car" },
+        { "title": "Rooftop cocktails in Brickell", "category": "food", "tier": "splurge", "est_cost": 60, "notes": "Sugar at EAST for skyline views" },
+        { "title": "Vizcaya Museum & Gardens", "category": "sightseeing", "tier": "moderate", "est_cost": 25, "notes": "Gilded Age villa on the bay" },
+        { "title": "Boat party / bay cruise", "category": "activity", "tier": "moderate", "est_cost": 35, "notes": "Millionaire's Row cruises from Bayside" }
+      ]
+    },
+    "orlando": {
+      "label": "Orlando, USA",
+      "aliases": ["orlando", "disney world", "walt disney world"],
+      "suggestions": [
+        { "title": "Magic Kingdom day", "category": "activity", "tier": "splurge", "est_cost": 120, "notes": "Buy dated tickets online; rope-drop the park" },
+        { "title": "Universal / Epic Universe day", "category": "activity", "tier": "splurge", "est_cost": 130, "notes": "Single-park dated tickets are cheapest" },
+        { "title": "Disney Springs evening", "category": "activity", "tier": "free", "est_cost": 0, "notes": "Free entry & parking; pay only for food" },
+        { "title": "ICON Park + The Wheel", "category": "activity", "tier": "moderate", "est_cost": 30, "notes": "International Drive; combo tickets available" },
+        { "title": "Wekiwa Springs kayaking", "category": "activity", "tier": "budget", "est_cost": 25, "notes": "Crystal-clear spring 30 min north" },
+        { "title": "Character breakfast", "category": "food", "tier": "moderate", "est_cost": 45, "notes": "Book 60 days out for popular ones" },
+        { "title": "Kennedy Space Center day trip", "category": "activity", "tier": "moderate", "est_cost": 75, "notes": "1 hour east; check launch schedule" },
+        { "title": "Food truck night at local parks", "category": "food", "tier": "budget", "est_cost": 12, "notes": "Lake Eola farmers market Sundays" }
+      ]
+    }
+  },
+  "generic": [
+    { "title": "Free walking tour of the city center", "category": "activity", "tier": "free", "est_cost": 0, "notes": "Tip-based tours exist in most cities — search '<city> free walking tour'" },
+    { "title": "Local market visit for breakfast or lunch", "category": "food", "tier": "budget", "est_cost": 10, "notes": "Markets are the cheapest way to eat like a local" },
+    { "title": "Top-rated viewpoint or observation deck", "category": "sightseeing", "tier": "moderate", "est_cost": 25, "notes": "Go near sunset for the best light" },
+    { "title": "Museum day (check free-admission days)", "category": "sightseeing", "tier": "budget", "est_cost": 15, "notes": "Many museums have a free day each week or month" },
+    { "title": "Signature local dinner experience", "category": "food", "tier": "splurge", "est_cost": 80, "notes": "One nice dinner per trip is worth budgeting for" },
+    { "title": "Public park, beach, or waterfront afternoon", "category": "activity", "tier": "free", "est_cost": 0, "notes": "Pack snacks from a grocery store" },
+    { "title": "Day trip to a nearby town or nature spot", "category": "activity", "tier": "moderate", "est_cost": 40, "notes": "Regional trains/buses are usually cheap" },
+    { "title": "Local food specialty tasting", "category": "food", "tier": "budget", "est_cost": 15, "notes": "Ask locals what the city is famous for" }
+  ]
+}
