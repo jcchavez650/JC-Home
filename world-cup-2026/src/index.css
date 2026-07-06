@@ -23,7 +23,19 @@
 }
 
 body {
-  background: var(--bg);
+  /* Mexico-flag tricolor: deep green → dark center → deep red, as vertical
+     bands like the flag, kept dark so the UI stays readable */
+  background:
+    linear-gradient(
+      90deg,
+      #0b3d27 0%,
+      #12321f 18%,
+      var(--bg) 38%,
+      var(--bg) 62%,
+      #3a1216 82%,
+      #4a1118 100%
+    )
+    fixed;
   min-height: 100vh;
   overflow-x: hidden;
 }
@@ -34,6 +46,10 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  /* semi-transparent so the tricolor shows through subtly on mobile,
+     where the column fills the whole screen */
+  background: rgba(13, 17, 23, 0.72);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
 }
 
 button {
