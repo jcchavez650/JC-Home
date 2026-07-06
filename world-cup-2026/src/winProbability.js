@@ -132,9 +132,76 @@ function eloProbability(homeAbbr, awayAbbr) {
   return { homeWinPct: h, awayWinPct: a, drawPct: Math.max(0, d) }
 }
 
+// ── Live in-game probability ───────────────────────────────────────────────
+// Update the pre-match estimate with the current score and time remaining:
+// remaining goals for each side are modeled as Poisson with rates split by
+// pre-match strength and scaled by the fraction of the match left.
+
+function poissonPmf(lambda, k) {
+  let p = Math.exp(-lambda)
+  for (let i = 1; i <= k; i++) p *= lambda / i
+  return p
+}
+
+// Current minute from ESPN's display clock ("67'", "45'+2'"), with a
+// period-based estimate when the clock isn't parseable ("HT", "").
+function currentMinute(displayClock, period) {
+  const n = parseInt(displayClock, 10)
+  if (!isNaN(n)) return period >= 2 && n < 45 ? n + 45 : n
+  if (period <= 1) return 25
+  if (period === 2) return 70
+  return 100 // extra time
+}
+
+const TOTAL_XG = 2.6 // average total goals in a WC match
+
+function liveProbability(match, prior) {
+  const hs = match.home.score != null ? +match.home.score : NaN
+  const as = match.away.score != null ? +match.away.score : NaN
+  if (isNaN(hs) || isNaN(as)) return prior
+
+  const minute = currentMinute(match.displayClock, match.period)
+  const inExtraTime = match.period >= 3
+  const remaining = inExtraTime
+    ? Math.max(0, 120 - Math.min(minute, 120))
+    : Math.max(0, 90 - Math.min(minute, 90))
+
+  // Split expected remaining goals by pre-match strength (clamped so one
+  // side never gets a runaway rate from an extreme prior)
+  const strength = Math.min(0.7, Math.max(0.3,
+    prior.homeWinPct / Math.max(1, prior.homeWinPct + prior.awayWinPct)))
+  const frac = remaining / 90
+  const lh = Math.max(0.01, TOTAL_XG * strength * frac)
+  const la = Math.max(0.01, TOTAL_XG * (1 - strength) * frac)
+
+  // P(final outcome) = sum over remaining-goal combinations
+  let pHome = 0, pDraw = 0, pAway = 0
+  const MAX_G = 8
+  for (let i = 0; i <= MAX_G; i++) {
+    const ph = poissonPmf(lh, i)
+    for (let j = 0; j <= MAX_G; j++) {
+      const p = ph * poissonPmf(la, j)
+      const diff = (hs + i) - (as + j)
+      if (diff > 0) pHome += p
+      else if (diff < 0) pAway += p
+      else pDraw += p
+    }
+  }
+
+  const total = pHome + pDraw + pAway
+  const h = Math.round((pHome / total) * 100)
+  const a = Math.round((pAway / total) * 100)
+  return { homeWinPct: h, awayWinPct: a, drawPct: Math.max(0, 100 - h - a) }
+}
+
 // ── Public: enrich matches with win probabilities ─────────────────────────
 export function enrichWithProbability(matches) {
   // ESPN predictor/odds return 400 and Sofascore is CORS-blocked — skip them
   // to avoid console noise. Elo is instant and always available.
-  return matches.map(m => ({ ...m, ...eloProbability(m.home.abbr, m.away.abbr) }))
+  return matches.map(m => {
+    const prior = eloProbability(m.home.abbr, m.away.abbr)
+    const isLive = m.statusType === 'STATUS_IN_PROGRESS' ||
+                   m.statusType === 'STATUS_HALFTIME'
+    return { ...m, ...(isLive ? liveProbability(m, prior) : prior) }
+  })
 }
