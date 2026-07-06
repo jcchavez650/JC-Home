@@ -425,9 +425,23 @@ body.trip-theme {
   z-index: 1;
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.28));
 }
+.trip-hero-edit {
+  position: absolute;
+  right: 1.2rem;
+  bottom: 1.1rem;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(4px);
+}
+.trip-hero-edit:hover { background: rgba(255, 255, 255, 0.28); border-color: rgba(255, 255, 255, 0.6); }
+.form-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+
 @media (max-width: 560px) {
-  .trip-hero-emoji { font-size: 3rem; right: 0.9rem; opacity: 0.85; }
+  .trip-hero-emoji { font-size: 3rem; right: 0.9rem; top: 34%; opacity: 0.85; }
   .trip-hero p { max-width: 26ch; }
+  .trip-hero-edit { position: static; margin-top: 0.9rem; display: inline-block; }
 }
 
 @media (max-width: 720px) {

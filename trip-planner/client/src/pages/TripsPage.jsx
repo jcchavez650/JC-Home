@@ -8,7 +8,7 @@ const fmtMoney = (n, c = 'USD') =>
 export default function TripsPage() {
   const [trips, setTrips] = useState(null)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ name: '', destination: '', start_date: '', end_date: '', budget: '', currency: 'USD' })
+  const [form, setForm] = useState({ name: '', destination: '', start_date: '', end_date: '', party_size: '', budget: '', currency: 'USD' })
   const [prefs, setPrefs] = useState(EMPTY_PREFS)
   const [error, setError] = useState('')
 
@@ -22,7 +22,7 @@ export default function TripsPage() {
     setError('')
     try {
       await api('/trips', { method: 'POST', body: { ...form, preferences: prefs } })
-      setForm({ name: '', destination: '', start_date: '', end_date: '', budget: '', currency: 'USD' })
+      setForm({ name: '', destination: '', start_date: '', end_date: '', party_size: '', budget: '', currency: 'USD' })
       setPrefs(EMPTY_PREFS)
       setShowForm(false)
       load()
@@ -48,6 +48,7 @@ export default function TripsPage() {
           <label>Destination<input value={form.destination} onChange={set('destination')} required placeholder="Cancún, Mexico" /></label>
           <label>Start date<input type="date" value={form.start_date} onChange={set('start_date')} /></label>
           <label>End date<input type="date" value={form.end_date} onChange={set('end_date')} /></label>
+          <label>Number of people<input type="number" min="1" step="1" value={form.party_size} onChange={set('party_size')} placeholder="e.g. 4" /></label>
           <label>Total budget<input type="number" min="0" step="0.01" value={form.budget} onChange={set('budget')} placeholder="2000" /></label>
           <label>Currency<input value={form.currency} onChange={set('currency')} maxLength={3} /></label>
           <div className="span-2 prefs-section">

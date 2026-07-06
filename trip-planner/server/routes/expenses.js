@@ -3,7 +3,8 @@ import db from '../db.js'
 
 export const expensesRouter = Router({ mergeParams: true })
 
-const CATEGORIES = ['food', 'lodging', 'transport', 'activity', 'shopping', 'other']
+// New canonical categories plus legacy slugs (lodging, activity) kept for back-compat.
+const CATEGORIES = ['flights', 'hotel', 'transport', 'food', 'activities', 'shopping', 'other', 'lodging', 'activity']
 
 const round2 = (n) => Math.round(n * 100) / 100
 

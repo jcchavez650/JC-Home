@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api.js'
-
-const CATEGORIES = ['food', 'lodging', 'transport', 'activity', 'shopping', 'other']
-const CAT_ICONS = { food: '🍽️', lodging: '🏨', transport: '🚕', activity: '🎯', shopping: '🛍️', other: '📌' }
+import { EXPENSE_CATEGORIES, categoryIcon } from '../categories.js'
 
 export default function ExpensesTab({ trip, members }) {
   const [expenses, setExpenses] = useState(null)
@@ -81,7 +79,7 @@ export default function ExpensesTab({ trip, members }) {
           <label>Amount<input type="number" min="0.01" step="0.01" value={form.amount} onChange={set('amount')} required placeholder="120.00" /></label>
           <label>Category
             <select value={form.category} onChange={set('category')}>
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              {EXPENSE_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
           </label>
           <label>Paid by
@@ -142,7 +140,7 @@ export default function ExpensesTab({ trip, members }) {
       {expenses.map((e) => (
         <div key={e.id} className="card expense-item">
           <div className="item-main">
-            <span className="item-icon">{CAT_ICONS[e.category] || '📌'}</span>
+            <span className="item-icon">{categoryIcon(e.category)}</span>
             <div>
               <strong>{e.description}</strong> <span className="amount">${e.amount.toFixed(2)}</span>
               <p className="muted small">
