@@ -21,7 +21,7 @@ function formatTime(t) {
   return `${hour}:${String(m || 0).padStart(2, '0')} ${period}`
 }
 
-export default function ItineraryTab({ trip }) {
+export default function ItineraryTab({ trip, members = [] }) {
   const [items, setItems] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [editingId, setEditingId] = useState(null)
@@ -70,7 +70,9 @@ export default function ItineraryTab({ trip }) {
 
   if (!items) return <p className="muted">{error || 'Loading itinerary…'}</p>
 
-  const estTotal = items.reduce((s, i) => s + (i.est_cost || 0), 0)
+  // Estimated costs are entered per person; multiply by headcount for the group total.
+  const headcount = trip.party_size && trip.party_size > 0 ? trip.party_size : members.length || 1
+  const estPerPerson = items.reduce((s, i) => s + (i.est_cost || 0), 0)
   const byDate = items.reduce((acc, item) => {
     const key = item.date || 'Unscheduled'
     ;(acc[key] = acc[key] || []).push(item)
@@ -88,7 +90,7 @@ export default function ItineraryTab({ trip }) {
     <p className="muted small">
       {item.location && `📍 ${item.location}`}
       {item.location && item.est_cost != null && ' · '}
-      {item.est_cost != null && `~$${item.est_cost}`}
+      {item.est_cost != null && `~$${item.est_cost}/person`}
     </p>
   )
 
@@ -96,7 +98,8 @@ export default function ItineraryTab({ trip }) {
     <div>
       <div className="page-head">
         <p className="muted">
-          {items.length} item{items.length !== 1 ? 's' : ''} · estimated cost <strong>${estTotal.toFixed(2)}</strong>
+          {items.length} item{items.length !== 1 ? 's' : ''} · estimated <strong>${estPerPerson.toFixed(2)}</strong>/person
+          {headcount > 1 && <> · <strong>${(estPerPerson * headcount).toFixed(2)}</strong> for {headcount}</>}
         </p>
         <div className="item-actions">
           <div className="seg">
@@ -120,7 +123,7 @@ export default function ItineraryTab({ trip }) {
           <label>Date<input type="date" value={form.date} onChange={set('date')} /></label>
           <label>Time<input type="time" value={form.time} onChange={set('time')} /></label>
           <label>Location<input value={form.location} onChange={set('location')} placeholder="Dos Ojos, Tulum" /></label>
-          <label>Est. cost (per group)<input type="number" min="0" step="0.01" value={form.est_cost} onChange={set('est_cost')} placeholder="80" /></label>
+          <label>Est. cost (per person)<input type="number" min="0" step="0.01" value={form.est_cost} onChange={set('est_cost')} placeholder="120" /></label>
           <label className="span-2">Notes<input value={form.notes} onChange={set('notes')} placeholder="Bring biodegradable sunscreen" /></label>
           {error && <p className="error">{error}</p>}
           <button className="btn btn-primary">{editingId ? 'Save changes' : 'Add to itinerary'}</button>
@@ -137,7 +140,7 @@ export default function ItineraryTab({ trip }) {
                 <div className="tl-day-head">
                   <span className="tl-day-badge">🗓 {formatDay(date)}</span>
                   <span className="muted small">
-                    {dayItems.length} item{dayItems.length !== 1 ? 's' : ''}{dayCost > 0 ? ` · ~$${dayCost.toFixed(2)}` : ''}
+                    {dayItems.length} item{dayItems.length !== 1 ? 's' : ''}{dayCost > 0 ? ` · ~$${dayCost.toFixed(2)}/person` : ''}
                   </span>
                 </div>
                 <div className="tl-track">
@@ -171,7 +174,7 @@ export default function ItineraryTab({ trip }) {
                       <p className="muted">
                         {item.time && `🕐 ${formatTime(item.time)} · `}
                         {item.location && `📍 ${item.location} · `}
-                        {item.est_cost != null && `~$${item.est_cost}`}
+                        {item.est_cost != null && `~$${item.est_cost}/person`}
                       </p>
                       {item.notes && <p className="muted small">{item.notes}</p>}
                     </div>
