@@ -5,11 +5,28 @@ const CATEGORIES = ['activity', 'food', 'lodging', 'transport', 'sightseeing', '
 const CAT_ICONS = { activity: '🎯', food: '🍽️', lodging: '🏨', transport: '🚕', sightseeing: '📷', other: '📌' }
 const EMPTY = { date: '', time: '', title: '', category: 'activity', location: '', notes: '', est_cost: '' }
 
+function formatDay(dateStr) {
+  if (!dateStr || dateStr === 'Unscheduled') return 'Unscheduled'
+  const d = new Date(dateStr + 'T00:00:00')
+  if (Number.isNaN(d.getTime())) return dateStr
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function formatTime(t) {
+  if (!t) return ''
+  const [h, m] = t.split(':').map(Number)
+  if (Number.isNaN(h)) return t
+  const period = h < 12 ? 'AM' : 'PM'
+  const hour = h % 12 === 0 ? 12 : h % 12
+  return `${hour}:${String(m || 0).padStart(2, '0')} ${period}`
+}
+
 export default function ItineraryTab({ trip }) {
   const [items, setItems] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [editingId, setEditingId] = useState(null)
   const [showForm, setShowForm] = useState(false)
+  const [view, setView] = useState('timeline')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -60,15 +77,36 @@ export default function ItineraryTab({ trip }) {
     return acc
   }, {})
 
+  const actions = (item) => (
+    <div className="item-actions">
+      <button className="btn btn-ghost" onClick={() => edit(item)}>Edit</button>
+      <button className="btn btn-ghost danger" onClick={() => remove(item.id)}>Delete</button>
+    </div>
+  )
+
+  const metaLine = (item) => (
+    <p className="muted small">
+      {item.location && `📍 ${item.location}`}
+      {item.location && item.est_cost != null && ' · '}
+      {item.est_cost != null && `~$${item.est_cost}`}
+    </p>
+  )
+
   return (
     <div>
       <div className="page-head">
         <p className="muted">
           {items.length} item{items.length !== 1 ? 's' : ''} · estimated cost <strong>${estTotal.toFixed(2)}</strong>
         </p>
-        <button className="btn btn-primary" onClick={() => { setShowForm((s) => !s); setEditingId(null); setForm(EMPTY) }}>
-          {showForm ? 'Cancel' : '+ Add item'}
-        </button>
+        <div className="item-actions">
+          <div className="seg">
+            <button className={view === 'timeline' ? 'seg-btn active' : 'seg-btn'} onClick={() => setView('timeline')}>Timeline</button>
+            <button className={view === 'list' ? 'seg-btn active' : 'seg-btn'} onClick={() => setView('list')}>List</button>
+          </div>
+          <button className="btn btn-primary" onClick={() => { setShowForm((s) => !s); setEditingId(null); setForm(EMPTY) }}>
+            {showForm ? 'Cancel' : '+ Add item'}
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -91,31 +129,58 @@ export default function ItineraryTab({ trip }) {
 
       {items.length === 0 && <div className="card empty"><p>Nothing planned yet. Add your first activity, or grab ideas from the Suggestions tab.</p></div>}
 
-      {Object.entries(byDate).map(([date, dayItems]) => (
-        <div key={date} className="day-group">
-          <h3>{date === 'Unscheduled' ? '🗓 Unscheduled' : `🗓 ${date}`}</h3>
-          {dayItems.map((item) => (
-            <div key={item.id} className="card itinerary-item">
-              <div className="item-main">
-                <span className="item-icon">{CAT_ICONS[item.category] || '📌'}</span>
-                <div>
-                  <strong>{item.title}</strong>
-                  <p className="muted">
-                    {item.time && `🕐 ${item.time} · `}
-                    {item.location && `📍 ${item.location} · `}
-                    {item.est_cost != null && `~$${item.est_cost}`}
-                  </p>
-                  {item.notes && <p className="muted small">{item.notes}</p>}
+      {view === 'timeline'
+        ? Object.entries(byDate).map(([date, dayItems]) => {
+            const dayCost = dayItems.reduce((s, i) => s + (i.est_cost || 0), 0)
+            return (
+              <div key={date} className="tl-day">
+                <div className="tl-day-head">
+                  <span className="tl-day-badge">🗓 {formatDay(date)}</span>
+                  <span className="muted small">
+                    {dayItems.length} item{dayItems.length !== 1 ? 's' : ''}{dayCost > 0 ? ` · ~$${dayCost.toFixed(2)}` : ''}
+                  </span>
+                </div>
+                <div className="tl-track">
+                  {dayItems.map((item) => (
+                    <div key={item.id} className="tl-node">
+                      <div className="tl-time">{formatTime(item.time) || '—'}</div>
+                      <div className="tl-rail"><span className="tl-dot">{CAT_ICONS[item.category] || '📌'}</span></div>
+                      <div className="card tl-card">
+                        <div className="tl-card-head">
+                          <strong>{item.title}</strong>
+                          {actions(item)}
+                        </div>
+                        {metaLine(item)}
+                        {item.notes && <p className="muted small">{item.notes}</p>}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="item-actions">
-                <button className="btn btn-ghost" onClick={() => edit(item)}>Edit</button>
-                <button className="btn btn-ghost danger" onClick={() => remove(item.id)}>Delete</button>
-              </div>
+            )
+          })
+        : Object.entries(byDate).map(([date, dayItems]) => (
+            <div key={date} className="day-group">
+              <h3>{date === 'Unscheduled' ? '🗓 Unscheduled' : `🗓 ${formatDay(date)}`}</h3>
+              {dayItems.map((item) => (
+                <div key={item.id} className="card itinerary-item">
+                  <div className="item-main">
+                    <span className="item-icon">{CAT_ICONS[item.category] || '📌'}</span>
+                    <div>
+                      <strong>{item.title}</strong>
+                      <p className="muted">
+                        {item.time && `🕐 ${formatTime(item.time)} · `}
+                        {item.location && `📍 ${item.location} · `}
+                        {item.est_cost != null && `~$${item.est_cost}`}
+                      </p>
+                      {item.notes && <p className="muted small">{item.notes}</p>}
+                    </div>
+                  </div>
+                  {actions(item)}
+                </div>
+              ))}
             </div>
           ))}
-        </div>
-      ))}
     </div>
   )
 }
