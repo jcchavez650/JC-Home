@@ -33,6 +33,33 @@ npm run build   # builds the client into client/dist
 npm start       # Express serves API + built app on :3001
 ```
 
+## 📱 Deploy it so any phone can use it (Railway)
+
+GitHub stores this code but can't run it — the app needs a live server and database. Railway
+runs it straight from your GitHub repo and gives you a public HTTPS URL that works in any
+phone browser. The Hobby plan (~$5/month) includes the persistent storage that keeps your
+trip data safe forever. Setup is about 5 minutes:
+
+1. Go to [railway.app](https://railway.app) → **Login with GitHub** (use the account that owns this repo)
+2. **New Project → Deploy from GitHub repo** → choose `jcchavez650/JC-Home`
+3. Click the new service → **Settings → Root Directory** → set it to `trip-planner`
+   (Railway will find the `Dockerfile` there and build automatically)
+4. Right-click the service (or Settings → Volumes) → **Attach Volume** → mount path `/data`
+   — this is what makes your data survive restarts and redeploys
+5. **Variables** tab → add:
+   - `DB_PATH` = `/data/trip-planner.db`
+   - `JWT_SECRET` = a long random string — generate one by running this on any computer:
+     `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`
+   - *(optional)* `ANTHROPIC_API_KEY` = your Anthropic API key to enable ✨ AI suggestions
+6. **Settings → Networking → Generate Domain** — you'll get a URL like
+   `trip-planner-production-xxxx.up.railway.app`
+
+Open that URL on any phone, sign up, and share the link with your travel friends — they
+create their own accounts and you add them to trips by email. On iPhone/Android, use the
+browser's **"Add to Home Screen"** so it opens like a regular app.
+
+Every push to `main` on GitHub redeploys automatically, and the volume keeps all data intact.
+
 ### Environment variables (all optional)
 
 | Variable | Purpose | Default |
