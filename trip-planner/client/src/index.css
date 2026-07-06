@@ -387,6 +387,49 @@ input:focus, select:focus {
 .prefs-section h3 { margin: 0 0 0.2rem; font-size: 1.05rem; color: var(--primary); }
 .match-tag { color: var(--gold); font-weight: 600; }
 
+/* ---- Destination-themed trip view ---- */
+body.trip-theme {
+  background:
+    radial-gradient(1100px 560px at 88% -8%, var(--th-a, transparent), transparent 60%),
+    radial-gradient(950px 640px at -8% 2%, var(--th-b, transparent), transparent 58%),
+    linear-gradient(var(--bg), var(--bg-2));
+}
+.trip-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+  padding: 1.7rem 1.6rem;
+  margin-bottom: 1.1rem;
+  color: #fff;
+  box-shadow: var(--shadow-lg);
+}
+.trip-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 35%, rgba(0, 0, 0, 0.22));
+  pointer-events: none;
+}
+.trip-hero > * { position: relative; z-index: 1; }
+.trip-hero h1 { color: #fff; margin: 0.35rem 0 0.25rem; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.25); }
+.trip-hero p { color: rgba(255, 255, 255, 0.9); margin: 0; font-size: 0.95rem; max-width: 46ch; }
+.trip-hero-back { color: rgba(255, 255, 255, 0.88); font-size: 0.9rem; font-weight: 500; }
+.trip-hero-back:hover { color: #fff; }
+.trip-hero-emoji {
+  position: absolute;
+  right: 1.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 4.6rem;
+  line-height: 1;
+  z-index: 1;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.28));
+}
+@media (max-width: 560px) {
+  .trip-hero-emoji { font-size: 3rem; right: 0.9rem; opacity: 0.85; }
+  .trip-hero p { max-width: 26ch; }
+}
+
 @media (max-width: 720px) {
   .auth-shell { grid-template-columns: 1fr; max-width: 440px; }
   .auth-hero { min-height: auto; padding: 2rem; }
