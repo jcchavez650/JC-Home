@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS trips (
   end_date TEXT,
   budget REAL,
   currency TEXT NOT NULL DEFAULT 'USD',
+  preferences TEXT,
   created_by INTEGER NOT NULL REFERENCES users(id),
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -89,5 +90,11 @@ CREATE INDEX IF NOT EXISTS idx_expenses_trip ON expenses(trip_id);
 CREATE INDEX IF NOT EXISTS idx_splits_expense ON expense_splits(expense_id);
 CREATE INDEX IF NOT EXISTS idx_settlements_trip ON settlements(trip_id);
 `)
+
+// Migrations for databases created before newer columns existed
+const tripCols = db.prepare('PRAGMA table_info(trips)').all()
+if (!tripCols.some((c) => c.name === 'preferences')) {
+  db.exec('ALTER TABLE trips ADD COLUMN preferences TEXT')
+}
 
 export default db
