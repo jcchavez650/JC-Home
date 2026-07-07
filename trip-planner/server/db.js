@@ -107,5 +107,21 @@ const itinCols = db.prepare('PRAGMA table_info(itinerary_items)').all()
 if (!itinCols.some((c) => c.name === 'image_url')) {
   db.exec('ALTER TABLE itinerary_items ADD COLUMN image_url TEXT')
 }
+if (!tripCols.some((c) => c.name === 'invite_token')) {
+  db.exec('ALTER TABLE trips ADD COLUMN invite_token TEXT')
+}
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS packing_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  text TEXT NOT NULL,
+  checked INTEGER NOT NULL DEFAULT 0,
+  created_by INTEGER NOT NULL REFERENCES users(id),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_packing_trip ON packing_items(trip_id);
+CREATE INDEX IF NOT EXISTS idx_trips_invite ON trips(invite_token);
+`)
 
 export default db

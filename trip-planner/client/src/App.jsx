@@ -4,6 +4,7 @@ import AuthPage from './pages/AuthPage.jsx'
 import TripsPage from './pages/TripsPage.jsx'
 import TripDetailPage from './pages/TripDetailPage.jsx'
 import ReportsPage from './pages/ReportsPage.jsx'
+import JoinTripPage from './pages/JoinTripPage.jsx'
 
 const AuthContext = createContext(null)
 export const useAuth = () => useContext(AuthContext)
@@ -32,17 +33,20 @@ export default function App() {
     navigate('/')
   }
 
+  const joinMatch = route.match(/^\/join\/(.+)$/)
+
   if (!user) {
     return (
       <AuthContext.Provider value={{ user, setUser, logout }}>
-        <AuthPage onLogin={setUser} />
+        <AuthPage onLogin={setUser} pendingInvite={!!joinMatch} />
       </AuthContext.Provider>
     )
   }
 
   let page
   const tripMatch = route.match(/^\/trips\/(\d+)/)
-  if (tripMatch) page = <TripDetailPage tripId={Number(tripMatch[1])} />
+  if (joinMatch) page = <JoinTripPage token={joinMatch[1]} />
+  else if (tripMatch) page = <TripDetailPage tripId={Number(tripMatch[1])} />
   else if (route === '/reports') page = <ReportsPage />
   else page = <TripsPage />
 

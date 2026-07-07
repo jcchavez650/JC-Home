@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import crypto from 'node:crypto'
 import db from '../db.js'
 import { requireTripMember } from '../auth.js'
 
@@ -136,6 +137,22 @@ tripsRouter.put('/:id', requireTripMember, (req, res) => {
   }
   const trip = db.prepare('SELECT * FROM trips WHERE id = ?').get(req.trip.id)
   res.json({ trip })
+})
+
+// --- Invite link ---
+
+tripsRouter.post('/:id/invite', requireTripMember, (req, res) => {
+  let token = req.trip.invite_token
+  if (!token) {
+    token = crypto.randomBytes(18).toString('base64url')
+    db.prepare('UPDATE trips SET invite_token = ? WHERE id = ?').run(token, req.trip.id)
+  }
+  res.json({ invite_token: token })
+})
+
+tripsRouter.delete('/:id/invite', requireTripMember, (req, res) => {
+  db.prepare('UPDATE trips SET invite_token = NULL WHERE id = ?').run(req.trip.id)
+  res.json({ invite_token: null })
 })
 
 tripsRouter.delete('/:id', requireTripMember, (req, res) => {

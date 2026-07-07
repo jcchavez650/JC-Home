@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { api, storeSession } from '../api.js'
 
-export default function AuthPage({ onLogin }) {
+export default function AuthPage({ onLogin, pendingInvite }) {
   const [mode, setMode] = useState('login')
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [error, setError] = useState('')
@@ -47,9 +47,13 @@ export default function AuthPage({ onLogin }) {
 
         <div className="auth-panel">
           <h2>{mode === 'login' ? 'Welcome back' : 'Create your account'}</h2>
-          <p className="muted small">
-            {mode === 'login' ? 'Log in to pick up where you left off.' : 'Start planning your next escape in seconds.'}
-          </p>
+          {pendingInvite ? (
+            <p className="success small">🎟️ You've been invited to a trip — log in or sign up to join it.</p>
+          ) : (
+            <p className="muted small">
+              {mode === 'login' ? 'Log in to pick up where you left off.' : 'Start planning your next escape in seconds.'}
+            </p>
+          )}
           <div className="tabs">
             <button className={mode === 'login' ? 'tab active' : 'tab'} onClick={() => setMode('login')}>
               Log in

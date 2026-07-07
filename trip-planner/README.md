@@ -8,8 +8,10 @@ Built with **React (Vite)** + **Express** + **SQLite**. All data is saved to a l
 
 - **Accounts** — simple email/password sign-up and login (JWT sessions)
 - **Multiple trips** — each with destination, dates, budget, and its own members
-- **Members** — add friends to a trip by email; everyone on the trip sees the same data
-- **Itinerary** — day-by-day schedule with categories, locations, notes, and estimated costs
+- **Members & invite links** — add friends by email, or share an invite link so they can sign up and join a trip in one tap
+- **Itinerary** — day-by-day timeline or list, with categories, locations, notes, per-person estimated costs, and activity photos
+- **Packing list** — a shared, checkable checklist per trip with progress tracking
+- **Installable app (PWA)** — "Add to Home Screen" on your phone for a full-screen, offline-capable app
 - **Expenses** — log who paid, split equally among any subset of members or with custom amounts
 - **Balances & settle up** — live "who owes whom" with simplified payment suggestions; record payments and see full payment history
 - **Suggestions** — curated ideas for 10 popular destinations filtered by your budget tier, generic ideas for anywhere else, and optional AI suggestions via the Claude API
