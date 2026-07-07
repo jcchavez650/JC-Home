@@ -70,7 +70,7 @@ const imageFilter = (req, file, cb) => {
   }
 };
 
-const upload = multer({ storage, fileFilter: imageFilter, limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = multer({ storage, fileFilter: imageFilter, limits: { fileSize: 15 * 1024 * 1024 } });
 
 // Serve uploads — auth required; basename() prevents path traversal
 app.get('/uploads/:filename', requireAuth, (req, res) => {
@@ -106,6 +106,19 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 const distPath = join(__dirname, '..', 'frontend', 'dist');
 app.use(express.static(distPath));
 app.get('*', (req, res) => res.sendFile(join(distPath, 'index.html')));
+
+// Error handler — turns multer/upload errors into clean JSON responses
+app.use((err, req, res, next) => {
+  if (!err) return next();
+  console.error('Request error:', err.code || err.name, err.message);
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ error: 'Image is too large (max 15 MB)' });
+  }
+  if (typeof err.message === 'string' && err.message.includes('images are allowed')) {
+    return res.status(400).json({ error: err.message });
+  }
+  res.status(500).json({ error: 'Something went wrong processing the request' });
+});
 
 app.listen(PORT, () => {
   console.log(`Tote Tracker running on port ${PORT}`);

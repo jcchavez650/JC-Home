@@ -39,14 +39,33 @@ export default function ToteDetail({ theme, onToggleTheme }) {
     }
   }
 
+  // Shrink big phone photos before upload — the AI vision API caps images at ~5 MB,
+  // and smaller images upload and analyze faster. Falls back to the original on error.
+  async function downscaleImage(file, maxDim = 1568, quality = 0.85) {
+    try {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+      if (scale === 1 && file.size < 3 * 1024 * 1024) return file; // already small enough
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
+      return blob || file;
+    } catch {
+      return file;
+    }
+  }
+
   async function analyzePhoto(file) {
     setUploading(true);
-    const fd = new FormData();
-    fd.append('photo', file);
     try {
+      const optimized = await downscaleImage(file);
+      const fd = new FormData();
+      fd.append('photo', optimized, 'scan.jpg');
       const res = await apiFetch(`/api/analyze/${id}`, { method: 'POST', body: fd });
       if (res.ok) { await fetchTote(); setTab('items'); }
-      else { const err = await res.json(); alert(t('detail.analysisFailed') + (err.error || t('detail.unknown'))); }
+      else { const err = await res.json().catch(() => ({})); alert(t('detail.analysisFailed') + (err.error || t('detail.unknown'))); }
     } catch (e) { alert(t('detail.uploadFailed') + e.message); }
     setUploading(false);
   }

@@ -19,7 +19,7 @@ router.post('/:toteId', async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
+  if (!apiKey) return res.status(500).json({ error: 'AI is not configured — set ANTHROPIC_API_KEY on the server' });
 
   const client = new Anthropic({ apiKey });
   const imageBuffer = readFileSync(req.file.path);
@@ -31,7 +31,7 @@ router.post('/:toteId', async (req, res) => {
 
   try {
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5',
       max_tokens: 1024,
       messages: [
         {
@@ -74,8 +74,13 @@ Be specific and descriptive. If you see multiple of the same item, use the quant
         .filter(item => item.name);
     }
   } catch (err) {
-    console.error('AI analysis error:', err);
-    return res.status(500).json({ error: 'AI analysis failed' });
+    console.error('AI analysis error:', err?.status, err?.name, err?.message);
+    let msg = 'AI analysis failed — please try again';
+    if (err?.status === 401) msg = 'AI request rejected — the ANTHROPIC_API_KEY is invalid or revoked';
+    else if (err?.status === 404) msg = 'AI model unavailable — check the configured model name';
+    else if (err?.status === 429) msg = 'AI is rate-limited or out of credit — try again shortly';
+    else if (err?.status === 400) msg = 'AI could not read this image — it may be too large or an unsupported format';
+    return res.status(502).json({ error: msg });
   }
 
   const photoId = uuidv4();
