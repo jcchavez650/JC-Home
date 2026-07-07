@@ -1,7 +1,7 @@
 .app-shell {
   max-width: 480px;
   margin: 0 auto;
-  padding: var(--space-4) var(--space-3) var(--space-5);
+  padding: var(--space-4) var(--space-3) calc(80px + var(--space-5));
   min-height: 100dvh;
 }
 
@@ -19,6 +19,22 @@
   margin: var(--space-1) 0 0;
   color: var(--color-muted-foreground);
   font-size: 14px;
+}
+
+.signout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  min-height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-card);
+  color: var(--color-muted-foreground);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .app-main {
@@ -485,4 +501,194 @@
 
 .error-card .btn {
   margin-top: var(--space-3);
+}
+
+.form-error {
+  color: var(--color-destructive);
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Auth */
+.auth-card h2 {
+  font-size: 22px;
+}
+
+.auth-subtitle {
+  margin: var(--space-1) 0 var(--space-4);
+  color: var(--color-muted-foreground);
+  font-size: 14px;
+}
+
+.auth-card .field-group {
+  margin-bottom: 0;
+}
+
+.auth-switch {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: var(--space-2);
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Bottom tab bar */
+.tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-2) var(--space-3) calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+  background: var(--color-card);
+  border-top: 1px solid var(--color-border);
+}
+
+.tab-bar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 52px;
+  padding: var(--space-1);
+  border: none;
+  background: none;
+  color: var(--color-muted-foreground);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tab-bar-item-active {
+  color: var(--color-primary);
+}
+
+/* Report */
+.report-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.report-header h2 {
+  font-size: 20px;
+}
+
+.range-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.range-pill {
+  flex: 1;
+  min-height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-muted);
+  color: var(--color-muted-foreground);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.range-pill-active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.report-stats {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-3) var(--space-2);
+  background: var(--color-muted);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.stat-value {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--color-muted-foreground);
+  margin-top: 2px;
+}
+
+.report-chart {
+  margin-bottom: var(--space-4);
+}
+
+.report-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-5);
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.report-table thead th {
+  text-align: right;
+  padding: var(--space-2);
+  color: var(--color-muted-foreground);
+  font-weight: 600;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.report-table thead th:first-child {
+  text-align: left;
+}
+
+.report-table tbody th,
+.report-table tbody td {
+  padding: var(--space-2);
+  text-align: right;
+  font-weight: 400;
+  color: var(--color-foreground);
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.report-table tbody th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--color-muted-foreground);
+}
+
+.report-table tbody tr:last-child th,
+.report-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.report-row-empty th,
+.report-row-empty td {
+  opacity: 0.5;
 }

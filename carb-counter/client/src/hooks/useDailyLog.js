@@ -1,41 +1,42 @@
 import { useCallback, useEffect, useState } from "react";
+import { listEntriesApi, createEntryApi, deleteEntryApi } from "../api.js";
 
-function todayKey() {
+function todayString() {
   const d = new Date();
-  return `carb-counter:log:${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
     d.getDate()
   ).padStart(2, "0")}`;
 }
 
-function load(key) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
+export default function useDailyLog(enabled) {
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-export default function useDailyLog() {
-  const [key] = useState(todayKey);
-  const [entries, setEntries] = useState(() => load(key));
+  const refresh = useCallback(async () => {
+    if (!enabled) return;
+    setLoading(true);
+    try {
+      const rows = await listEntriesApi(todayString());
+      setEntries(rows);
+    } finally {
+      setLoading(false);
+    }
+  }, [enabled]);
 
   useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(entries));
-  }, [key, entries]);
+    refresh();
+  }, [refresh]);
 
-  const addEntry = useCallback((estimate) => {
-    setEntries((prev) => [
-      { id: crypto.randomUUID(), addedAt: Date.now(), ...estimate },
-      ...prev,
-    ]);
+  const addEntry = useCallback(async (estimate) => {
+    const saved = await createEntryApi(estimate);
+    setEntries((prev) => [saved, ...prev]);
+    return saved;
   }, []);
 
-  const removeEntry = useCallback((id) => {
+  const removeEntry = useCallback(async (id) => {
+    await deleteEntryApi(id);
     setEntries((prev) => prev.filter((e) => e.id !== id));
   }, []);
-
-  const clearToday = useCallback(() => setEntries([]), []);
 
   const totals = entries.reduce(
     (acc, e) => ({
@@ -46,5 +47,5 @@ export default function useDailyLog() {
     { totalCarbsG: 0, netCarbsG: 0, caloriesKcal: 0 }
   );
 
-  return { entries, addEntry, removeEntry, clearToday, totals };
+  return { entries, loading, addEntry, removeEntry, refresh, totals };
 }

@@ -1,51 +1,75 @@
 # Carb Counter
 
-AI-powered carb counter. Take a photo of your food (or enter a description and
-weight), answer up to 5 quick clarifying questions the AI asks to nail down
-the details, and get a full carb/macro breakdown — logged to a running daily
-total.
+AI-powered carb counter. Sign in, take a photo of your food (or enter a
+description and weight), answer up to 5 quick clarifying questions the AI asks
+to nail down the details, and get a full carb/macro breakdown. Every entry is
+saved to your account in Postgres, and a **Report** tab charts your carbs by
+day.
 
 ## How it works
 
-1. **Input** — photo upload (auto-downscaled client-side before upload) or
+1. **Sign in / sign up** — email + password accounts. Each user's data is
+   private to their account.
+2. **Input** — photo upload (auto-downscaled client-side before upload) or
    manual description + weight in grams.
-2. **Identify** — `POST /api/identify` sends the input to Claude, which
+3. **Identify** — `POST /api/identify` sends the input to Claude, which
    identifies the food and returns up to 5 targeted clarifying questions
    (e.g. cooking method, added sauce, portion size) tailored to that specific
    item.
-3. **Clarify** — the app walks through those questions one at a time
+4. **Clarify** — the app walks through those questions one at a time
    (skippable).
-4. **Estimate** — `POST /api/estimate` sends everything back to Claude, which
+5. **Estimate** — `POST /api/estimate` sends everything back to Claude, which
    returns a structured nutrition estimate (calories, total/net carbs, fiber,
    sugar, protein, fat, confidence).
-5. **Log** — save the result to today's log (stored in `localStorage`), which
-   tracks a running carb total for the day.
+6. **Log** — save the result; it's persisted to your account and added to
+   today's running carb total.
+7. **Report** — the Report tab shows a per-day carb bar chart plus a table
+   (7 / 14 / 30-day ranges) with averages and totals.
 
 ## Stack
 
-- **Frontend**: React + Vite, Recharts (macro donut chart), Phosphor icons
+- **Frontend**: React + Vite, Recharts (macro donut + daily bar chart),
+  Phosphor icons
 - **Backend**: Express, `@anthropic-ai/sdk` (Claude API, tool-use for
-  structured JSON output)
+  structured JSON output), PostgreSQL (`pg`), JWT auth (`jsonwebtoken` +
+  `bcryptjs`)
 - Single Node service: Express serves both the `/api/*` routes and the built
   static frontend — one deployable unit.
 
+## API
+
+| Method | Route                | Auth | Purpose                                  |
+| ------ | -------------------- | ---- | ---------------------------------------- |
+| POST   | `/api/auth/signup`   | —    | Create account, returns JWT              |
+| POST   | `/api/auth/login`    | —    | Sign in, returns JWT                     |
+| GET    | `/api/auth/me`       | ✓    | Current user                             |
+| POST   | `/api/identify`      | —    | Identify food + clarifying questions     |
+| POST   | `/api/estimate`      | —    | Structured nutrition estimate            |
+| POST   | `/api/entries`       | ✓    | Save a logged food entry                 |
+| GET    | `/api/entries?date=` | ✓    | List entries (optionally for one day)    |
+| DELETE | `/api/entries/:id`   | ✓    | Delete an entry                          |
+| GET    | `/api/report?days=`  | ✓    | Carbs/calories aggregated per day        |
+
+The database schema (`users`, `entries`) is created automatically on server
+startup — no separate migration step.
+
 ## Local development
 
-```bash
-# 1. Install root (server) deps
-npm install
+You need a running PostgreSQL database.
 
-# 2. Install client deps
+```bash
+# 1. Install deps
+npm install
 npm install --prefix client
 
-# 3. Set your API key
+# 2. Configure env
 cp .env.example .env
-# edit .env and set ANTHROPIC_API_KEY
+# edit .env: set ANTHROPIC_API_KEY, DATABASE_URL, and JWT_SECRET
 
-# 4. Run the backend (terminal 1)
+# 3. Run the backend (terminal 1) — creates tables on first start
 node server/index.js
 
-# 5. Run the frontend dev server (terminal 2) — proxies /api to :3001
+# 4. Run the frontend dev server (terminal 2) — proxies /api to :3001
 npm run dev --prefix client
 ```
 
@@ -62,11 +86,16 @@ npm start        # Express serves client/dist + /api/*
 
 1. Push this repo (or the `carb-counter/` subfolder as its own Railway
    service) to GitHub and create a new Railway project from it.
-2. Railway auto-detects Node via `railway.json` / Nixpacks: it runs
-   `npm run build` then `npm start`.
-3. Set the `ANTHROPIC_API_KEY` environment variable in the Railway service
-   settings (Variables tab). Optionally set `CLAUDE_MODEL`.
-4. Railway provides `PORT` automatically — the server already reads
+2. **Add the PostgreSQL plugin** to the project. Railway injects a
+   `DATABASE_URL` variable that the app reads automatically (SSL is enabled
+   for connection strings containing `sslmode=require`, or set `PGSSL=true`).
+3. Railway auto-detects Node via `railway.json` / Nixpacks: it runs
+   `npm run build` then `npm start`. Tables are created on first boot.
+4. Set these variables in the service's **Variables** tab:
+   - `ANTHROPIC_API_KEY` — your Anthropic key
+   - `JWT_SECRET` — a long random string for signing auth tokens
+   - (optional) `CLAUDE_MODEL`
+5. Railway provides `PORT` automatically — the server already reads
    `process.env.PORT`.
 
 No separate frontend deployment is needed — Express serves the built client.
