@@ -1,0 +1,19 @@
+{
+  "name": "carb-counter",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "AI-powered carb counter: photo or weight entry, dynamic clarifying questions, structured carb/macro estimate.",
+  "scripts": {
+    "build": "npm install --prefix client && npm run build --prefix client",
+    "start": "node server/index.js",
+    "dev:server": "node --watch server/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "express": "^4.21.2"
+  }
+}
