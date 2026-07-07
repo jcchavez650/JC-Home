@@ -109,7 +109,10 @@ reportsRouter.get('/trip/:id/export.csv', requireTripMember, (req, res) => {
     )
     .all(req.trip.id)
   const esc = (v) => {
-    const s = String(v ?? '')
+    let s = String(v ?? '')
+    // Neutralize spreadsheet formula injection: a leading =, +, -, or @ can be
+    // executed as a formula by Excel/Sheets, so prefix such cells with a quote.
+    if (/^[=+\-@]/.test(s)) s = `'${s}`
     return /[",\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s
   }
   const header = 'date,description,category,amount,paid_by,split_type,splits'

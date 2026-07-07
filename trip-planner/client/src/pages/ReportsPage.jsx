@@ -106,7 +106,7 @@ export default function ReportsPage() {
                   <strong className={tripReport.budget_remaining < 0 ? 'neg' : 'pos'}>{fmt(tripReport.budget_remaining)}</strong>
                 </div>
               )}
-              <div className="card stat"><span className="stat-label">Itinerary est. cost</span><strong>{fmt(tripReport.itinerary_estimated_cost)}</strong></div>
+              <div className="card stat"><span className="stat-label">Itinerary est. / person</span><strong>{fmt(tripReport.itinerary_estimated_cost)}</strong></div>
             </div>
 
             {tripReport.by_category.length > 0 && (
