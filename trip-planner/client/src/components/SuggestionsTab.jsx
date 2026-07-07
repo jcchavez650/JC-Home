@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api.js'
+import { findActivityImage } from '../imageSearch.js'
 import PreferencesFields, { parsePrefs, VIBES, GROUP_TYPES } from './PreferencesFields.jsx'
 
 const TIER_BADGES = { free: '🆓 free', budget: '💲 budget', moderate: '💲💲 moderate', splurge: '💎 splurge' }
@@ -37,6 +38,8 @@ export default function SuggestionsTab({ trip, refreshTrip, goToItinerary }) {
 
   const addToItinerary = async (s, idx) => {
     try {
+      // Best-effort: find a photo for the chosen activity (browser-side, may be null).
+      const image_url = await findActivityImage(s.title, trip.destination)
       await api(`/trips/${trip.id}/itinerary`, {
         method: 'POST',
         body: {
@@ -44,6 +47,7 @@ export default function SuggestionsTab({ trip, refreshTrip, goToItinerary }) {
           category: ['food', 'lodging', 'transport', 'sightseeing'].includes(s.category) ? s.category : 'activity',
           notes: s.notes,
           est_cost: s.est_cost || null,
+          image_url,
         },
       })
       setAdded(new Set([...added, idx]))

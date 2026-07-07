@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api.js'
+import { findActivityImage } from '../imageSearch.js'
 
 const CATEGORIES = ['activity', 'food', 'lodging', 'transport', 'sightseeing', 'other']
 const CAT_ICONS = { activity: '🎯', food: '🍽️', lodging: '🏨', transport: '🚕', sightseeing: '📷', other: '📌' }
-const EMPTY = { date: '', time: '', title: '', category: 'activity', location: '', notes: '', est_cost: '' }
+const EMPTY = { date: '', time: '', title: '', category: 'activity', location: '', notes: '', est_cost: '', image_url: '' }
 
 function formatDay(dateStr) {
   if (!dateStr || dateStr === 'Unscheduled') return 'Unscheduled'
@@ -27,6 +28,7 @@ export default function ItineraryTab({ trip, members = [] }) {
   const [editingId, setEditingId] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [view, setView] = useState('timeline')
+  const [finding, setFinding] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -57,9 +59,22 @@ export default function ItineraryTab({ trip, members = [] }) {
     setForm({
       date: item.date || '', time: item.time || '', title: item.title,
       category: item.category, location: item.location || '',
-      notes: item.notes || '', est_cost: item.est_cost ?? '',
+      notes: item.notes || '', est_cost: item.est_cost ?? '', image_url: item.image_url || '',
     })
     setShowForm(true)
+  }
+
+  const autoFindImage = async () => {
+    if (!form.title.trim()) { setError('Add a title first, then auto-find a photo.'); return }
+    setFinding(true)
+    setError('')
+    try {
+      const img = await findActivityImage(form.title, form.location || trip.destination)
+      if (img) setForm((f) => ({ ...f, image_url: img }))
+      else setError('No photo found — try a more specific title/location, or paste an image URL.')
+    } finally {
+      setFinding(false)
+    }
   }
 
   const remove = async (id) => {
@@ -125,6 +140,25 @@ export default function ItineraryTab({ trip, members = [] }) {
           <label>Location<input value={form.location} onChange={set('location')} placeholder="Dos Ojos, Tulum" /></label>
           <label>Est. cost (per person)<input type="number" min="0" step="0.01" value={form.est_cost} onChange={set('est_cost')} placeholder="120" /></label>
           <label className="span-2">Notes<input value={form.notes} onChange={set('notes')} placeholder="Bring biodegradable sunscreen" /></label>
+          <div className="span-2">
+            <div className="img-field">
+              <label style={{ flex: 1 }}>
+                Photo
+                <input value={form.image_url} onChange={set('image_url')} placeholder="Paste an image URL, or auto-find one" />
+              </label>
+              <button type="button" className="btn" disabled={finding} onClick={autoFindImage}>
+                {finding ? 'Searching…' : '🔎 Auto-find'}
+              </button>
+            </div>
+            {form.image_url && (
+              <img
+                className="img-preview"
+                src={form.image_url}
+                alt="preview"
+                onError={(e) => { e.currentTarget.style.display = 'none' }}
+              />
+            )}
+          </div>
           {error && <p className="error">{error}</p>}
           <button className="btn btn-primary">{editingId ? 'Save changes' : 'Add to itinerary'}</button>
         </form>
@@ -155,6 +189,10 @@ export default function ItineraryTab({ trip, members = [] }) {
                         </div>
                         {metaLine(item)}
                         {item.notes && <p className="muted small">{item.notes}</p>}
+                        {item.image_url && (
+                          <img className="itinerary-photo" src={item.image_url} alt={item.title} loading="lazy"
+                            onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                        )}
                       </div>
                     </div>
                   ))}
@@ -177,6 +215,10 @@ export default function ItineraryTab({ trip, members = [] }) {
                         {item.est_cost != null && `~$${item.est_cost}/person`}
                       </p>
                       {item.notes && <p className="muted small">{item.notes}</p>}
+                      {item.image_url && (
+                        <img className="itinerary-photo" src={item.image_url} alt={item.title} loading="lazy"
+                          onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                      )}
                     </div>
                   </div>
                   {actions(item)}

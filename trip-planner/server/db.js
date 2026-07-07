@@ -103,4 +103,9 @@ if (!tripCols.some((c) => c.name === 'cost_plan')) {
   db.exec('ALTER TABLE trips ADD COLUMN cost_plan TEXT')
 }
 
+const itinCols = db.prepare('PRAGMA table_info(itinerary_items)').all()
+if (!itinCols.some((c) => c.name === 'image_url')) {
+  db.exec('ALTER TABLE itinerary_items ADD COLUMN image_url TEXT')
+}
+
 export default db
