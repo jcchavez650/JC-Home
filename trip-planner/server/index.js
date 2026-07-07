@@ -1,4 +1,5 @@
 import express from 'express'
+import helmet from 'helmet'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { authRouter, requireAuth, requireTripMember } from './auth.js'
@@ -15,8 +16,15 @@ import { reportsRouter } from './routes/reports.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
-app.use(express.json())
 
+// Behind Railway's proxy: trust it so client IPs (for rate limiting) are correct.
+app.set('trust proxy', 1)
+// Security headers. CSP is disabled here because the SPA loads Google Fonts and
+// inline styles; the strict defaults would block them.
+app.use(helmet({ contentSecurityPolicy: false }))
+app.use(express.json({ limit: '100kb' }))
+
+app.get('/api/health', (_req, res) => res.json({ ok: true }))
 app.use('/api/auth', authRouter)
 app.use('/api/trips', requireAuth, tripsRouter)
 app.use('/api/trips/:tripId/itinerary', requireAuth, requireTripMember, itineraryRouter)
@@ -32,6 +40,12 @@ app.use('/api/trips/:tripId/suggestions', requireAuth, requireTripMember, sugges
 app.use('/api/reports', requireAuth, reportsRouter)
 
 app.use((err, _req, res, _next) => {
+  if (err?.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'request body too large' })
+  }
+  if (err?.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'invalid JSON body' })
+  }
   console.error(err)
   res.status(500).json({ error: 'internal server error' })
 })

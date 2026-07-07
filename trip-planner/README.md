@@ -60,14 +60,23 @@ browser's **"Add to Home Screen"** so it opens like a regular app.
 
 Every push to `main` on GitHub redeploys automatically, and the volume keeps all data intact.
 
-### Environment variables (all optional)
+### Environment variables
 
 | Variable | Purpose | Default |
 |---|---|---|
 | `PORT` | Server port | `3001` |
 | `DB_PATH` | SQLite file location | `server/trip-planner.db` |
-| `JWT_SECRET` | Token signing secret — set this in production | dev value |
+| `JWT_SECRET` | Token signing secret. **Required in production** — the server refuses to start without a strong value (≥16 chars). In development an ephemeral one is generated. | — |
 | `ANTHROPIC_API_KEY` | Enables the ✨ AI suggestions button | off |
+
+Generate a secret with: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`
+
+### Security notes
+
+- Auth endpoints (`/auth/login`, `/auth/register`) are rate-limited to 30 requests per IP per 15 minutes.
+- Security headers are set via `helmet`; JSON bodies are capped at 100 KB.
+- CSV exports neutralize spreadsheet formula injection.
+- A `GET /api/health` endpoint is available for uptime checks.
 
 ## How splitting works
 

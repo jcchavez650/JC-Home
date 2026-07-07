@@ -1,9 +1,39 @@
 import { Router } from 'express'
+import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import rateLimit from 'express-rate-limit'
 import db from './db.js'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production'
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+// Throttle auth attempts per IP to blunt brute-force and mass sign-up.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'too many attempts — please wait a few minutes and try again' },
+})
+
+// A real secret must be provided in production; refuse to boot on the insecure
+// default so a misconfigured deploy can't run with forgeable tokens. In dev we
+// generate an ephemeral one (sessions reset on restart, which is fine locally).
+function resolveJwtSecret() {
+  const fromEnv = process.env.JWT_SECRET
+  if (fromEnv && fromEnv.length >= 16 && fromEnv !== 'dev-secret-change-in-production') {
+    return fromEnv
+  }
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'JWT_SECRET is not set (or too weak). Set a strong, random JWT_SECRET before starting in production.'
+    )
+  }
+  console.warn('[auth] JWT_SECRET not set — using an ephemeral dev secret; sessions reset on restart.')
+  return crypto.randomBytes(48).toString('hex')
+}
+
+const JWT_SECRET = resolveJwtSecret()
 const TOKEN_TTL = '30d'
 
 export const authRouter = Router()
@@ -18,10 +48,13 @@ function publicUser(user) {
   return { id: user.id, name: user.name, email: user.email }
 }
 
-authRouter.post('/register', (req, res) => {
+authRouter.post('/register', authLimiter, (req, res) => {
   const { name, email, password } = req.body || {}
   if (!name?.trim() || !email?.trim() || !password) {
     return res.status(400).json({ error: 'name, email, and password are required' })
+  }
+  if (!EMAIL_RE.test(email.trim())) {
+    return res.status(400).json({ error: 'please enter a valid email address' })
   }
   if (password.length < 6) {
     return res.status(400).json({ error: 'password must be at least 6 characters' })
@@ -41,7 +74,7 @@ authRouter.post('/register', (req, res) => {
   }
 })
 
-authRouter.post('/login', (req, res) => {
+authRouter.post('/login', authLimiter, (req, res) => {
   const { email, password } = req.body || {}
   if (!email || !password) {
     return res.status(400).json({ error: 'email and password are required' })
