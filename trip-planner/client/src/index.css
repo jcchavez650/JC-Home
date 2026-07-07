@@ -365,6 +365,30 @@ input:focus, select:focus {
   box-shadow: var(--shadow);
 }
 .tl-card { margin-bottom: 0.7rem; }
+
+/* Itinerary photos */
+.itinerary-photo {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-top: 0.6rem;
+  border: 1px solid var(--hairline);
+}
+.img-field { display: flex; gap: 0.5rem; align-items: flex-end; }
+.img-field .btn { white-space: nowrap; }
+.img-preview {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-top: 0.6rem;
+  border: 1px solid var(--hairline);
+}
 .tl-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.6rem; }
 .tl-card-head strong { font-family: var(--serif); font-size: 1.05rem; font-weight: 600; }
 .tl-card p { margin: 0.2rem 0 0; }

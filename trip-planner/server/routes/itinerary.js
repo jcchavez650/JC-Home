@@ -5,6 +5,14 @@ export const itineraryRouter = Router({ mergeParams: true })
 
 const CATEGORIES = ['activity', 'food', 'lodging', 'transport', 'sightseeing', 'other']
 
+// Only allow http(s) image URLs (the browser loads these directly); cap length.
+function cleanImageUrl(value) {
+  if (value == null || value === '') return null
+  const s = String(value).trim()
+  if (!/^https?:\/\//i.test(s) || s.length > 2048) return null
+  return s
+}
+
 function listItems(tripId) {
   return db
     .prepare(
@@ -21,12 +29,12 @@ itineraryRouter.get('/', (req, res) => {
 })
 
 itineraryRouter.post('/', (req, res) => {
-  const { date, time, title, category, location, notes, est_cost } = req.body || {}
+  const { date, time, title, category, location, notes, est_cost, image_url } = req.body || {}
   if (!title?.trim()) return res.status(400).json({ error: 'title is required' })
   const cat = CATEGORIES.includes(category) ? category : 'activity'
   db.prepare(
-    `INSERT INTO itinerary_items (trip_id, date, time, title, category, location, notes, est_cost, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO itinerary_items (trip_id, date, time, title, category, location, notes, est_cost, image_url, created_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     req.trip.id,
     date || null,
@@ -36,6 +44,7 @@ itineraryRouter.post('/', (req, res) => {
     location?.trim() || null,
     notes?.trim() || null,
     est_cost != null && est_cost !== '' ? Number(est_cost) : null,
+    cleanImageUrl(image_url),
     req.user.id
   )
   res.status(201).json({ items: listItems(req.trip.id) })
@@ -46,10 +55,10 @@ itineraryRouter.put('/:itemId', (req, res) => {
     .prepare('SELECT * FROM itinerary_items WHERE id = ? AND trip_id = ?')
     .get(Number(req.params.itemId), req.trip.id)
   if (!item) return res.status(404).json({ error: 'itinerary item not found' })
-  const { date, time, title, category, location, notes, est_cost } = req.body || {}
+  const { date, time, title, category, location, notes, est_cost, image_url } = req.body || {}
   db.prepare(
     `UPDATE itinerary_items SET
-       date = ?, time = ?, title = ?, category = ?, location = ?, notes = ?, est_cost = ?
+       date = ?, time = ?, title = ?, category = ?, location = ?, notes = ?, est_cost = ?, image_url = ?
      WHERE id = ?`
   ).run(
     date !== undefined ? date || null : item.date,
@@ -59,6 +68,7 @@ itineraryRouter.put('/:itemId', (req, res) => {
     location !== undefined ? location?.trim() || null : item.location,
     notes !== undefined ? notes?.trim() || null : item.notes,
     est_cost !== undefined ? (est_cost === '' || est_cost == null ? null : Number(est_cost)) : item.est_cost,
+    image_url !== undefined ? cleanImageUrl(image_url) : item.image_url,
     item.id
   )
   res.json({ items: listItems(req.trip.id) })
