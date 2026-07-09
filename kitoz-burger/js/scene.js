@@ -1,8 +1,14 @@
 /* ============================================================================
-   KITOZ BURGER — Hero 3D scene (Three.js)
-   A procedural, slowly rotating smash burger with warm studio lighting and
-   floating spark particles. Reacts to the mouse, respects reduced-motion,
-   and pauses when the tab is hidden. Degrades gracefully if WebGL is absent.
+   KITOZ BURGER — Hero 3D scene (Three.js)  ·  premium build
+   ----------------------------------------------------------------------------
+   A studio-lit, physically-shaded smash burger:
+   • Lathe-modeled brioche buns with a glazed clearcoat
+   • Seared, irregular patty · melting cheese with drips · ruffled lettuce
+   • Tomato + onion · scattered sesame seeds
+   • Real environment reflections (RoomEnvironment), filmic tone mapping,
+     soft contact shadow and a warm additive glow.
+   Reacts to the mouse, respects reduced-motion, pauses when hidden, and
+   degrades gracefully if WebGL / add-ons are unavailable.
    ========================================================================== */
 import * as THREE from "three";
 
@@ -10,152 +16,226 @@ const canvas = document.getElementById("scene");
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 if (canvas && !reduceMotion) {
-  try { init(); } catch (e) { console.warn("3D scene disabled:", e); }
+  init().catch((e) => console.warn("3D scene disabled:", e));
 }
 
-function init() {
+async function init() {
+  /* ---- Renderer --------------------------------------------------------- */
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setClearColor(0x000000, 0);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-  camera.position.set(0, 1.1, 11);
+  const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
+  camera.position.set(0, 0.7, 12);
 
-  /* ---- Lighting: warm studio ------------------------------------------- */
-  scene.add(new THREE.AmbientLight(0xffe8d0, 0.55));
+  /* ---- Environment reflections (soft studio) ---------------------------- */
+  try {
+    const { RoomEnvironment } = await import("three/addons/environments/RoomEnvironment.js");
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  } catch (e) {
+    // No env map — the lights below still render a good result.
+  }
 
-  const key = new THREE.DirectionalLight(0xffffff, 2.1);
-  key.position.set(5, 8, 6);
-  scene.add(key);
+  /* ---- Stage (holds everything; repositioned on resize) ----------------- */
+  const stage = new THREE.Group();
+  scene.add(stage);
 
-  const rim = new THREE.DirectionalLight(0xff7a18, 2.4);
-  rim.position.set(-6, 3, -4);
-  scene.add(rim);
+  /* ---- Lighting: warm 3-point studio ------------------------------------ */
+  scene.add(new THREE.HemisphereLight(0xffe9d2, 0x241a12, 0.5));
 
-  const fill = new THREE.PointLight(0xffb347, 1.4, 40);
-  fill.position.set(-3, -2, 6);
-  scene.add(fill);
+  const key = new THREE.DirectionalLight(0xfff2e2, 2.6);
+  key.position.set(4.5, 8, 6);
+  key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.radius = 6;
+  key.shadow.bias = -0.0006;
+  const sc = key.shadow.camera;
+  sc.near = 1; sc.far = 30; sc.left = -4.5; sc.right = 4.5; sc.top = 4.5; sc.bottom = -4.5;
+  const keyTarget = new THREE.Object3D();
+  stage.add(keyTarget);
+  key.target = keyTarget;
+  stage.add(key);
+
+  const rim = new THREE.DirectionalLight(0xff7a18, 3.2);   // orange edge light
+  rim.position.set(-6, 2.5, -5);
+  stage.add(rim);
+
+  const fill = new THREE.PointLight(0xffb060, 1.1, 40);
+  fill.position.set(-3, -1.5, 6);
+  stage.add(fill);
 
   /* ---- Materials -------------------------------------------------------- */
-  const mat = (color, rough, metal = 0) =>
-    new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal });
+  const physical = (o) => new THREE.MeshPhysicalMaterial(o);
 
-  const bunMat = mat(0xe8912f, 0.62);
-  const bunTopMat = mat(0xef9d3a, 0.55);
-  const pattyMat = mat(0x3a2013, 0.85);
-  const cheeseMat = mat(0xffb302, 0.35);
-  const lettuceMat = mat(0x6fb63a, 0.7);
-  const tomatoMat = mat(0xd23c34, 0.5);
-  const seedMat = mat(0xf5e2b8, 0.5);
+  const bunMat = physical({ color: 0xd98a37, roughness: 0.42, clearcoat: 0.55, clearcoatRoughness: 0.45, sheen: 0.3, sheenColor: new THREE.Color(0xffcaa0) });
+  const bunBottomMat = physical({ color: 0xcf7f30, roughness: 0.5, clearcoat: 0.4, clearcoatRoughness: 0.5 });
+  const pattyMat = physical({ color: 0x3c2214, roughness: 0.9, clearcoat: 0.15, clearcoatRoughness: 0.8 });
+  const cheeseMat = physical({ color: 0xf7b301, roughness: 0.28, clearcoat: 0.85, clearcoatRoughness: 0.25, sheen: 0.4, sheenColor: new THREE.Color(0xffe08a) });
+  const lettuceMat = physical({ color: 0x74b83a, roughness: 0.55, sheen: 0.5, sheenColor: new THREE.Color(0xbfe08a), clearcoat: 0.2 });
+  const tomatoMat = physical({ color: 0xd8382c, roughness: 0.32, clearcoat: 0.5, clearcoatRoughness: 0.3, transmission: 0.08, thickness: 0.4 });
+  const onionMat = physical({ color: 0xf3e8de, roughness: 0.4, transmission: 0.25, thickness: 0.3, clearcoat: 0.3 });
+  const seedMat = physical({ color: 0xf3e0b6, roughness: 0.5 });
 
-  /* ---- Build the burger ------------------------------------------------- */
+  /* ---- Burger pivot (this is what rotates / bobs) ----------------------- */
   const burger = new THREE.Group();
+  stage.add(burger);
 
-  // Bottom bun — a slightly domed disc
-  const bottomBun = new THREE.Mesh(new THREE.CylinderGeometry(2.05, 1.9, 0.7, 48), bunMat);
-  roundTop(bottomBun);
-  bottomBun.position.y = -1.55;
+  const enableShadow = (m) => { m.castShadow = true; m.receiveShadow = true; return m; };
+
+  // Bottom bun — lathe-revolved rounded disc
+  const bottomBun = enableShadow(new THREE.Mesh(lathe([
+    [0.02, -0.50], [0.55, -0.52], [1.15, -0.50], [1.62, -0.42],
+    [1.92, -0.26], [2.00, -0.03], [1.88, 0.10], [1.40, 0.15], [0.02, 0.15]
+  ]), bunBottomMat));
+  bottomBun.position.y = -1.5;
   burger.add(bottomBun);
 
-  // Patty
-  const patty = new THREE.Mesh(new THREE.CylinderGeometry(2.15, 2.15, 0.55, 48), pattyMat);
-  patty.position.y = -1.0;
+  // Patty — thick seared disc with an irregular, bumpy rim (peeks past the bun)
+  const pattyGeo = new THREE.CylinderGeometry(2.0, 1.94, 0.5, 64, 3, false);
+  roundEdges(pattyGeo, 0.18);
+  jitterRim(pattyGeo, 0.06);
+  const patty = enableShadow(new THREE.Mesh(pattyGeo, pattyMat));
+  patty.position.y = -1.05;
   burger.add(patty);
 
-  // Cheese — a square slab rotated to show corners
-  const cheese = new THREE.Mesh(new THREE.BoxGeometry(3.9, 0.14, 3.9), cheeseMat);
-  cheese.position.y = -0.66;
+  // Cheese — square slab rotated to show corners, plus melting drips
+  const cheese = enableShadow(new THREE.Mesh(new THREE.BoxGeometry(3.05, 0.13, 3.05, 1, 1, 1), cheeseMat));
+  cheese.position.y = -0.75;
   cheese.rotation.y = Math.PI / 4;
   burger.add(cheese);
+  for (let i = 0; i < 4; i++) {
+    const drip = enableShadow(new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), cheeseMat));
+    const a = (i / 4) * Math.PI * 2;
+    drip.position.set(Math.cos(a) * 1.6, -0.86, Math.sin(a) * 1.6);
+    drip.scale.set(1, 1.5, 0.68);   // draping blob hugging the patty edge
+    burger.add(drip);
+  }
 
-  // Lettuce — a wavy green ring
-  const lettuce = new THREE.Mesh(new THREE.TorusGeometry(1.85, 0.42, 12, 40), lettuceMat);
-  wobble(lettuce.geometry, 0.14);
+  // Tomato slice
+  const tomato = enableShadow(new THREE.Mesh(new THREE.CylinderGeometry(1.86, 1.84, 0.16, 48), tomatoMat));
+  tomato.position.y = -0.6;
+  burger.add(tomato);
+
+  // Onion ring
+  const onion = enableShadow(new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.09, 12, 48), onionMat));
+  onion.rotation.x = Math.PI / 2;
+  onion.scale.y = 0.5;
+  onion.position.y = -0.5;
+  burger.add(onion);
+
+  // Lettuce — ruffled green ring, leafing out past the buns
+  const lettuceGeo = new THREE.TorusGeometry(1.82, 0.34, 16, 100);
+  ruffle(lettuceGeo, 0.2, 10);
+  const lettuce = enableShadow(new THREE.Mesh(lettuceGeo, lettuceMat));
   lettuce.rotation.x = Math.PI / 2;
-  lettuce.scale.y = 0.55;
+  lettuce.scale.y = 0.5;
   lettuce.position.y = -0.42;
   burger.add(lettuce);
 
-  // Tomato
-  const tomato = new THREE.Mesh(new THREE.CylinderGeometry(1.95, 1.95, 0.22, 40), tomatoMat);
-  tomato.position.y = -0.12;
-  burger.add(tomato);
-
-  // Top bun — a dome
-  const topBun = new THREE.Mesh(new THREE.SphereGeometry(2.1, 48, 32, 0, Math.PI * 2, 0, Math.PI / 2), bunTopMat);
-  topBun.scale.y = 0.72;
-  topBun.position.y = 0.15;
+  // Top bun — lathe-revolved brioche dome
+  const topBun = enableShadow(new THREE.Mesh(lathe([
+    [2.00, -0.06], [2.03, 0.06], [1.9, 0.30], [1.6, 0.60],
+    [1.2, 0.86], [0.78, 1.03], [0.36, 1.13], [0.02, 1.16]
+  ]), bunMat));
+  topBun.position.y = -0.28;
   burger.add(topBun);
 
-  // Sesame seeds on the dome
-  const seedGeo = new THREE.SphereGeometry(0.09, 8, 6);
-  for (let i = 0; i < 26; i++) {
-    const seed = new THREE.Mesh(seedGeo, seedMat);
-    const phi = Math.acos(1 - Math.random() * 0.72);   // upper hemisphere-ish
-    const theta = Math.random() * Math.PI * 2;
-    const r = 2.02;
-    seed.position.set(
-      r * Math.sin(phi) * Math.cos(theta),
-      0.15 + r * 0.72 * Math.cos(phi),
-      r * Math.sin(phi) * Math.sin(theta)
-    );
+  // Sesame seeds scattered on the dome
+  const seedGeo = new THREE.SphereGeometry(0.085, 10, 8);
+  const domeCx = 0, domeCy = topBun.position.y, rx = 2.0, ry = 1.16;
+  const golden = Math.PI * (3 - Math.sqrt(5));   // even, non-clumping spread
+  const seedCount = 30;
+  for (let i = 0; i < seedCount; i++) {
+    const seed = enableShadow(new THREE.Mesh(seedGeo, seedMat));
+    const frac = (i + 0.5) / seedCount;
+    const phi = (0.28 + frac * 0.64) * (Math.PI / 2);   // skip the very apex
+    const theta = i * golden;
+    const sx = rx * Math.sin(phi) * Math.cos(theta);
+    const sz = rx * Math.sin(phi) * Math.sin(theta);
+    const sy = domeCy + ry * Math.cos(phi);
+    seed.position.set(domeCx + sx * 0.99, sy + 0.02, sz * 0.99);
     seed.scale.set(1, 0.55, 1.5);
-    seed.lookAt(0, 3, 0);
+    seed.lookAt(0, domeCy + ry + 1.4, 0);
+    seed.rotateZ(Math.random() * Math.PI);   // vary seed orientation
     burger.add(seed);
   }
 
-  burger.rotation.x = 0.12;
-  scene.add(burger);
+  // Lift the whole burger so it frames nicely
+  burger.position.y = 0.55;
+  burger.rotation.x = 0.1;
 
-  /* ---- Floating spark particles ---------------------------------------- */
-  const count = 90;
+  /* ---- Soft contact shadow --------------------------------------------- */
+  const shadowPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(16, 16),
+    new THREE.ShadowMaterial({ opacity: 0.34 })
+  );
+  shadowPlane.rotation.x = -Math.PI / 2;
+  shadowPlane.position.y = -1.75;
+  shadowPlane.receiveShadow = true;
+  stage.add(shadowPlane);
+
+  /* ---- Warm glow behind the burger ------------------------------------- */
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: radialTexture("#ff7a18"), color: 0xffffff, transparent: true,
+    opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending
+  }));
+  glow.scale.set(11, 11, 1);
+  glow.position.set(0, 0.4, -2.5);
+  stage.add(glow);
+
+  /* ---- Floating embers -------------------------------------------------- */
+  const count = 70;
   const pGeo = new THREE.BufferGeometry();
   const pos = new Float32Array(count * 3);
   for (let i = 0; i < count; i++) {
-    pos[i * 3] = (Math.random() - 0.5) * 22;
-    pos[i * 3 + 1] = (Math.random() - 0.5) * 16;
-    pos[i * 3 + 2] = (Math.random() - 0.5) * 10 - 2;
+    pos[i * 3] = (Math.random() - 0.5) * 16;
+    pos[i * 3 + 1] = (Math.random() - 0.5) * 12;
+    pos[i * 3 + 2] = (Math.random() - 0.5) * 8 - 1;
   }
   pGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-  const particles = new THREE.Points(pGeo, new THREE.PointsMaterial({
-    color: 0xff9d3c, size: 0.08, transparent: true, opacity: 0.7, depthWrite: false,
-    blending: THREE.AdditiveBlending
+  const embers = new THREE.Points(pGeo, new THREE.PointsMaterial({
+    map: radialTexture("#ffb264"), color: 0xffb060, size: 0.16, transparent: true,
+    opacity: 0.8, depthWrite: false, blending: THREE.AdditiveBlending
   }));
-  scene.add(particles);
+  scene.add(embers);
 
   /* ---- Pointer parallax ------------------------------------------------- */
-  const target = { x: 0, y: 0 };
-  const cur = { x: 0, y: 0 };
+  const target = { x: 0, y: 0 }, cur = { x: 0, y: 0 };
   window.addEventListener("pointermove", (e) => {
-    target.x = (e.clientX / window.innerWidth - 0.5);
-    target.y = (e.clientY / window.innerHeight - 0.5);
+    target.x = e.clientX / window.innerWidth - 0.5;
+    target.y = e.clientY / window.innerHeight - 0.5;
   }, { passive: true });
 
   /* ---- Resize ----------------------------------------------------------- */
   function resize() {
     const w = canvas.clientWidth, h = canvas.clientHeight;
-    if (w === 0 || h === 0) return;
+    if (!w || !h) return;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
-    // pull the burger to the right on wide screens, center on narrow
-    burger.position.x = w / h > 1.1 ? 3.1 : 0;
-    burger.position.y = w / h > 1.1 ? 0 : -0.6;
-    const s = w / h > 1.1 ? 1 : 0.82;
-    burger.scale.setScalar(s);
+    const wide = w / h > 1.1;
+    stage.position.x = wide ? 3.0 : 0;
+    stage.position.y = wide ? 0 : -0.5;
+    stage.scale.setScalar(wide ? 1 : 0.82);
     camera.updateProjectionMatrix();
   }
   window.addEventListener("resize", resize);
   resize();
 
   /* ---- Animate ---------------------------------------------------------- */
+  const clock = new THREE.Clock();
   let running = true;
   document.addEventListener("visibilitychange", () => {
     running = !document.hidden;
-    if (running) clock.start(), loop();
+    if (running) { clock.start(); loop(); }
   });
 
-  const clock = new THREE.Clock();
   function loop() {
     if (!running) return;
     requestAnimationFrame(loop);
@@ -164,42 +244,87 @@ function init() {
     cur.x += (target.x - cur.x) * 0.05;
     cur.y += (target.y - cur.y) * 0.05;
 
-    burger.rotation.y += 0.004;
-    burger.rotation.z = cur.x * 0.18;
-    burger.rotation.x = 0.12 + cur.y * 0.2;
-    burger.position.y += Math.sin(t * 1.1) * 0.0016;   // gentle bob
+    burger.rotation.y += 0.0038;
+    burger.rotation.z = cur.x * 0.16;
+    burger.rotation.x = 0.1 + cur.y * 0.18;
+    burger.position.y = 0.55 + Math.sin(t * 1.1) * 0.05;
 
-    particles.rotation.y = t * 0.03;
-    particles.position.y = Math.sin(t * 0.4) * 0.4;
+    embers.rotation.y = t * 0.025;
+    embers.position.y = Math.sin(t * 0.35) * 0.4;
+    glow.material.opacity = 0.5 + Math.sin(t * 1.4) * 0.06;
 
     renderer.render(scene, camera);
   }
   loop();
 }
 
-/* ---- Geometry helpers ---------------------------------------------------- */
-// Round off the top rim of a cylinder for a softer bun look
-function roundTop(mesh) {
-  const g = mesh.geometry;
+/* ============================================================================
+   Geometry & texture helpers
+   ========================================================================== */
+
+// Build a lathe (surface of revolution) from [radius, y] pairs.
+function lathe(pairs) {
+  const pts = pairs.map(([r, y]) => new THREE.Vector2(Math.max(r, 0.001), y));
+  const g = new THREE.LatheGeometry(pts, 64);
+  g.computeVertexNormals();
+  return g;
+}
+
+// Soften the top/bottom rim of a cylinder by pulling the outer edge inward.
+function roundEdges(g, amt) {
   const p = g.attributes.position;
+  let maxY = -Infinity, minY = Infinity;
+  for (let i = 0; i < p.count; i++) { const y = p.getY(i); if (y > maxY) maxY = y; if (y < minY) minY = y; }
   for (let i = 0; i < p.count; i++) {
     const y = p.getY(i);
-    if (y > 0) {
-      const x = p.getX(i), z = p.getZ(i);
-      p.setX(i, x * 0.92);
-      p.setZ(i, z * 0.92);
+    if (Math.abs(y - maxY) < 1e-3 || Math.abs(y - minY) < 1e-3) {
+      const x = p.getX(i), z = p.getZ(i), s = 1 - amt;
+      p.setX(i, x * s); p.setZ(i, z * s);
     }
   }
   g.computeVertexNormals();
 }
 
-// Add gentle random wobble to a geometry for organic edges
-function wobble(g, amt) {
+// Add subtle radial jitter to a mesh's rim so it isn't perfectly circular.
+function jitterRim(g, amt) {
   const p = g.attributes.position;
   for (let i = 0; i < p.count; i++) {
-    p.setX(i, p.getX(i) + (Math.random() - 0.5) * amt);
-    p.setY(i, p.getY(i) + (Math.random() - 0.5) * amt);
-    p.setZ(i, p.getZ(i) + (Math.random() - 0.5) * amt);
+    const x = p.getX(i), z = p.getZ(i);
+    const r = Math.hypot(x, z);
+    if (r > 0.001) {
+      const n = 1 + (Math.sin(Math.atan2(z, x) * 7) * 0.5 + (Math.random() - 0.5)) * amt;
+      p.setX(i, x * n); p.setZ(i, z * n);
+    }
   }
   g.computeVertexNormals();
+}
+
+// Give a torus a rippled, leafy edge.
+function ruffle(g, amt, freq) {
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    const ang = Math.atan2(z, x);
+    const w = Math.sin(ang * freq) * amt + (Math.random() - 0.5) * amt * 0.5;
+    p.setY(i, y + w);
+    const s = 1 + w * 0.25;
+    p.setX(i, x * s); p.setZ(i, z * s);
+  }
+  g.computeVertexNormals();
+}
+
+// A soft radial-gradient sprite texture (for glow & embers).
+function radialTexture(hex) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const ctx = c.getContext("2d");
+  const grd = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grd.addColorStop(0, hex);
+  grd.addColorStop(0.4, hex + "88");
+  grd.addColorStop(1, hex + "00");
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, 128, 128);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
 }
