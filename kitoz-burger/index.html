@@ -231,6 +231,15 @@
     </div>
   </aside>
 
+  <!-- Option picker (e.g. wing flavor) -->
+  <div class="opt-overlay" id="optOverlay" hidden></div>
+  <div class="opt-modal" id="optModal" role="dialog" aria-modal="true" aria-labelledby="optTitle" hidden>
+    <button class="opt-close" id="optClose" aria-label="Cancel">✕</button>
+    <p class="opt-kicker" id="optKicker"></p>
+    <h3 id="optTitle">Choose an option</h3>
+    <div class="opt-choices" id="optChoices"></div>
+  </div>
+
   <!-- Toast -->
   <div class="toast" id="toast" hidden></div>
 

@@ -20,12 +20,14 @@
   }
   function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(cart)); } catch {} }
 
-  function addToCart(item) {
-    const key = item.name;
-    if (cart[key]) cart[key].qty += 1;
-    else cart[key] = { name: item.name, price: item.price || 0, qty: 1 };
+  function addToCart(item, choice) {
+    // Items with options (e.g. wing flavor) prompt for a choice first
+    if (item.options && !choice) { openOptionPicker(item); return; }
+    const label = choice ? `${item.name} — ${choice}` : item.name;
+    if (cart[label]) cart[label].qty += 1;
+    else cart[label] = { name: label, price: item.price || 0, qty: 1 };
     save(); renderCart(); bump();
-    toast(`Added ${item.name}`);
+    toast(`Added ${label}`);
   }
   function setQty(key, delta) {
     if (!cart[key]) return;
@@ -207,6 +209,30 @@
     document.body.style.overflow = ""; setTimeout(() => (overlay.hidden = true), 300);
   }
 
+  /* ---- Option picker (wing flavor, etc.) -------------------------------- */
+  let pendingOptionItem = null;
+  let optCloseTimer = null;
+  function openOptionPicker(item) {
+    clearTimeout(optCloseTimer);
+    pendingOptionItem = item;
+    $("#optKicker").textContent = item.name;
+    $("#optTitle").textContent = `Choose a ${(item.options.label || "option").toLowerCase()}`;
+    $("#optChoices").innerHTML = item.options.choices.map((c) =>
+      `<button class="opt-choice" data-choice="${esc(c)}">${c}<span aria-hidden="true">＋</span></button>`).join("");
+    $("#optOverlay").hidden = false; $("#optModal").hidden = false;
+    requestAnimationFrame(() => $("#optModal").classList.add("open"));
+  }
+  function closeOptionPicker() {
+    $("#optModal").classList.remove("open");
+    $("#optOverlay").hidden = true;
+    pendingOptionItem = null;
+    clearTimeout(optCloseTimer);
+    // Only hide after the fade IF it wasn't reopened in the meantime
+    optCloseTimer = setTimeout(() => {
+      if (!$("#optModal").classList.contains("open")) $("#optModal").hidden = true;
+    }, 220);
+  }
+
   /* ---- Visit section: hours & socials ----------------------------------- */
   function renderVisit() {
     $("#hoursList").innerHTML = CONFIG.hours.map((h) =>
@@ -247,6 +273,11 @@
   function wire() {
     // add / qty via delegation
     document.addEventListener("click", (e) => {
+      const choice = e.target.closest("[data-choice]");
+      if (choice) {
+        if (pendingOptionItem) addToCart(pendingOptionItem, choice.getAttribute("data-choice"));
+        closeOptionPicker(); return;
+      }
       const add = e.target.closest("[data-add]");
       if (add) { const it = findItem(add.getAttribute("data-add")); if (it) addToCart(it); return; }
       const inc = e.target.closest("[data-inc]");
@@ -262,7 +293,9 @@
     $("#sendOrder").addEventListener("click", sendOrder);
     ["custName", "custPhone"].forEach((id) =>
       $("#" + id).addEventListener("input", (e) => e.target.classList.remove("invalid")));
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeCart(); });
+    $("#optClose").addEventListener("click", closeOptionPicker);
+    $("#optOverlay").addEventListener("click", closeOptionPicker);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeOptionPicker(); closeCart(); } });
 
     // menu tabs -> smooth scroll + active state
     $("#menuTabs").addEventListener("click", (e) => {

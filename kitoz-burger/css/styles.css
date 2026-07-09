@@ -337,6 +337,30 @@ section { padding: clamp(4rem, 9vw, 7rem) clamp(1rem, 5vw, 2.5rem); }
 .cart-total span { color: var(--muted); } .cart-total strong { font-size: 1.5rem; }
 .cart-disclaimer { font-size: .74rem; color: var(--muted-2); margin: .3rem 0 1rem; }
 
+/* ---- Option picker (wing flavor, etc.) ----------------------------------- */
+.opt-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(3px); z-index: 220; }
+.opt-modal {
+  position: fixed; z-index: 230; left: 50%; top: 50%; transform: translate(-50%, -46%);
+  width: min(420px, 92vw); background: var(--bg-elev); border: 1px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.9rem;
+  opacity: 0; transition: opacity .2s ease, transform .2s ease;
+}
+.opt-modal.open { opacity: 1; transform: translate(-50%, -50%); }
+.opt-close { position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,.06); border: none; color: var(--text); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 1rem; transition: .2s; }
+.opt-close:hover { background: var(--hot); color: #fff; }
+.opt-kicker { color: var(--orange); font-family: var(--font-head); font-weight: 700; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 .3rem; }
+.opt-modal h3 { font-size: 1.4rem; margin-bottom: 1.3rem; }
+.opt-choices { display: flex; flex-direction: column; gap: .6rem; }
+.opt-choice {
+  display: flex; align-items: center; justify-content: space-between; text-align: left;
+  font-family: var(--font-head); font-weight: 700; font-size: .98rem; color: var(--text);
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  padding: .9rem 1.1rem; cursor: pointer; transition: border-color .18s, background .18s, transform .18s;
+}
+.opt-choice span { color: var(--orange); font-size: 1.2rem; line-height: 1; opacity: .6; transition: opacity .18s, transform .18s; }
+.opt-choice:hover { border-color: rgba(255,122,24,.6); background: #1b1b21; transform: translateY(-2px); }
+.opt-choice:hover span { opacity: 1; transform: scale(1.15); }
+
 /* ---- Toast --------------------------------------------------------------- */
 .toast {
   position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(20px); z-index: 300;
