@@ -11,6 +11,18 @@ function parseTote(t) {
   return { ...t, tags: JSON.parse(t.tags || '[]') };
 }
 
+// Public base URL for QR links — prefer PUBLIC_URL, else derive from the request
+function baseUrl(req) {
+  const configured = process.env.PUBLIC_URL;
+  if (configured) return configured.replace(/\/$/, '');
+  return `${req.protocol}://${req.get('host')}`;
+}
+
+// A QR that opens the public, read-only share page for this tote
+async function shareQr(req, token) {
+  return QRCode.toDataURL(`${baseUrl(req)}/share/${token}`, { width: 300, margin: 1 });
+}
+
 router.get('/', (req, res) => {
   const totes = db.prepare(`
     SELECT t.*,
@@ -83,12 +95,13 @@ router.post('/', requireEditor, async (req, res) => {
   if (location && location.length > 200) return res.status(400).json({ error: 'Location must be 200 characters or fewer' });
 
   const id = uuidv4();
-  const qrData = JSON.stringify({ tote_id: id, label });
-  const qrCode = await QRCode.toDataURL(qrData, { width: 300 });
+  // Every tote gets a public share link so its QR opens the contents on any phone
+  const shareToken = uuidv4();
+  const qrCode = await shareQr(req, shareToken);
   const tagsJson = JSON.stringify(Array.isArray(tags) ? tags : []);
 
-  db.prepare(`INSERT INTO totes (id, label, location, tags, qr_code) VALUES (?, ?, ?, ?, ?)`)
-    .run(id, label, location || null, tagsJson, qrCode);
+  db.prepare(`INSERT INTO totes (id, label, location, tags, share_token, qr_code) VALUES (?, ?, ?, ?, ?, ?)`)
+    .run(id, label, location || null, tagsJson, shareToken, qrCode);
 
   res.status(201).json(parseTote(db.prepare('SELECT * FROM totes WHERE id = ?').get(id)));
 });
@@ -101,6 +114,18 @@ router.put('/:id', requireEditor, (req, res) => {
   const tagsJson = tags !== undefined ? JSON.stringify(Array.isArray(tags) ? tags : []) : tote.tags;
   db.prepare(`UPDATE totes SET label = ?, location = ?, tags = ?, updated_at = datetime('now') WHERE id = ?`)
     .run(label || tote.label, location !== undefined ? location : tote.location, tagsJson, req.params.id);
+
+  res.json(parseTote(db.prepare('SELECT * FROM totes WHERE id = ?').get(req.params.id)));
+});
+
+// Ensure a tote has a share link and a URL-based QR (upgrades older totes)
+router.post('/:id/regenerate-qr', requireEditor, async (req, res) => {
+  const tote = db.prepare('SELECT * FROM totes WHERE id = ?').get(req.params.id);
+  if (!tote) return res.status(404).json({ error: 'Tote not found' });
+
+  const token = tote.share_token || uuidv4();
+  const qrCode = await shareQr(req, token);
+  db.prepare('UPDATE totes SET share_token = ?, qr_code = ? WHERE id = ?').run(token, qrCode, req.params.id);
 
   res.json(parseTote(db.prepare('SELECT * FROM totes WHERE id = ?').get(req.params.id)));
 });

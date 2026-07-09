@@ -32,6 +32,19 @@ export default function ToteDetail({ theme, onToggleTheme }) {
 
   useEffect(() => { fetchTote(); }, [id]);
 
+  // Upgrade older totes to a scannable URL QR the first time the QR tab is opened
+  useEffect(() => {
+    if (tab === 'qr' && canEdit && tote && !tote.share_token) regenerateQr();
+  }, [tab, tote?.share_token]);
+
+  async function regenerateQr() {
+    const res = await apiFetch(`/api/totes/${id}/regenerate-qr`, { method: 'POST' });
+    if (res.ok) {
+      const data = await res.json();
+      setTote(prev => ({ ...prev, ...data }));
+    }
+  }
+
   async function fetchTote() {
     const res = await apiFetch(`/api/totes/${id}`);
     if (res.ok) {
@@ -442,6 +455,11 @@ export default function ToteDetail({ theme, onToggleTheme }) {
                     {t('detail.printLabel')}
                   </button>
                 </div>
+                {canEdit && (
+                  <button className="btn btn-ghost btn-sm btn-full" style={{ marginTop: 8 }} onClick={regenerateQr}>
+                    ↻ {t('detail.updateQr')}
+                  </button>
+                )}
               </>
             )}
           </div>
