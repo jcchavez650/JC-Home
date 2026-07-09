@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kitoz Burger — Smashed to Perfection</title>
+  <meta name="description" content="Kitoz Burger — bold smash burgers, K-Burger specials, wings, and more. Order online for pickup." />
+  <meta name="theme-color" content="#0d0d0f" />
+
+  <!-- Social preview -->
+  <meta property="og:title" content="Kitoz Burger — Smashed to Perfection" />
+  <meta property="og:description" content="Bold smash burgers & K-Burger specials. Order online." />
+  <meta property="og:type" content="website" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+
+  <!-- Three.js (ES module via CDN) -->
+  <script type="importmap">
+  { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+
+  <!-- ===== NAV ===================================================== -->
+  <header class="nav" id="nav">
+    <a href="#home" class="brand" aria-label="Kitoz Burger home">
+      <span class="brand-mark" aria-hidden="true">
+        <span class="brand-k">K</span><span class="brand-b">B</span>
+      </span>
+      <span class="brand-text">KITOZ<span>BURGER</span></span>
+    </a>
+
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#specials">Specials</a>
+      <a href="#menu">Menu</a>
+      <a href="#story">About</a>
+      <a href="#visit">Visit</a>
+    </nav>
+
+    <div class="nav-actions">
+      <button class="cart-btn" id="openCart" aria-label="Open your order">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M7 4h-.7a1 1 0 0 0-.98.8L4.2 9M7 4l1.3 8.4a1.5 1.5 0 0 0 1.48 1.27h6.9a1.5 1.5 0 0 0 1.46-1.14L20 6H6"/><circle cx="10" cy="19" r="1.6" fill="currentColor"/><circle cx="17" cy="19" r="1.6" fill="currentColor"/></svg>
+        <span>Order</span>
+        <span class="cart-count" id="cartCount" hidden>0</span>
+      </button>
+    </div>
+
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <div class="mobile-menu" id="mobileMenu" hidden>
+    <a href="#specials">Specials</a>
+    <a href="#menu">Menu</a>
+    <a href="#story">About</a>
+    <a href="#visit">Visit</a>
+  </div>
+
+  <!-- ===== HERO ==================================================== -->
+  <section class="hero" id="home">
+    <canvas id="scene" class="hero-canvas" aria-hidden="true"></canvas>
+    <div class="hero-glow" aria-hidden="true"></div>
+
+    <div class="hero-inner">
+      <p class="hero-eyebrow reveal">🔥 Fresh · Smashed · Never Frozen</p>
+      <h1 class="hero-title reveal">
+        Smashed<br><span class="grad">to Perfection</span>
+      </h1>
+      <p class="hero-sub reveal">
+        Bold, juicy smash burgers and legendary K-Burger specials — built with love,
+        stacked without limits. Order online, we'll get it sizzling.
+      </p>
+      <div class="hero-cta reveal">
+        <a href="#menu" class="btn btn-primary">Order Now</a>
+        <a href="#specials" class="btn btn-ghost">See the Specials</a>
+      </div>
+      <div class="hero-stats reveal">
+        <div><strong>100%</strong><span>Fresh Beef</span></div>
+        <div><strong>6+</strong><span>Signature Specials</span></div>
+        <div><strong>★ 5.0</strong><span>Local Favorite</span></div>
+      </div>
+    </div>
+
+    <a href="#specials" class="scroll-hint" aria-hidden="true"><span></span>Scroll</a>
+  </section>
+
+  <!-- ===== MARQUEE ================================================= -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track">
+      <span>Smash Burgers</span><span>•</span><span>K-Burger Specials</span><span>•</span>
+      <span>Wings</span><span>•</span><span>Elote Ribs</span><span>•</span>
+      <span>Mango Habanero</span><span>•</span><span>Ribeye Sandwich</span><span>•</span>
+      <span>Smash Burgers</span><span>•</span><span>K-Burger Specials</span><span>•</span>
+      <span>Wings</span><span>•</span><span>Elote Ribs</span><span>•</span>
+      <span>Mango Habanero</span><span>•</span><span>Ribeye Sandwich</span><span>•</span>
+    </div>
+  </div>
+
+  <!-- ===== SPECIALS SPOTLIGHT ====================================== -->
+  <section class="specials" id="specials">
+    <div class="section-head reveal">
+      <p class="kicker">The K-Burger Lineup</p>
+      <h2>Specials worth the drive</h2>
+      <p class="section-sub">Every special comes loaded and served with fries and jalapeño on the side.</p>
+    </div>
+    <div class="spotlight-grid" id="spotlightGrid"><!-- injected --></div>
+  </section>
+
+  <!-- ===== FULL MENU =============================================== -->
+  <section class="menu" id="menu">
+    <div class="section-head reveal">
+      <p class="kicker">Everything We Serve</p>
+      <h2>The Full Menu</h2>
+      <p class="section-sub">Tap <strong>Add</strong> on anything to build your order, then send it straight to us.</p>
+    </div>
+
+    <div class="menu-tabs" id="menuTabs" role="tablist"><!-- injected --></div>
+    <div class="menu-sections" id="menuSections"><!-- injected --></div>
+  </section>
+
+  <!-- ===== STORY / ABOUT ========================================== -->
+  <section class="story" id="story">
+    <div class="story-media reveal" aria-hidden="true">
+      <div class="story-card float-a"><span>🍔</span><p>Smashed on the flat-top</p></div>
+      <div class="story-card float-b"><span>🧀</span><p>Real melted cheese</p></div>
+      <div class="story-card float-c"><span>🌶️</span><p>Mango habanero heat</p></div>
+    </div>
+    <div class="story-copy reveal">
+      <p class="kicker">Our Story</p>
+      <h2>Big flavor, no shortcuts</h2>
+      <p>
+        At Kitoz Burger we do one thing and we do it loud — smash fresh beef thin on a
+        screaming-hot flat-top for those crispy, caramelized edges, then stack it with
+        the good stuff. From the over-the-top <strong>La 4x4</strong> to the sweet-heat
+        <strong>Happy Costa Burger</strong>, every order is made to order.
+      </p>
+      <p>
+        Come hungry. Leave happy. That's the whole plan.
+      </p>
+      <a href="#menu" class="btn btn-primary">Build Your Order</a>
+    </div>
+  </section>
+
+  <!-- ===== VISIT / ORDER ========================================== -->
+  <section class="visit" id="visit">
+    <div class="section-head reveal">
+      <p class="kicker">Come Get It</p>
+      <h2>Hours &amp; Ordering</h2>
+    </div>
+    <div class="visit-grid">
+      <div class="visit-card reveal">
+        <h3>Opening Hours</h3>
+        <ul class="hours" id="hoursList"><!-- injected --></ul>
+        <p class="visit-address" id="addressLine" hidden></p>
+      </div>
+      <div class="visit-card reveal">
+        <h3>How to Order</h3>
+        <ol class="how">
+          <li>Browse the menu and tap <strong>Add</strong> on what you want.</li>
+          <li>Open your <strong>Order</strong> and add any notes (flavors, bread, meat).</li>
+          <li>Hit send — your order goes straight to us on WhatsApp.</li>
+          <li>We'll confirm and get it cooking. Pay on pickup.</li>
+        </ol>
+        <button class="btn btn-primary" id="startOrder">Start My Order</button>
+      </div>
+      <div class="visit-card reveal">
+        <h3>Follow the Flavor</h3>
+        <p class="section-sub" style="margin:0 0 1rem">Specials, drops &amp; behind-the-grill.</p>
+        <div class="socials" id="socials"><!-- injected --></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ================================================= -->
+  <footer class="footer">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><span class="brand-k">K</span><span class="brand-b">B</span></span>
+      <span class="brand-text">KITOZ<span>BURGER</span></span>
+    </div>
+    <p>© <span id="year"></span> Kitoz Burger. Smashed with love.</p>
+    <p class="allergen">Our kitchen handles common allergens (milk, nuts, eggs, wheat, soy, fish, shellfish). Please tell us about any allergies when ordering.</p>
+  </footer>
+
+  <!-- ===== CART DRAWER ============================================ -->
+  <div class="cart-overlay" id="cartOverlay" hidden></div>
+  <aside class="cart-drawer" id="cartDrawer" aria-label="Your order" aria-hidden="true">
+    <div class="cart-head">
+      <h3>Your Order</h3>
+      <button class="cart-close" id="closeCart" aria-label="Close order">✕</button>
+    </div>
+    <div class="cart-body" id="cartBody">
+      <div class="cart-empty" id="cartEmpty">
+        <div class="cart-empty-emoji">🛒</div>
+        <p>Your order is empty.</p>
+        <span>Add something delicious from the menu.</span>
+      </div>
+      <ul class="cart-items" id="cartItems"></ul>
+    </div>
+    <div class="cart-foot" id="cartFoot" hidden>
+      <label class="cart-notes-label" for="orderNotes">Order notes (flavors, bread, meat choice, allergies)</label>
+      <textarea id="orderNotes" class="cart-notes" rows="2" placeholder="e.g. Wings mango habanero, sandwich on sourdough, no onions"></textarea>
+      <div class="cart-total"><span>Total</span><strong id="cartTotal">$0.00</strong></div>
+      <p class="cart-disclaimer">Total is an estimate — we'll confirm your final price on WhatsApp.</p>
+      <button class="btn btn-primary btn-wide" id="sendOrder">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.5A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-2.8.9.9-2.7-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.5.1-.6.8-.7 1-.3.2-.5.1a6.5 6.5 0 0 1-1.9-1.2 7.2 7.2 0 0 1-1.3-1.7c-.1-.2 0-.4.1-.5l.4-.4.2-.4c0-.1 0-.3 0-.4l-.7-1.7c-.2-.5-.4-.4-.5-.4h-.5a1 1 0 0 0-.7.3A2.8 2.8 0 0 0 7 8.9a4.9 4.9 0 0 0 1 2.6 11.2 11.2 0 0 0 4.3 3.8c2 .8 2 .5 2.4.5a2.4 2.4 0 0 0 1.6-1.1 2 2 0 0 0 .1-1.1c0-.1-.2-.1-.4-.2Z"/></svg>
+        Send Order via WhatsApp
+      </button>
+    </div>
+  </aside>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" hidden></div>
+
+  <!-- ===== SCRIPTS ================================================ -->
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script type="module" src="js/scene.js"></script>
+</body>
+</html>
