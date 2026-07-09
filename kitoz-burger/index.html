@@ -210,6 +210,16 @@
       <ul class="cart-items" id="cartItems"></ul>
     </div>
     <div class="cart-foot" id="cartFoot" hidden>
+      <div class="cart-fields">
+        <label class="cart-field">
+          <span>Your name <em>*</em></span>
+          <input id="custName" class="cart-input" type="text" autocomplete="name" placeholder="e.g. Maria G." required />
+        </label>
+        <label class="cart-field">
+          <span>Your phone <em>*</em></span>
+          <input id="custPhone" class="cart-input" type="tel" autocomplete="tel" inputmode="tel" placeholder="e.g. (669) 300-7607" required />
+        </label>
+      </div>
       <label class="cart-notes-label" for="orderNotes">Order notes (flavors, bread, meat choice, allergies)</label>
       <textarea id="orderNotes" class="cart-notes" rows="2" placeholder="e.g. Wings mango habanero, sandwich on sourdough, no onions"></textarea>
       <div class="cart-total"><span>Total</span><strong id="cartTotal">$0.00</strong></div>

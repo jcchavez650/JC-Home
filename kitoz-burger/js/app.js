@@ -131,10 +131,26 @@
     $("#cartTotal").textContent = money(cartTotal());
   }
 
+  /* ---- Customer details (remembered for repeat orders) ------------------ */
+  const CUST_KEY = "kitoz_cust_v1";
+  function loadCust() {
+    try { return JSON.parse(localStorage.getItem(CUST_KEY)) || {}; } catch { return {}; }
+  }
+  function saveCust(name, phone) {
+    try { localStorage.setItem(CUST_KEY, JSON.stringify({ name, phone })); } catch {}
+  }
+  function fillCust() {
+    const c = loadCust();
+    if (c.name) $("#custName").value = c.name;
+    if (c.phone) $("#custPhone").value = c.phone;
+  }
+
   /* ---- Build & send the WhatsApp order ---------------------------------- */
-  function buildOrderText() {
+  function buildOrderText(name, phone) {
     const items = Object.values(cart);
     let msg = `🍔 *New Kitoz Burger Order*\n\n`;
+    msg += `👤 Name: ${name}\n`;
+    msg += `📞 Phone: ${phone}\n\n`;
     items.forEach((i) => {
       msg += `• ${i.qty}× ${i.name}` + (i.price ? ` — ${money(i.price * i.qty)}` : "") + `\n`;
     });
@@ -145,15 +161,34 @@
     return msg;
   }
 
+  function flagInvalid(el, bad) {
+    el.classList.toggle("invalid", bad);
+    if (bad) el.focus();
+  }
+
   function sendOrder() {
     if (cartCount() === 0) { toast("Your order is empty"); return; }
+
+    const nameEl = $("#custName"), phoneEl = $("#custPhone");
+    const name = nameEl.value.trim();
+    const phone = phoneEl.value.trim();
+    const phoneDigits = phone.replace(/[^\d]/g, "");
+
+    // Validate customer details (phone must be missing-or-typo proof)
+    const phoneBad = phoneDigits.length < 7;
+    flagInvalid(phoneEl, phoneBad);
+    flagInvalid(nameEl, !name);
+    if (!name || phoneBad) { toast(!name ? "Please add your name" : "Enter a valid phone number"); return; }
+
     const digits = (CONFIG.phone || "").replace(/[^\d]/g, "");
     if (!digits || digits === "10000000000") {
       toast("Order number not set yet — see config");
-      alert("⚠️ The order phone number hasn't been set up yet.\n\nAdd your real WhatsApp number in js/data.js (CONFIG.phone) and orders will send automatically.");
+      alert("⚠️ The order phone number hasn't been set up yet.\n\nAdd your real WhatsApp number in js/data.js (CONFIG.phone) and orders will send.");
       return;
     }
-    const text = encodeURIComponent(buildOrderText());
+
+    saveCust(name, phone);
+    const text = encodeURIComponent(buildOrderText(name, phone));
     const url = CONFIG.orderMethod === "sms"
       ? `sms:${CONFIG.phone}?&body=${text}`
       : `https://wa.me/${digits}?text=${text}`;
@@ -225,6 +260,8 @@
     $("#closeCart").addEventListener("click", closeCart);
     $("#cartOverlay").addEventListener("click", closeCart);
     $("#sendOrder").addEventListener("click", sendOrder);
+    ["custName", "custPhone"].forEach((id) =>
+      $("#" + id).addEventListener("input", (e) => e.target.classList.remove("invalid")));
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeCart(); });
 
     // menu tabs -> smooth scroll + active state
@@ -290,5 +327,6 @@
   renderMenu();
   renderVisit();
   renderCart();
+  fillCust();
   wire();
 })();
