@@ -318,6 +318,18 @@ section { padding: clamp(4rem, 9vw, 7rem) clamp(1rem, 5vw, 2.5rem); }
 .qty span { min-width: 22px; text-align: center; font-weight: 700; font-size: .9rem; }
 .cart-line-total { font-family: var(--font-head); font-weight: 800; font-size: .95rem; min-width: 54px; text-align: right; }
 .cart-foot { border-top: 1px solid var(--line); padding: 1.2rem 1.5rem; background: var(--bg-2); }
+.cart-fields { display: flex; flex-direction: column; gap: .7rem; margin-bottom: 1rem; }
+.cart-field { display: flex; flex-direction: column; gap: .3rem; }
+.cart-field > span { font-size: .78rem; color: var(--muted); }
+.cart-field em { color: var(--orange); font-style: normal; }
+.cart-input {
+  width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  color: var(--text); padding: .7rem .8rem; font-family: var(--font-body); font-size: .92rem;
+  transition: border-color .2s, box-shadow .2s;
+}
+.cart-input::placeholder { color: var(--muted-2); }
+.cart-input:focus { outline: none; border-color: var(--orange); }
+.cart-input.invalid { border-color: var(--hot); box-shadow: 0 0 0 3px rgba(255,45,63,.15); }
 .cart-notes-label { display: block; font-size: .78rem; color: var(--muted); margin-bottom: .4rem; }
 .cart-notes { width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--text); padding: .7rem .8rem; font-family: var(--font-body); font-size: .88rem; resize: vertical; margin-bottom: 1rem; }
 .cart-notes:focus { outline: none; border-color: var(--orange); }
