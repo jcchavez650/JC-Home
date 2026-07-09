@@ -9,6 +9,8 @@
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   const money = (n) => `${CONFIG.currency}${Number(n).toFixed(2)}`;
+  const L = (v) => window.i18n.L(v);   // resolve bilingual {en,es}
+  const T = (k) => window.i18n.t(k);   // UI string for current language
 
   /* ---- Cart state (persisted) ------------------------------------------- */
   const STORE_KEY = "kitoz_cart_v1";
@@ -25,22 +27,22 @@
     if (item.options && !choice) { openOptionPicker(item); return; }
     // Customizable burgers open the ingredient customizer first
     if (item.customize && !choice) { openCustomizer(item); return; }
-    const label = choice ? `${item.name} — ${choice}` : item.name;
+    const label = choice ? `${L(item.name)} — ${choice}` : L(item.name);
     if (cart[label]) cart[label].qty += 1;
     else cart[label] = { name: label, price: item.price || 0, qty: 1 };
     save(); renderCart(); bump();
-    toast(`Added ${label}`);
+    toast(`${T("toast.added")} ${label}`);
   }
 
   // Add a customized burger (with removed ingredients / added extras) to the cart
   function addCustomized(item, removed, added) {
-    const mods = [...removed.map((r) => "No " + r), ...added.map((a) => "Add " + a.name)];
-    const label = mods.length ? `${item.name} (${mods.join(", ")})` : item.name;
+    const mods = [...removed.map((r) => T("mod.no") + r), ...added.map((a) => T("mod.add") + a.name)];
+    const label = mods.length ? `${L(item.name)} (${mods.join(", ")})` : L(item.name);
     const price = (item.price || 0) + added.reduce((s, a) => s + a.price, 0);
     if (cart[label]) cart[label].qty += 1;
     else cart[label] = { name: label, price, qty: 1 };
     save(); renderCart(); bump();
-    toast(`Added ${item.name}`);
+    toast(`${T("toast.added")} ${L(item.name)}`);
   }
   function setQty(key, delta) {
     if (!cart[key]) return;
@@ -58,14 +60,14 @@
     if (!specials) return;
     $("#spotlightGrid").innerHTML = specials.items.map((it, i) => `
       <article class="spot-card tilt">
-        ${it.tag ? `<span class="spot-tag">${it.tag}</span>` : ""}
+        ${it.tag ? `<span class="spot-tag">${L(it.tag)}</span>` : ""}
         <div class="spot-emoji">${SPOT_EMOJI[i % SPOT_EMOJI.length]}</div>
-        <h3>${it.name}</h3>
-        <p class="spot-desc">${it.desc || ""}</p>
+        <h3>${L(it.name)}</h3>
+        <p class="spot-desc">${L(it.desc) || ""}</p>
         <div class="spot-foot">
           <span class="spot-price"><span>${CONFIG.currency}</span>${it.price ?? "—"}</span>
-          <button class="add-btn" data-add="${esc(it.name)}">
-            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg> Add
+          <button class="add-btn" data-add="${it.id}">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg> ${T("btn.add")}
           </button>
         </div>
       </article>`).join("");
@@ -75,31 +77,31 @@
   function renderMenu() {
     // tabs
     $("#menuTabs").innerHTML = MENU.map((c, i) =>
-      `<button class="menu-tab${i === 0 ? " active" : ""}" data-tab="${c.id}">${c.title}</button>`
+      `<button class="menu-tab${i === 0 ? " active" : ""}" data-tab="${c.id}">${L(c.title)}</button>`
     ).join("");
 
     // sections
     $("#menuSections").innerHTML = MENU.map((c) => `
       <div class="menu-cat" id="cat-${c.id}">
         <div class="menu-cat-head">
-          <h3>${c.title}</h3>
-          ${c.kicker ? `<span class="menu-cat-kicker">${c.kicker}</span>` : ""}
+          <h3>${L(c.title)}</h3>
+          ${c.kicker ? `<span class="menu-cat-kicker">${L(c.kicker)}</span>` : ""}
         </div>
-        ${c.note ? `<p class="menu-cat-note">${c.note}</p>` : ""}
+        ${c.note ? `<p class="menu-cat-note">${L(c.note)}</p>` : ""}
         <div class="item-grid">
           ${c.items.map((it) => `
             <div class="item">
               <div class="item-info">
                 <div class="item-top">
-                  <span class="item-name">${it.name}</span>
-                  ${it.tag ? `<span class="item-tag">${it.tag}</span>` : ""}
+                  <span class="item-name">${L(it.name)}</span>
+                  ${it.tag ? `<span class="item-tag">${L(it.tag)}</span>` : ""}
                 </div>
-                ${it.desc ? `<p class="item-desc">${it.desc}</p>` : ""}
+                ${it.desc ? `<p class="item-desc">${L(it.desc)}</p>` : ""}
               </div>
               <div class="item-right">
-                <span class="item-price">${it.price != null ? money(it.price) : "Ask"}</span>
-                <button class="add-btn" data-add="${esc(it.name)}">
-                  <svg viewBox="0 0 24 24"><path fill="currentColor" d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg> Add
+                <span class="item-price">${it.price != null ? money(it.price) : T("cart.ask")}</span>
+                <button class="add-btn" data-add="${it.id}">
+                  <svg viewBox="0 0 24 24"><path fill="currentColor" d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg> ${T("btn.add")}
                 </button>
               </div>
             </div>`).join("")}
@@ -107,8 +109,8 @@
       </div>`).join("");
   }
 
-  const findItem = (name) => {
-    for (const c of MENU) { const f = c.items.find((i) => i.name === name); if (f) return f; }
+  const findItem = (id) => {
+    for (const c of MENU) { const f = c.items.find((i) => i.id === id); if (f) return f; }
     return null;
   };
 
@@ -133,7 +135,7 @@
       <li class="cart-item">
         <div class="cart-item-main">
           <div class="cart-item-name">${i.name}</div>
-          <div class="cart-item-price">${i.price ? money(i.price) : "Price on request"} each</div>
+          <div class="cart-item-price">${i.price ? money(i.price) : T("cart.priceOnReq")} ${T("cart.each")}</div>
         </div>
         <div class="qty">
           <button data-dec="${esc(i.name)}" aria-label="Decrease">−</button>
@@ -163,16 +165,16 @@
   /* ---- Build & send the WhatsApp order ---------------------------------- */
   function buildOrderText(name, phone) {
     const items = Object.values(cart);
-    let msg = `🍔 *New Kitoz Burger Order*\n\n`;
-    msg += `👤 Name: ${name}\n`;
-    msg += `📞 Phone: ${phone}\n\n`;
+    let msg = `🍔 *${T("msg.title")}*\n\n`;
+    msg += `👤 ${T("msg.name")}: ${name}\n`;
+    msg += `📞 ${T("msg.phone")}: ${phone}\n\n`;
     items.forEach((i) => {
       msg += `• ${i.qty}× ${i.name}` + (i.price ? ` — ${money(i.price * i.qty)}` : "") + `\n`;
     });
-    msg += `\n*Estimated total: ${money(cartTotal())}*\n`;
+    msg += `\n*${T("msg.total")}: ${money(cartTotal())}*\n`;
     const notes = $("#orderNotes").value.trim();
-    if (notes) msg += `\n📝 Notes: ${notes}\n`;
-    msg += `\n(Sent from the Kitoz Burger website)`;
+    if (notes) msg += `\n📝 ${T("msg.notes")}: ${notes}\n`;
+    msg += `\n${T("msg.sentFrom")}`;
     return msg;
   }
 
@@ -182,7 +184,7 @@
   }
 
   function sendOrder() {
-    if (cartCount() === 0) { toast("Your order is empty"); return; }
+    if (cartCount() === 0) { toast(T("toast.emptyCart")); return; }
 
     const nameEl = $("#custName"), phoneEl = $("#custPhone");
     const name = nameEl.value.trim();
@@ -193,11 +195,11 @@
     const phoneBad = phoneDigits.length < 7;
     flagInvalid(phoneEl, phoneBad);
     flagInvalid(nameEl, !name);
-    if (!name || phoneBad) { toast(!name ? "Please add your name" : "Enter a valid phone number"); return; }
+    if (!name || phoneBad) { toast(!name ? T("toast.needName") : T("toast.badPhone")); return; }
 
     const digits = (CONFIG.phone || "").replace(/[^\d]/g, "");
     if (!digits || digits === "10000000000") {
-      toast("Order number not set yet — see config");
+      toast(T("toast.noNumber"));
       alert("⚠️ The order phone number hasn't been set up yet.\n\nAdd your real WhatsApp number in js/data.js (CONFIG.phone) and orders will send.");
       return;
     }
@@ -213,7 +215,7 @@
     cart = {}; save(); renderCart();
     $("#orderNotes").value = "";
     closeCart();
-    toast("Order sent! We'll confirm on WhatsApp 🍔");
+    toast(T("toast.sent"));
   }
 
   /* ---- Cart open/close --------------------------------------------------- */
@@ -234,8 +236,8 @@
   function openOptionPicker(item) {
     clearTimeout(optCloseTimer);
     pendingOptionItem = item;
-    $("#optKicker").textContent = item.name;
-    $("#optTitle").textContent = `Choose a ${(item.options.label || "option").toLowerCase()}`;
+    $("#optKicker").textContent = L(item.name);
+    $("#optTitle").textContent = T("cfg.chooseFlavor");
     $("#optChoices").innerHTML = item.options.choices.map((c) =>
       `<button class="opt-choice" data-choice="${esc(c)}">${c}<span aria-hidden="true">＋</span></button>`).join("");
     $("#optFoot").hidden = true;
@@ -246,23 +248,24 @@
   function openCustomizer(item) {
     clearTimeout(optCloseTimer);
     pendingOptionItem = item;
-    $("#optKicker").textContent = item.name;
-    $("#optTitle").textContent = "Customize";
+    $("#optKicker").textContent = L(item.name);
+    $("#optTitle").textContent = T("cfg.customize");
     const removable = item.customize.removable || [];
     const extras = window.BURGER_EXTRAS || [];
     let html = "";
     if (removable.length) {
-      html += `<p class="opt-section">Tap to remove</p><div class="opt-tags">`;
-      html += removable.map((r) => `<button class="opt-tag" data-remove="${esc(r)}">${r}</button>`).join("");
+      html += `<p class="opt-section">${T("cfg.remove")}</p><div class="opt-tags">`;
+      html += removable.map((r) => { const n = L(r); return `<button class="opt-tag" data-remove="${esc(n)}">${n}</button>`; }).join("");
       html += `</div>`;
     }
     if (extras.length) {
-      html += `<p class="opt-section">Add extras</p><div class="opt-tags">`;
-      html += extras.map((x) =>
-        `<button class="opt-tag extra" data-extra="${esc(x.name)}" data-price="${x.price}">${x.name} <em>+${money(x.price)}</em></button>`).join("");
+      html += `<p class="opt-section">${T("cfg.extras")}</p><div class="opt-tags">`;
+      html += extras.map((x) => { const n = L(x.name);
+        return `<button class="opt-tag extra" data-extra="${esc(n)}" data-price="${x.price}">${n} <em>+${money(x.price)}</em></button>`; }).join("");
       html += `</div>`;
     }
     $("#optChoices").innerHTML = html;
+    $("#optConfirm").textContent = T("cfg.add");
     $("#optFoot").hidden = false;
     updateCfgTotal();
     $("#optOverlay").hidden = false; $("#optModal").hidden = false;
@@ -289,7 +292,7 @@
   /* ---- Visit section: hours & socials ----------------------------------- */
   function renderVisit() {
     $("#hoursList").innerHTML = CONFIG.hours.map((h) =>
-      `<li><span class="days">${h.days}</span><span class="time">${h.time}</span></li>`).join("");
+      `<li><span class="days">${L(h.days)}</span><span class="time">${L(h.time)}</span></li>`).join("");
 
     if (CONFIG.address) {
       const a = $("#addressLine"); a.hidden = false; a.textContent = `📍 ${CONFIG.address}`;
@@ -305,6 +308,29 @@
     const html = Object.keys(icons).filter((k) => s[k]).map((k) =>
       `<a class="social-link" href="${s[k]}" target="_blank" rel="noopener">${icons[k]} ${labels[k]}</a>`).join("");
     $("#socials").innerHTML = html || `<p class="section-sub" style="margin:0">Follow us soon!</p>`;
+  }
+
+  /* ---- Language (i18n) -------------------------------------------------- */
+  function applyStatic() {
+    document.documentElement.lang = window.i18n.get();
+    $$("[data-i18n]").forEach((el) => (el.textContent = T(el.getAttribute("data-i18n"))));
+    $$("[data-i18n-html]").forEach((el) => (el.innerHTML = T(el.getAttribute("data-i18n-html"))));
+    $$("[data-i18n-ph]").forEach((el) => el.setAttribute("placeholder", T(el.getAttribute("data-i18n-ph"))));
+    $("#footerCopy").textContent = `© ${new Date().getFullYear()} Kitoz Burger · ${T("ft.copy")}`;
+  }
+  function updateLangToggle() {
+    const cur = window.i18n.get();
+    $$("#langToggle button").forEach((b) => b.classList.toggle("active", b.getAttribute("data-lang") === cur));
+  }
+  function setLanguage(l) {
+    window.i18n.set(l);
+    closeOptionPicker();
+    applyStatic();
+    renderSpotlight();
+    renderMenu();
+    renderVisit();
+    renderCart();
+    updateLangToggle();
   }
 
   /* ---- Small helpers ---------------------------------------------------- */
@@ -341,6 +367,11 @@
       if (inc) { setQty(inc.getAttribute("data-inc"), 1); return; }
       const dec = e.target.closest("[data-dec]");
       if (dec) { setQty(dec.getAttribute("data-dec"), -1); return; }
+    });
+
+    $("#langToggle").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-lang]"); if (!btn) return;
+      setLanguage(btn.getAttribute("data-lang"));
     });
 
     $("#openCart").addEventListener("click", openCart);
@@ -417,11 +448,11 @@
         card.addEventListener("mouseleave", () => (card.style.transform = ""));
       });
     }
-
-    $("#year").textContent = new Date().getFullYear();
   }
 
   /* ---- Init ------------------------------------------------------------- */
+  applyStatic();
+  updateLangToggle();
   renderSpotlight();
   renderMenu();
   renderVisit();

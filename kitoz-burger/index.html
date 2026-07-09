@@ -43,16 +43,20 @@
     </a>
 
     <nav class="nav-links" aria-label="Primary">
-      <a href="#specials">Specials</a>
-      <a href="#menu">Menu</a>
-      <a href="#story">About</a>
-      <a href="#visit">Visit</a>
+      <a href="#specials" data-i18n="nav.specials">Specials</a>
+      <a href="#menu" data-i18n="nav.menu">Menu</a>
+      <a href="#story" data-i18n="nav.about">About</a>
+      <a href="#visit" data-i18n="nav.visit">Visit</a>
     </nav>
 
     <div class="nav-actions">
+      <div class="lang-toggle" id="langToggle" role="group" aria-label="Language">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="es">ES</button>
+      </div>
       <button class="cart-btn" id="openCart" aria-label="Open your order">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M7 4h-.7a1 1 0 0 0-.98.8L4.2 9M7 4l1.3 8.4a1.5 1.5 0 0 0 1.48 1.27h6.9a1.5 1.5 0 0 0 1.46-1.14L20 6H6"/><circle cx="10" cy="19" r="1.6" fill="currentColor"/><circle cx="17" cy="19" r="1.6" fill="currentColor"/></svg>
-        <span>Order</span>
+        <span data-i18n="nav.order">Order</span>
         <span class="cart-count" id="cartCount" hidden>0</span>
       </button>
     </div>
@@ -63,10 +67,10 @@
   </header>
 
   <div class="mobile-menu" id="mobileMenu" hidden>
-    <a href="#specials">Specials</a>
-    <a href="#menu">Menu</a>
-    <a href="#story">About</a>
-    <a href="#visit">Visit</a>
+    <a href="#specials" data-i18n="nav.specials">Specials</a>
+    <a href="#menu" data-i18n="nav.menu">Menu</a>
+    <a href="#story" data-i18n="nav.about">About</a>
+    <a href="#visit" data-i18n="nav.visit">Visit</a>
   </div>
 
   <!-- ===== HERO ==================================================== -->
@@ -75,26 +79,26 @@
     <div class="hero-glow" aria-hidden="true"></div>
 
     <div class="hero-inner">
-      <p class="hero-eyebrow reveal">🔥 Fresh · Smashed · Never Frozen</p>
-      <h1 class="hero-title reveal">
+      <p class="hero-eyebrow reveal" data-i18n="hero.eyebrow">🔥 Fresh · Smashed · Never Frozen</p>
+      <h1 class="hero-title reveal" data-i18n-html="hero.title">
         Smashed<br><span class="grad">to Perfection</span>
       </h1>
-      <p class="hero-sub reveal">
+      <p class="hero-sub reveal" data-i18n="hero.sub">
         Bold, juicy smash burgers and legendary K-Burger specials — built with love,
         stacked without limits. Order online, we'll get it sizzling.
       </p>
       <div class="hero-cta reveal">
-        <a href="#menu" class="btn btn-primary">Order Now</a>
-        <a href="#specials" class="btn btn-ghost">See the Specials</a>
+        <a href="#menu" class="btn btn-primary" data-i18n="hero.orderNow">Order Now</a>
+        <a href="#specials" class="btn btn-ghost" data-i18n="hero.seeSpecials">See the Specials</a>
       </div>
       <div class="hero-stats reveal">
-        <div><strong>100%</strong><span>Fresh Beef</span></div>
-        <div><strong>6+</strong><span>Signature Specials</span></div>
-        <div><strong>★ 5.0</strong><span>Local Favorite</span></div>
+        <div><strong>100%</strong><span data-i18n="hero.stat1">Fresh Beef</span></div>
+        <div><strong>6+</strong><span data-i18n="hero.stat2">Signature Specials</span></div>
+        <div><strong>★ 5.0</strong><span data-i18n="hero.stat3">Local Favorite</span></div>
       </div>
     </div>
 
-    <a href="#specials" class="scroll-hint" aria-hidden="true"><span></span>Scroll</a>
+    <a href="#specials" class="scroll-hint" aria-hidden="true"><span></span><span class="scroll-label" data-i18n="hero.scroll">Scroll</span></a>
   </section>
 
   <!-- ===== MARQUEE ================================================= -->
@@ -112,9 +116,9 @@
   <!-- ===== SPECIALS SPOTLIGHT ====================================== -->
   <section class="specials" id="specials">
     <div class="section-head reveal">
-      <p class="kicker">The K-Burger Lineup</p>
-      <h2>Specials worth the drive</h2>
-      <p class="section-sub">Every special comes loaded and served with fries and jalapeño on the side.</p>
+      <p class="kicker" data-i18n="sp.kicker">The K-Burger Lineup</p>
+      <h2 data-i18n="sp.title">Specials worth the drive</h2>
+      <p class="section-sub" data-i18n="sp.sub">Every special comes loaded and served with fries and jalapeño on the side.</p>
     </div>
     <div class="spotlight-grid" id="spotlightGrid"><!-- injected --></div>
   </section>
@@ -122,9 +126,9 @@
   <!-- ===== FULL MENU =============================================== -->
   <section class="menu" id="menu">
     <div class="section-head reveal">
-      <p class="kicker">Everything We Serve</p>
-      <h2>The Full Menu</h2>
-      <p class="section-sub">Tap <strong>Add</strong> on anything to build your order, then send it straight to us.</p>
+      <p class="kicker" data-i18n="mn.kicker">Everything We Serve</p>
+      <h2 data-i18n="mn.title">The Full Menu</h2>
+      <p class="section-sub" data-i18n-html="mn.sub">Tap <strong>Add</strong> on anything to build your order, then send it straight to us.</p>
     </div>
 
     <div class="menu-tabs" id="menuTabs" role="tablist"><!-- injected --></div>
@@ -134,51 +138,51 @@
   <!-- ===== STORY / ABOUT ========================================== -->
   <section class="story" id="story">
     <div class="story-media reveal" aria-hidden="true">
-      <div class="story-card float-a"><span>🍔</span><p>Smashed on the flat-top</p></div>
-      <div class="story-card float-b"><span>🧀</span><p>Real melted cheese</p></div>
-      <div class="story-card float-c"><span>🌶️</span><p>Mango habanero heat</p></div>
+      <div class="story-card float-a"><span>🍔</span><p data-i18n="st.card1">Smashed on the flat-top</p></div>
+      <div class="story-card float-b"><span>🧀</span><p data-i18n="st.card2">Real melted cheese</p></div>
+      <div class="story-card float-c"><span>🌶️</span><p data-i18n="st.card3">Mango habanero heat</p></div>
     </div>
     <div class="story-copy reveal">
-      <p class="kicker">Our Story</p>
-      <h2>Big flavor, no shortcuts</h2>
-      <p>
+      <p class="kicker" data-i18n="st.kicker">Our Story</p>
+      <h2 data-i18n="st.title">Big flavor, no shortcuts</h2>
+      <p data-i18n-html="st.p1">
         At Kitoz Burger we do one thing and we do it loud — smash fresh beef thin on a
         screaming-hot flat-top for those crispy, caramelized edges, then stack it with
         the good stuff. From the over-the-top <strong>La 4x4</strong> to the sweet-heat
         <strong>Happy Costa Burger</strong>, every order is made to order.
       </p>
-      <p>
+      <p data-i18n="st.p2">
         Come hungry. Leave happy. That's the whole plan.
       </p>
-      <a href="#menu" class="btn btn-primary">Build Your Order</a>
+      <a href="#menu" class="btn btn-primary" data-i18n="st.btn">Build Your Order</a>
     </div>
   </section>
 
   <!-- ===== VISIT / ORDER ========================================== -->
   <section class="visit" id="visit">
     <div class="section-head reveal">
-      <p class="kicker">Come Get It</p>
-      <h2>Hours &amp; Ordering</h2>
+      <p class="kicker" data-i18n="vs.kicker">Come Get It</p>
+      <h2 data-i18n="vs.title">Hours &amp; Ordering</h2>
     </div>
     <div class="visit-grid">
       <div class="visit-card reveal">
-        <h3>Opening Hours</h3>
+        <h3 data-i18n="vs.hours">Opening Hours</h3>
         <ul class="hours" id="hoursList"><!-- injected --></ul>
         <p class="visit-address" id="addressLine" hidden></p>
       </div>
       <div class="visit-card reveal">
-        <h3>How to Order</h3>
+        <h3 data-i18n="vs.how">How to Order</h3>
         <ol class="how">
-          <li>Browse the menu and tap <strong>Add</strong> on what you want.</li>
-          <li>Open your <strong>Order</strong> and add any notes (flavors, bread, meat).</li>
-          <li>Hit send — your order goes straight to us on WhatsApp.</li>
-          <li>We'll confirm and get it cooking. Pay on pickup.</li>
+          <li data-i18n-html="vs.how1">Browse the menu and tap <strong>Add</strong> on what you want.</li>
+          <li data-i18n-html="vs.how2">Open your <strong>Order</strong> and add any notes (flavors, bread, meat).</li>
+          <li data-i18n-html="vs.how3">Hit send — your order goes straight to us on WhatsApp.</li>
+          <li data-i18n-html="vs.how4">We'll confirm and get it cooking. Pay on pickup.</li>
         </ol>
-        <button class="btn btn-primary" id="startOrder">Start My Order</button>
+        <button class="btn btn-primary" id="startOrder" data-i18n="vs.startOrder">Start My Order</button>
       </div>
       <div class="visit-card reveal">
-        <h3>Follow the Flavor</h3>
-        <p class="section-sub" style="margin:0 0 1rem">Specials, drops &amp; behind-the-grill.</p>
+        <h3 data-i18n="vs.follow">Follow the Flavor</h3>
+        <p class="section-sub" style="margin:0 0 1rem" data-i18n="vs.followSub">Specials, drops &amp; behind-the-grill.</p>
         <div class="socials" id="socials"><!-- injected --></div>
       </div>
     </div>
@@ -190,48 +194,48 @@
       <span class="brand-mark" aria-hidden="true"><span class="brand-k">K</span><span class="brand-b">B</span></span>
       <span class="brand-text">KITOZ<span>BURGER</span></span>
     </div>
-    <p>© <span id="year"></span> Kitoz Burger. Smashed with love.</p>
-    <p class="allergen">Our kitchen handles common allergens (milk, nuts, eggs, wheat, soy, fish, shellfish). Please tell us about any allergies when ordering.</p>
+    <p id="footerCopy"></p>
+    <p class="allergen" data-i18n="ft.allergen">Our kitchen handles common allergens (milk, nuts, eggs, wheat, soy, fish, shellfish). Please tell us about any allergies when ordering.</p>
   </footer>
 
   <!-- ===== CART DRAWER ============================================ -->
   <div class="cart-overlay" id="cartOverlay" hidden></div>
   <aside class="cart-drawer" id="cartDrawer" aria-label="Your order" aria-hidden="true">
     <div class="cart-head">
-      <h3>Your Order</h3>
+      <h3 data-i18n="cart.title">Your Order</h3>
       <button class="cart-close" id="closeCart" aria-label="Close order">✕</button>
     </div>
     <div class="cart-body" id="cartBody">
       <div class="cart-empty" id="cartEmpty">
         <div class="cart-empty-emoji">🛒</div>
-        <p>Your order is empty.</p>
-        <span>Add something delicious from the menu.</span>
+        <p data-i18n="cart.empty1">Your order is empty.</p>
+        <span data-i18n="cart.empty2">Add something delicious from the menu.</span>
       </div>
       <ul class="cart-items" id="cartItems"></ul>
     </div>
     <div class="cart-foot" id="cartFoot" hidden>
       <div class="cart-fields">
         <label class="cart-field">
-          <span>Your name <em>*</em></span>
-          <input id="custName" class="cart-input" type="text" autocomplete="name" placeholder="e.g. Maria G." required />
+          <span data-i18n-html="cart.name">Your name <em>*</em></span>
+          <input id="custName" class="cart-input" type="text" autocomplete="name" placeholder="e.g. Maria G." data-i18n-ph="cart.namePh" required />
         </label>
         <label class="cart-field">
-          <span>Your phone <em>*</em></span>
-          <input id="custPhone" class="cart-input" type="tel" autocomplete="tel" inputmode="tel" placeholder="e.g. (669) 300-7607" required />
+          <span data-i18n-html="cart.phone">Your phone <em>*</em></span>
+          <input id="custPhone" class="cart-input" type="tel" autocomplete="tel" inputmode="tel" placeholder="e.g. (669) 300-7607" data-i18n-ph="cart.phonePh" required />
         </label>
       </div>
-      <label class="cart-notes-label" for="orderNotes">Order notes (flavors, bread, meat choice, allergies)</label>
-      <textarea id="orderNotes" class="cart-notes" rows="2" placeholder="e.g. Wings mango habanero, sandwich on sourdough, no onions"></textarea>
-      <div class="cart-total"><span>Total</span><strong id="cartTotal">$0.00</strong></div>
-      <p class="cart-disclaimer">Total is an estimate — we'll confirm your final price on WhatsApp.</p>
+      <label class="cart-notes-label" for="orderNotes" data-i18n="cart.notesLabel">Order notes (flavors, bread, meat choice, allergies)</label>
+      <textarea id="orderNotes" class="cart-notes" rows="2" placeholder="e.g. Wings mango habanero, sandwich on sourdough, no onions" data-i18n-ph="cart.notesPh"></textarea>
+      <div class="cart-total"><span data-i18n="cart.total">Total</span><strong id="cartTotal">$0.00</strong></div>
+      <p class="cart-disclaimer" data-i18n="cart.disclaimer">Total is an estimate — we'll confirm your final price on WhatsApp.</p>
       <button class="btn btn-primary btn-wide" id="sendOrder">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.5A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-2.8.9.9-2.7-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.5.1-.6.8-.7 1-.3.2-.5.1a6.5 6.5 0 0 1-1.9-1.2 7.2 7.2 0 0 1-1.3-1.7c-.1-.2 0-.4.1-.5l.4-.4.2-.4c0-.1 0-.3 0-.4l-.7-1.7c-.2-.5-.4-.4-.5-.4h-.5a1 1 0 0 0-.7.3A2.8 2.8 0 0 0 7 8.9a4.9 4.9 0 0 0 1 2.6 11.2 11.2 0 0 0 4.3 3.8c2 .8 2 .5 2.4.5a2.4 2.4 0 0 0 1.6-1.1 2 2 0 0 0 .1-1.1c0-.1-.2-.1-.4-.2Z"/></svg>
-        Send Order via WhatsApp
+        <span data-i18n="cart.send">Send Order via WhatsApp</span>
       </button>
     </div>
   </aside>
 
-  <!-- Option picker (e.g. wing flavor) -->
+  <!-- Option picker (wing flavor) / customizer -->
   <div class="opt-overlay" id="optOverlay" hidden></div>
   <div class="opt-modal" id="optModal" role="dialog" aria-modal="true" aria-labelledby="optTitle" hidden>
     <button class="opt-close" id="optClose" aria-label="Cancel">✕</button>
@@ -239,7 +243,7 @@
     <h3 id="optTitle">Choose an option</h3>
     <div class="opt-choices" id="optChoices"></div>
     <div class="opt-foot" id="optFoot" hidden>
-      <div class="opt-total">Total <strong id="optTotal">$0.00</strong></div>
+      <div class="opt-total"><span data-i18n="cfg.total">Total</span> <strong id="optTotal">$0.00</strong></div>
       <button class="btn btn-primary btn-wide" id="optConfirm">Add to order</button>
     </div>
   </div>
@@ -248,6 +252,7 @@
   <div class="toast" id="toast" hidden></div>
 
   <!-- ===== SCRIPTS ================================================ -->
+  <script src="js/i18n.js"></script>
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
   <script type="module" src="js/scene.js"></script>
