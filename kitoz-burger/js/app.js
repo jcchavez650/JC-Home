@@ -23,11 +23,24 @@
   function addToCart(item, choice) {
     // Items with options (e.g. wing flavor) prompt for a choice first
     if (item.options && !choice) { openOptionPicker(item); return; }
+    // Customizable burgers open the ingredient customizer first
+    if (item.customize && !choice) { openCustomizer(item); return; }
     const label = choice ? `${item.name} — ${choice}` : item.name;
     if (cart[label]) cart[label].qty += 1;
     else cart[label] = { name: label, price: item.price || 0, qty: 1 };
     save(); renderCart(); bump();
     toast(`Added ${label}`);
+  }
+
+  // Add a customized burger (with removed ingredients / added extras) to the cart
+  function addCustomized(item, removed, added) {
+    const mods = [...removed.map((r) => "No " + r), ...added.map((a) => "Add " + a.name)];
+    const label = mods.length ? `${item.name} (${mods.join(", ")})` : item.name;
+    const price = (item.price || 0) + added.reduce((s, a) => s + a.price, 0);
+    if (cart[label]) cart[label].qty += 1;
+    else cart[label] = { name: label, price, qty: 1 };
+    save(); renderCart(); bump();
+    toast(`Added ${item.name}`);
   }
   function setQty(key, delta) {
     if (!cart[key]) return;
@@ -195,6 +208,12 @@
       ? `sms:${CONFIG.phone}?&body=${text}`
       : `https://wa.me/${digits}?text=${text}`;
     window.open(url, "_blank");
+
+    // Clear the cart once the order is on its way (name/phone are kept)
+    cart = {}; save(); renderCart();
+    $("#orderNotes").value = "";
+    closeCart();
+    toast("Order sent! We'll confirm on WhatsApp 🍔");
   }
 
   /* ---- Cart open/close --------------------------------------------------- */
@@ -219,8 +238,42 @@
     $("#optTitle").textContent = `Choose a ${(item.options.label || "option").toLowerCase()}`;
     $("#optChoices").innerHTML = item.options.choices.map((c) =>
       `<button class="opt-choice" data-choice="${esc(c)}">${c}<span aria-hidden="true">＋</span></button>`).join("");
+    $("#optFoot").hidden = true;
     $("#optOverlay").hidden = false; $("#optModal").hidden = false;
     requestAnimationFrame(() => $("#optModal").classList.add("open"));
+  }
+
+  function openCustomizer(item) {
+    clearTimeout(optCloseTimer);
+    pendingOptionItem = item;
+    $("#optKicker").textContent = item.name;
+    $("#optTitle").textContent = "Customize";
+    const removable = item.customize.removable || [];
+    const extras = window.BURGER_EXTRAS || [];
+    let html = "";
+    if (removable.length) {
+      html += `<p class="opt-section">Tap to remove</p><div class="opt-tags">`;
+      html += removable.map((r) => `<button class="opt-tag" data-remove="${esc(r)}">${r}</button>`).join("");
+      html += `</div>`;
+    }
+    if (extras.length) {
+      html += `<p class="opt-section">Add extras</p><div class="opt-tags">`;
+      html += extras.map((x) =>
+        `<button class="opt-tag extra" data-extra="${esc(x.name)}" data-price="${x.price}">${x.name} <em>+${money(x.price)}</em></button>`).join("");
+      html += `</div>`;
+    }
+    $("#optChoices").innerHTML = html;
+    $("#optFoot").hidden = false;
+    updateCfgTotal();
+    $("#optOverlay").hidden = false; $("#optModal").hidden = false;
+    requestAnimationFrame(() => $("#optModal").classList.add("open"));
+  }
+
+  function updateCfgTotal() {
+    if (!pendingOptionItem) return;
+    let t = pendingOptionItem.price || 0;
+    $$("#optChoices [data-extra].on").forEach((el) => (t += parseFloat(el.getAttribute("data-price")) || 0));
+    $("#optTotal").textContent = money(t);
   }
   function closeOptionPicker() {
     $("#optModal").classList.remove("open");
@@ -278,6 +331,10 @@
         if (pendingOptionItem) addToCart(pendingOptionItem, choice.getAttribute("data-choice"));
         closeOptionPicker(); return;
       }
+      const rem = e.target.closest("#optChoices [data-remove]");
+      if (rem) { rem.classList.toggle("off"); return; }
+      const ext = e.target.closest("#optChoices [data-extra]");
+      if (ext) { ext.classList.toggle("on"); updateCfgTotal(); return; }
       const add = e.target.closest("[data-add]");
       if (add) { const it = findItem(add.getAttribute("data-add")); if (it) addToCart(it); return; }
       const inc = e.target.closest("[data-inc]");
@@ -295,6 +352,15 @@
       $("#" + id).addEventListener("input", (e) => e.target.classList.remove("invalid")));
     $("#optClose").addEventListener("click", closeOptionPicker);
     $("#optOverlay").addEventListener("click", closeOptionPicker);
+    $("#optConfirm").addEventListener("click", () => {
+      if (!pendingOptionItem) return;
+      const removed = $$("#optChoices [data-remove].off").map((el) => el.getAttribute("data-remove"));
+      const added = $$("#optChoices [data-extra].on").map((el) => ({
+        name: el.getAttribute("data-extra"), price: parseFloat(el.getAttribute("data-price")) || 0
+      }));
+      addCustomized(pendingOptionItem, removed, added);
+      closeOptionPicker();
+    });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeOptionPicker(); closeCart(); } });
 
     // menu tabs -> smooth scroll + active state

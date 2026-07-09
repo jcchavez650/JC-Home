@@ -34,6 +34,19 @@ window.CONFIG = {
 };
 
 /* ============================================================================
+   BURGER EXTRAS — add-ons offered when customizing any burger.
+   ⚠️  TODO: confirm these add-on prices (they're editable estimates).
+   ========================================================================== */
+window.BURGER_EXTRAS = [
+  { name: "Extra patty",    price: 3 },
+  { name: "Extra cheese",   price: 1.5 },
+  { name: "Bacon",          price: 2 },
+  { name: "Avocado",        price: 2 },
+  { name: "Grilled onions", price: 1 },
+  { name: "Jalapeños",      price: 1 }
+];
+
+/* ============================================================================
    MENU
    ----------------------------------------------------------------------------
    Each category has a title and a list of items:
@@ -50,16 +63,22 @@ window.MENU = [
     accent: "hot",
     items: [
       { name: "Mama Luchona", price: 20, tag: "Signature",
+        customize: { removable: ["ham", "hot links", "pineapple", "grilled onions", "house sauce"] },
         desc: "2 smash patties, 2 cheese slices, 2 ham slices, hot links, pineapple, grilled onions & house sauce. Veggies on the side." },
       { name: "La 4x4", price: 25, tag: "Monster",
+        customize: { removable: ["bacon", "fries inside", "grilled onions", "pineapple"] },
         desc: "4 patties, bacon, fries inside, cheese, grilled onions & pineapple. Veggies on the side." },
       { name: "Happy Costa Burger", price: 20, tag: "Fan Favorite",
+        customize: { removable: ["lettuce", "red onions", "avocado", "tomato", "pineapple", "mango habanero sauce"] },
         desc: "Shrimp, lettuce, red onions, avocado, tomato, pineapple, mozzarella & our mango habanero sauce." },
       { name: "Double Cheese", price: 15,
+        customize: { removable: ["grilled onions", "house sauce"] },
         desc: "2 patties, 2 cheese slices, grilled onions & house sauce. Veggies on the side." },
       { name: "Bacon Special", price: 16,
+        customize: { removable: ["bacon", "grilled onions", "house sauce"] },
         desc: "2 patties, 2 cheese slices, bacon, grilled onions & house sauce. Veggies on the side." },
       { name: "Surf & Turf", price: 23, tag: "Spicy",
+        customize: { removable: ["lettuce", "tomato", "red onions", "avocado", "pineapple", "mango habanero sauce"] },
         desc: "Shrimp, 1 smash patty, lettuce, tomato, red onions, avocado, pineapple, mozzarella & mango habanero sauce." }
     ]
   },
