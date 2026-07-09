@@ -100,7 +100,12 @@ app.use('/api/totes', requireAuth, totesRouter);
 app.use('/api/analyze', requireAuth, requireEditor, analyzeLimiter, upload.single('photo'), analyzeRouter);
 app.use('/api/users', requireAuth, requireAdmin, usersRouter);
 
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
+app.get('/health', (req, res) => res.json({
+  status: 'ok',
+  build: 'ai-fix-2',
+  aiConfigured: !!process.env.ANTHROPIC_API_KEY,
+  model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5',
+}));
 
 // Serve React frontend in production
 const distPath = join(__dirname, '..', 'frontend', 'dist');
