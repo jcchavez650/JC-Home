@@ -95,6 +95,11 @@ export const STRINGS = {
     'detail.analysisFailed': 'Analysis failed: ',
     'detail.uploadFailed': 'Upload failed: ',
     'detail.unknown': 'Unknown',
+    'detail.reviewTitle': 'Review detected items',
+    'detail.reviewHint': 'Remove anything the AI got wrong, then save.',
+    'detail.noItemsDetected': 'No items detected in this photo',
+    'detail.saveItems': 'Save {n} item{s}',
+    'detail.discard': 'Discard',
 
     // Admin
     'admin.title': 'User Management',
@@ -227,6 +232,11 @@ export const STRINGS = {
     'detail.analysisFailed': 'Falló el análisis: ',
     'detail.uploadFailed': 'Falló la subida: ',
     'detail.unknown': 'Desconocido',
+    'detail.reviewTitle': 'Revisar artículos detectados',
+    'detail.reviewHint': 'Elimina lo que la IA detectó mal y luego guarda.',
+    'detail.noItemsDetected': 'No se detectaron artículos en esta foto',
+    'detail.saveItems': 'Guardar {n} artículo{s}',
+    'detail.discard': 'Descartar',
 
     // Admin
     'admin.title': 'Gestión de Usuarios',

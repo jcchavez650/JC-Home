@@ -17,6 +17,8 @@ export default function ToteDetail({ theme, onToggleTheme }) {
 
   const [tote, setTote] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [pendingScan, setPendingScan] = useState(null);
+  const [savingScan, setSavingScan] = useState(false);
   const [newItem, setNewItem] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [tab, setTab] = useState('items');
@@ -64,10 +66,42 @@ export default function ToteDetail({ theme, onToggleTheme }) {
       const fd = new FormData();
       fd.append('photo', optimized, 'scan.jpg');
       const res = await apiFetch(`/api/analyze/${id}`, { method: 'POST', body: fd });
-      if (res.ok) { await fetchTote(); setTab('items'); }
-      else { const err = await res.json().catch(() => ({})); alert(t('detail.analysisFailed') + (err.error || t('detail.unknown'))); }
+      if (res.ok) {
+        // Don't save yet — stage the detected items for the user to review
+        const data = await res.json();
+        const items = (data.items || []).map((it, idx) => ({ ...it, _id: `scan-${Date.now()}-${idx}` }));
+        setPendingScan({ items, photo_filename: data.photo_filename });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(t('detail.analysisFailed') + (err.error || t('detail.unknown')));
+      }
     } catch (e) { alert(t('detail.uploadFailed') + e.message); }
     setUploading(false);
+  }
+
+  function removePendingItem(localId) {
+    setPendingScan(p => ({ ...p, items: p.items.filter(i => i._id !== localId) }));
+  }
+
+  function cancelScan() {
+    setPendingScan(null);
+  }
+
+  async function confirmScan() {
+    setSavingScan(true);
+    try {
+      const res = await apiFetch(`/api/analyze/${id}/confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: pendingScan.items.map(({ name, quantity, notes }) => ({ name, quantity, notes })),
+          photo_filename: pendingScan.photo_filename,
+        }),
+      });
+      if (res.ok) { setPendingScan(null); await fetchTote(); setTab('items'); }
+      else { const err = await res.json().catch(() => ({})); alert(t('detail.analysisFailed') + (err.error || t('detail.unknown'))); }
+    } catch (e) { alert(t('detail.uploadFailed') + e.message); }
+    setSavingScan(false);
   }
 
   async function saveTote(e) {
@@ -241,8 +275,8 @@ export default function ToteDetail({ theme, onToggleTheme }) {
           </div>
         )}
 
-        {/* AI Scanner — editors and admins only */}
-        {canEdit && (
+        {/* AI Scanner — editors and admins only (hidden while reviewing a scan) */}
+        {canEdit && !pendingScan && (
           <div className="camera-section">
             <div className="section-label">{t('detail.aiScan')}</div>
             {uploading ? (
@@ -275,6 +309,39 @@ export default function ToteDetail({ theme, onToggleTheme }) {
                   onChange={e => e.target.files[0] && analyzePhoto(e.target.files[0])} />
               </>
             )}
+          </div>
+        )}
+
+        {/* Scan review — confirm/remove detected items before saving */}
+        {canEdit && pendingScan && (
+          <div className="camera-section">
+            <div className="section-label">{t('detail.reviewTitle')}</div>
+            {pendingScan.items.length === 0 ? (
+              <div className="empty-items">{t('detail.noItemsDetected')}</div>
+            ) : (
+              <>
+                <div className="detail-loc" style={{ marginBottom: 10 }}>{t('detail.reviewHint')}</div>
+                {pendingScan.items.map(item => (
+                  <div key={item._id} className="item-row">
+                    <div className="qty-tag">×{item.quantity}</div>
+                    <div style={{ flex: 1 }}>
+                      <div className="item-name">{item.name}</div>
+                      {item.notes && <div className="item-notes">{item.notes}</div>}
+                    </div>
+                    <button className="delete-btn" onClick={() => removePendingItem(item._id)} title="Remove">✕</button>
+                  </div>
+                ))}
+              </>
+            )}
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} onClick={cancelScan} disabled={savingScan}>
+                {t('detail.discard')}
+              </button>
+              <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={confirmScan}
+                disabled={savingScan || pendingScan.items.length === 0}>
+                {savingScan ? t('list.creating') : t('detail.saveItems', { n: pendingScan.items.length, s: pendingScan.items.length === 1 ? '' : 's' })}
+              </button>
+            </div>
           </div>
         )}
 
