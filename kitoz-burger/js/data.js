@@ -14,23 +14,20 @@ window.CONFIG = {
      Use full international format, digits only after the +, e.g. +13055551234
      Orders will NOT send until this is your real number.
      ---------------------------------------------------------------------- */
-  phone: "+10000000000",       // TODO: replace with your real WhatsApp number
+  phone: "+16693007607",       // WhatsApp order number
   orderMethod: "whatsapp",     // "whatsapp" or "sms"
 
   currency: "$",
 
-  /* ⚠️  TODO: replace with your real opening hours */
   hours: [
-    { days: "Monday – Thursday", time: "11:00 AM – 10:00 PM" },
-    { days: "Friday – Saturday", time: "11:00 AM – 12:00 AM" },
-    { days: "Sunday",            time: "12:00 PM – 9:00 PM" }
+    { days: "Friday & Saturday", time: "4:00 PM – 10:00 PM" }
   ],
 
   /* Leave a link empty ("") to hide that social icon */
   social: {
-    instagram: "https://instagram.com/kitoz__burger",
-    facebook: "",   // TODO: add if you have one
-    tiktok: ""      // TODO: add if you have one
+    instagram: "https://instagram.com/kitoz_burger",
+    facebook: "",   // add if you have one
+    tiktok: ""      // add if you have one
   },
 
   address: ""       // Optional: add your address to show a location line
@@ -42,8 +39,6 @@ window.CONFIG = {
    Each category has a title and a list of items:
      { name, price, desc, tag }   tag is optional ("Signature", "Spicy", etc.)
    Items with price: null are "market / ask" items (no cart price).
-   ⚠️  Prices marked TODO were hidden behind the Instagram UI in your photo —
-       please confirm them.
    ========================================================================== */
 
 window.MENU = [
@@ -60,11 +55,11 @@ window.MENU = [
         desc: "4 patties, bacon, fries inside, cheese, grilled onions & pineapple. Veggies on the side." },
       { name: "Happy Costa Burger", price: 20, tag: "Fan Favorite",
         desc: "Shrimp, lettuce, red onions, avocado, tomato, pineapple, mozzarella & our mango habanero sauce." },
-      { name: "Double Cheese", price: 15, /* TODO: confirm price */
+      { name: "Double Cheese", price: 15,
         desc: "2 patties, 2 cheese slices, grilled onions & house sauce. Veggies on the side." },
-      { name: "Bacon Special", price: 16, /* TODO: confirm price */
+      { name: "Bacon Special", price: 16,
         desc: "2 patties, 2 cheese slices, bacon, grilled onions & house sauce. Veggies on the side." },
-      { name: "Surf & Turf", price: 23, /* TODO: confirm price */ tag: "Spicy",
+      { name: "Surf & Turf", price: 23, tag: "Spicy",
         desc: "Shrimp, 1 smash patty, lettuce, tomato, red onions, avocado, pineapple, mozzarella & mango habanero sauce." }
     ]
   },
@@ -120,7 +115,7 @@ window.MENU = [
         desc: "Crisp romaine, parmesan & house Caesar dressing." },
       { name: "Mixed Greens", price: 5,
         desc: "Fresh mixed greens. Add protein below." },
-      { name: "Add Chicken", price: 5, /* TODO: confirm price */
+      { name: "Add Chicken", price: 5,
         desc: "Grilled chicken protein add-on." },
       { name: "Add Shrimp", price: 8,
         desc: "Shrimp protein add-on." }
@@ -145,7 +140,6 @@ window.MENU = [
     items: [
       { name: "Cheesecake", price: 8, desc: "Rich & creamy." },
       { name: "Tres Leches Cake", price: 8, desc: "Soft sponge soaked in three milks." }
-      /* TODO: two more dessert items were hidden in your photo — add them here. */
     ]
   },
   {
@@ -154,9 +148,9 @@ window.MENU = [
     kicker: "Wash it down",
     note: "Aguas Frescas & Shirley Temple flavors: Strawberry · Lime · Blue Raspberry · Orange.",
     items: [
-      { name: "Fountain Drink", price: 3, /* TODO: confirm price */ desc: "Refillable fountain soda." },
-      { name: "Agua Fresca", price: 4, /* TODO: confirm price */ desc: "House-made. Choose your flavor in notes." },
-      { name: "Shirley Temple", price: 4, /* TODO: confirm price */ desc: "Choose your flavor in notes." }
+      { name: "Fountain Drink", price: 3, desc: "Refillable fountain soda." },
+      { name: "Agua Fresca", price: 4, desc: "House-made. Choose your flavor in notes." },
+      { name: "Shirley Temple", price: 4, desc: "Choose your flavor in notes." }
     ]
   }
 ];
