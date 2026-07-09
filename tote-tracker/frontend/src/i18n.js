@@ -138,6 +138,13 @@ export const STRINGS = {
     'share.subtitle': 'Shared Manifest — View Only',
     'share.sharedTote': 'Shared Tote',
     'share.notFound': 'Tote not found',
+    'share.totalQty': 'Total Qty',
+    'share.categories': 'Categories',
+    'share.searchItems': 'Search items…',
+    'share.itemsHeader': 'Contents',
+    'share.noMatches': 'No items match “{q}”',
+    'share.updated': 'Updated {date}',
+    'share.poweredBy': 'Powered by Tote Tracker',
   },
 
   es: {
@@ -276,6 +283,13 @@ export const STRINGS = {
     'share.subtitle': 'Lista Compartida — Solo Lectura',
     'share.sharedTote': 'Caja Compartida',
     'share.notFound': 'Caja no encontrada',
+    'share.totalQty': 'Cantidad Total',
+    'share.categories': 'Categorías',
+    'share.searchItems': 'Buscar artículos…',
+    'share.itemsHeader': 'Contenido',
+    'share.noMatches': 'Ningún artículo coincide con “{q}”',
+    'share.updated': 'Actualizado {date}',
+    'share.poweredBy': 'Con tecnología de Tote Tracker',
   },
 };
 
