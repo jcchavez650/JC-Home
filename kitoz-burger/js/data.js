@@ -25,7 +25,7 @@ window.CONFIG = {
 
   /* Leave a link empty ("") to hide that social icon */
   social: {
-    instagram: "https://instagram.com/kitoz_burger",
+    instagram: "https://instagram.com/kitoz__burger",
     facebook: "",   // add if you have one
     tiktok: ""      // add if you have one
   },
