@@ -1,3 +1,8 @@
+import { webcrypto } from 'node:crypto';
+// The Anthropic SDK relies on the Web Crypto global, which older Node versions
+// (e.g. Node 18) don't expose. Polyfill it so image analysis works everywhere.
+if (!globalThis.crypto) globalThis.crypto = webcrypto;
+
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -102,7 +107,7 @@ app.use('/api/users', requireAuth, requireAdmin, usersRouter);
 
 app.get('/health', (req, res) => res.json({
   status: 'ok',
-  build: 'ai-fix-2',
+  build: 'ai-fix-3',
   aiConfigured: !!process.env.ANTHROPIC_API_KEY,
   model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5',
 }));
