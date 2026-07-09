@@ -108,13 +108,21 @@ window.MENU = [
     kicker: { en: "Start it right", es: "Para empezar" },
     items: [
       { id: "elote-ribs", name: "Elote Ribs", price: 10,
+        customize: { removable: [
+          { en: "sour cream", es: "crema" }, { en: "queso fresco", es: "queso fresco" },
+          { en: "tajín", es: "tajín" }, { en: "cilantro", es: "cilantro" } ] },
         desc: { en: "Deep-fried sweet corn, garnished with our sour cream, queso fresco, tajín & cilantro.",
                 es: "Elote frito, cubierto con nuestra crema, queso fresco, tajín y cilantro." } },
       { id: "kitoz-fries", name: "Kitoz Fries", price: 12, tag: { en: "Loaded", es: "Cargadas" },
+        customize: { removable: [
+          { en: "pineapple", es: "piña" }, { en: "grilled onions", es: "cebolla asada" },
+          { en: "house sauce", es: "salsa de la casa" } ] },
         desc: { en: "Crispy french fries, one meat patty, pineapple, grilled onions & our house sauce.",
                 es: "Papas fritas crujientes, una carne, piña, cebolla asada y nuestra salsa de la casa." } },
       { id: "wings-6", name: { en: "Wings", es: "Alitas" }, price: 12,
         options: { label: { en: "Flavor", es: "Sabor" }, choices: ["Mango Habanero", "Buffalo", "Sweet Chili", "BBQ"] },
+        customize: { removable: [
+          { en: "carrots", es: "zanahoria" }, { en: "celery", es: "apio" }, { en: "ranch", es: "ranch" } ] },
         desc: { en: "Six crispy chicken wings with carrots, celery & ranch. Pick a flavor: Mango Habanero, Buffalo, Sweet Chili or BBQ.",
                 es: "Seis alitas de pollo crujientes con zanahoria, apio y ranch. Elige un sabor: Mango Habanero, Buffalo, Sweet Chili o BBQ." } }
     ]

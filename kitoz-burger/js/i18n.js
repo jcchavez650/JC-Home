@@ -121,6 +121,7 @@ window.i18n = (function () {
     "toast.emptyCart": { en: "Your order is empty", es: "Tu orden está vacía" },
     "toast.needName": { en: "Please add your name", es: "Agrega tu nombre" },
     "toast.badPhone": { en: "Enter a valid phone number", es: "Ingresa un teléfono válido" },
+    "toast.needFlavor": { en: "Please choose a flavor", es: "Por favor elige un sabor" },
     "toast.noNumber": { en: "Order number not set yet — see config", es: "Número de pedidos no configurado — revisa la config" }
   };
 

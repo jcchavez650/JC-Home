@@ -383,6 +383,7 @@ section { padding: clamp(4rem, 9vw, 7rem) clamp(1rem, 5vw, 2.5rem); }
 .opt-tag.off { text-decoration: line-through; opacity: .42; border-style: dashed; }        /* removed */
 .opt-tag.extra.on { background: var(--grad); color: #14100a; border-color: transparent; }   /* added */
 .opt-tag.extra.on em { color: #14100a; }
+.opt-tag.flavor.on { background: var(--grad); color: #14100a; border-color: transparent; }   /* selected flavor */
 .opt-foot { margin-top: 1.6rem; }
 .opt-total { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-head); font-weight: 700; color: var(--muted); margin-bottom: .9rem; }
 .opt-total strong { color: var(--text); font-size: 1.35rem; }

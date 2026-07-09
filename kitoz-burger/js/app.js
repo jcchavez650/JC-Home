@@ -22,22 +22,22 @@
   }
   function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(cart)); } catch {} }
 
-  function addToCart(item, choice) {
-    // Items with options (e.g. wing flavor) prompt for a choice first
-    if (item.options && !choice) { openOptionPicker(item); return; }
-    // Customizable burgers open the ingredient customizer first
-    if (item.customize && !choice) { openCustomizer(item); return; }
-    const label = choice ? `${L(item.name)} — ${choice}` : L(item.name);
+  function addToCart(item) {
+    // Anything with a flavor and/or removable ingredients opens the configurator
+    if (item.options || item.customize) { openConfigurator(item); return; }
+    const label = L(item.name);
     if (cart[label]) cart[label].qty += 1;
     else cart[label] = { name: label, price: item.price || 0, qty: 1 };
     save(); renderCart(); bump();
     toast(`${T("toast.added")} ${label}`);
   }
 
-  // Add a customized burger (with removed ingredients / added extras) to the cart
-  function addCustomized(item, removed, added) {
+  // Add a configured item (chosen flavor / removed ingredients / added extras)
+  function addConfigured(item, flavor, removed, added) {
+    let label = L(item.name);
+    if (flavor) label += ` — ${flavor}`;
     const mods = [...removed.map((r) => T("mod.no") + r), ...added.map((a) => T("mod.add") + a.name)];
-    const label = mods.length ? `${L(item.name)} (${mods.join(", ")})` : L(item.name);
+    if (mods.length) label += ` (${mods.join(", ")})`;
     const price = (item.price || 0) + added.reduce((s, a) => s + a.price, 0);
     if (cart[label]) cart[label].qty += 1;
     else cart[label] = { name: label, price, qty: 1 };
@@ -233,26 +233,24 @@
   /* ---- Option picker (wing flavor, etc.) -------------------------------- */
   let pendingOptionItem = null;
   let optCloseTimer = null;
-  function openOptionPicker(item) {
-    clearTimeout(optCloseTimer);
-    pendingOptionItem = item;
-    $("#optKicker").textContent = L(item.name);
-    $("#optTitle").textContent = T("cfg.chooseFlavor");
-    $("#optChoices").innerHTML = item.options.choices.map((c) =>
-      `<button class="opt-choice" data-choice="${esc(c)}">${c}<span aria-hidden="true">＋</span></button>`).join("");
-    $("#optFoot").hidden = true;
-    $("#optOverlay").hidden = false; $("#optModal").hidden = false;
-    requestAnimationFrame(() => $("#optModal").classList.add("open"));
-  }
+  const isBurger = (item) => ((MENU.find((c) => c.id === "specials") || {}).items || []).includes(item);
 
-  function openCustomizer(item) {
+  function openConfigurator(item) {
     clearTimeout(optCloseTimer);
     pendingOptionItem = item;
     $("#optKicker").textContent = L(item.name);
-    $("#optTitle").textContent = T("cfg.customize");
-    const removable = item.customize.removable || [];
-    const extras = window.BURGER_EXTRAS || [];
+    $("#optTitle").textContent = item.customize ? T("cfg.customize") : T("cfg.chooseFlavor");
+
+    const removable = (item.customize && item.customize.removable) || [];
+    const extras = isBurger(item) ? (window.BURGER_EXTRAS || []) : [];
     let html = "";
+
+    if (item.options) {
+      html += `<p class="opt-section">${L(item.options.label) || "Flavor"}</p><div class="opt-tags">`;
+      html += item.options.choices.map((c) =>
+        `<button class="opt-tag flavor" data-flavor="${esc(c)}">${c}</button>`).join("");
+      html += `</div>`;
+    }
     if (removable.length) {
       html += `<p class="opt-section">${T("cfg.remove")}</p><div class="opt-tags">`;
       html += removable.map((r) => { const n = L(r); return `<button class="opt-tag" data-remove="${esc(n)}">${n}</button>`; }).join("");
@@ -352,10 +350,10 @@
   function wire() {
     // add / qty via delegation
     document.addEventListener("click", (e) => {
-      const choice = e.target.closest("[data-choice]");
-      if (choice) {
-        if (pendingOptionItem) addToCart(pendingOptionItem, choice.getAttribute("data-choice"));
-        closeOptionPicker(); return;
+      const flav = e.target.closest("#optChoices [data-flavor]");
+      if (flav) {
+        $$("#optChoices [data-flavor]").forEach((f) => f.classList.remove("on"));
+        flav.classList.add("on"); return;
       }
       const rem = e.target.closest("#optChoices [data-remove]");
       if (rem) { rem.classList.toggle("off"); return; }
@@ -385,11 +383,15 @@
     $("#optOverlay").addEventListener("click", closeOptionPicker);
     $("#optConfirm").addEventListener("click", () => {
       if (!pendingOptionItem) return;
+      const item = pendingOptionItem;
+      const sel = $("#optChoices [data-flavor].on");
+      if (item.options && !sel) { toast(T("toast.needFlavor")); return; }
+      const flavor = sel ? sel.getAttribute("data-flavor") : null;
       const removed = $$("#optChoices [data-remove].off").map((el) => el.getAttribute("data-remove"));
       const added = $$("#optChoices [data-extra].on").map((el) => ({
         name: el.getAttribute("data-extra"), price: parseFloat(el.getAttribute("data-price")) || 0
       }));
-      addCustomized(pendingOptionItem, removed, added);
+      addConfigured(item, flavor, removed, added);
       closeOptionPicker();
     });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeOptionPicker(); closeCart(); } });
