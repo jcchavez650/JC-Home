@@ -14,7 +14,7 @@ window.CONFIG = {
      Use full international format, digits only after the +, e.g. +13055551234
      Orders will NOT send until this is your real number.
      ---------------------------------------------------------------------- */
-  phone: "+16693007607",       // WhatsApp order number
+  phone: "+14088492949",       // WhatsApp order number
   orderMethod: "whatsapp",     // "whatsapp" or "sms"
 
   currency: "$",
