@@ -100,10 +100,11 @@ window.MENU = [
     id: "wings",
     title: "Wings",
     kicker: "Sauced up",
-    note: "6 wings, served with carrots & celery. Flavors: A la Diabla · Mango Habanero · Buffalo · Sweet Chili · BBQ.",
+    note: "6 wings, served with carrots & celery. One flavor per order.",
     items: [
       { name: "Wings (6)", price: 12,
-        desc: "Pick a flavor in your order notes: A la Diabla, Mango Habanero, Buffalo, Sweet Chili or BBQ." }
+        options: { label: "Flavor", choices: ["A la Diabla", "Mango Habanero", "Buffalo", "Sweet Chili", "BBQ"] },
+        desc: "Pick your flavor when you add: A la Diabla, Mango Habanero, Buffalo, Sweet Chili or BBQ." }
     ]
   },
   {
