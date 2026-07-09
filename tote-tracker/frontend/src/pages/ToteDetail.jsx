@@ -83,6 +83,13 @@ export default function ToteDetail({ theme, onToggleTheme }) {
     setPendingScan(p => ({ ...p, items: p.items.filter(i => i._id !== localId) }));
   }
 
+  function updatePendingItem(localId, patch) {
+    setPendingScan(p => ({
+      ...p,
+      items: p.items.map(i => i._id === localId ? { ...i, ...patch } : i),
+    }));
+  }
+
   function cancelScan() {
     setPendingScan(null);
   }
@@ -322,26 +329,35 @@ export default function ToteDetail({ theme, onToggleTheme }) {
               <>
                 <div className="detail-loc" style={{ marginBottom: 10 }}>{t('detail.reviewHint')}</div>
                 {pendingScan.items.map(item => (
-                  <div key={item._id} className="item-row">
-                    <div className="qty-tag">×{item.quantity}</div>
-                    <div style={{ flex: 1 }}>
-                      <div className="item-name">{item.name}</div>
-                      {item.notes && <div className="item-notes">{item.notes}</div>}
+                  <div key={item._id} style={{ marginBottom: 6 }}>
+                    <div className="item-edit-row">
+                      <input className="input" style={{ width: 60, textAlign: 'center' }} type="number" min="1"
+                        value={item.quantity}
+                        onChange={e => updatePendingItem(item._id, { quantity: Math.max(1, parseInt(e.target.value) || 1) })} />
+                      <input className="input" style={{ flex: 1 }} value={item.name}
+                        placeholder={t('detail.label')}
+                        onChange={e => updatePendingItem(item._id, { name: e.target.value })} />
+                      <button className="delete-btn" onClick={() => removePendingItem(item._id)} title="Remove">✕</button>
                     </div>
-                    <button className="delete-btn" onClick={() => removePendingItem(item._id)} title="Remove">✕</button>
+                    {item.notes && <div className="item-notes" style={{ paddingLeft: 4, marginTop: 2 }}>{item.notes}</div>}
                   </div>
                 ))}
               </>
             )}
-            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-              <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} onClick={cancelScan} disabled={savingScan}>
-                {t('detail.discard')}
-              </button>
-              <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={confirmScan}
-                disabled={savingScan || pendingScan.items.length === 0}>
-                {savingScan ? t('list.creating') : t('detail.saveItems', { n: pendingScan.items.length, s: pendingScan.items.length === 1 ? '' : 's' })}
-              </button>
-            </div>
+            {(() => {
+              const validCount = pendingScan.items.filter(i => i.name.trim()).length;
+              return (
+                <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+                  <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} onClick={cancelScan} disabled={savingScan}>
+                    {t('detail.discard')}
+                  </button>
+                  <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={confirmScan}
+                    disabled={savingScan || validCount === 0}>
+                    {savingScan ? t('list.creating') : t('detail.saveItems', { n: validCount, s: validCount === 1 ? '' : 's' })}
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         )}
 
