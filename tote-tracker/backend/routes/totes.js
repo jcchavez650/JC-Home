@@ -1,0 +1,189 @@
+import { Router } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import QRCode from 'qrcode';
+import db from '../database.js';
+import { requireEditor } from '../middleware/auth.js';
+
+const router = Router();
+
+function parseTote(t) {
+  if (!t) return null;
+  return { ...t, tags: JSON.parse(t.tags || '[]') };
+}
+
+// Public base URL for QR links — prefer PUBLIC_URL, else derive from the request
+function baseUrl(req) {
+  const configured = process.env.PUBLIC_URL;
+  if (configured) return configured.replace(/\/$/, '');
+  return `${req.protocol}://${req.get('host')}`;
+}
+
+// A QR that opens the public, read-only share page for this tote
+async function shareQr(req, token) {
+  return QRCode.toDataURL(`${baseUrl(req)}/share/${token}`, { width: 300, margin: 1 });
+}
+
+router.get('/', (req, res) => {
+  const totes = db.prepare(`
+    SELECT t.*,
+      COUNT(DISTINCT i.id) as item_count,
+      COUNT(DISTINCT p.id) as photo_count
+    FROM totes t
+    LEFT JOIN items i ON i.tote_id = t.id
+    LEFT JOIN photos p ON p.tote_id = t.id
+    GROUP BY t.id
+    ORDER BY t.updated_at DESC
+  `).all();
+  res.json(totes.map(parseTote));
+});
+
+router.get('/export', requireEditor, (req, res) => {
+  const totes = db.prepare('SELECT * FROM totes ORDER BY label').all();
+  const items = db.prepare('SELECT * FROM items ORDER BY tote_id, name').all();
+
+  const rows = [['Tote', 'Location', 'Tags', 'Item', 'Quantity', 'Notes']];
+  for (const tote of totes) {
+    const toteItems = items.filter(i => i.tote_id === tote.id);
+    if (toteItems.length === 0) {
+      rows.push([tote.label, tote.location || '', tote.tags || '[]', '', '', '']);
+    } else {
+      for (const item of toteItems) {
+        rows.push([tote.label, tote.location || '', tote.tags || '[]', item.name, item.quantity, item.notes || '']);
+      }
+    }
+  }
+
+  // Prefix formula characters to prevent CSV injection in Excel/Sheets
+  function csvCell(v) {
+    const s = String(v ?? '').replace(/"/g, '""');
+    return /^[=+\-@\t\r]/.test(s) ? `"'${s}"` : `"${s}"`;
+  }
+  const csv = rows.map(r => r.map(csvCell).join(',')).join('\n');
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="tote-inventory.csv"');
+  res.send(csv);
+});
+
+router.get('/search', requireEditor, (req, res) => {
+  const q = (req.query.q || '').trim();
+  if (!q) return res.json([]);
+
+  const results = db.prepare(`
+    SELECT i.*, t.label as tote_label, t.location as tote_location, t.id as tote_id
+    FROM items i
+    JOIN totes t ON t.id = i.tote_id
+    WHERE i.name LIKE ? OR i.notes LIKE ?
+    ORDER BY t.label, i.name
+  `).all(`%${q}%`, `%${q}%`);
+
+  res.json(results);
+});
+
+router.get('/:id', (req, res) => {
+  const tote = db.prepare('SELECT * FROM totes WHERE id = ?').get(req.params.id);
+  if (!tote) return res.status(404).json({ error: 'Tote not found' });
+  const items = db.prepare('SELECT * FROM items WHERE tote_id = ? ORDER BY name').all(req.params.id);
+  const photos = db.prepare('SELECT * FROM photos WHERE tote_id = ? ORDER BY created_at DESC').all(req.params.id);
+  res.json({ ...parseTote(tote), items, photos });
+});
+
+// Write operations require editor or admin role
+router.post('/', requireEditor, async (req, res) => {
+  const { label, location, tags } = req.body;
+  if (!label) return res.status(400).json({ error: 'Label is required' });
+  if (label.length > 200) return res.status(400).json({ error: 'Label must be 200 characters or fewer' });
+  if (location && location.length > 200) return res.status(400).json({ error: 'Location must be 200 characters or fewer' });
+
+  const id = uuidv4();
+  // Every tote gets a public share link so its QR opens the contents on any phone
+  const shareToken = uuidv4();
+  const qrCode = await shareQr(req, shareToken);
+  const tagsJson = JSON.stringify(Array.isArray(tags) ? tags : []);
+
+  db.prepare(`INSERT INTO totes (id, label, location, tags, share_token, qr_code) VALUES (?, ?, ?, ?, ?, ?)`)
+    .run(id, label, location || null, tagsJson, shareToken, qrCode);
+
+  res.status(201).json(parseTote(db.prepare('SELECT * FROM totes WHERE id = ?').get(id)));
+});
+
+router.put('/:id', requireEditor, (req, res) => {
+  const { label, location, tags } = req.body;
+  const tote = db.prepare('SELECT * FROM totes WHERE id = ?').get(req.params.id);
+  if (!tote) return res.status(404).json({ error: 'Tote not found' });
+
+  const tagsJson = tags !== undefined ? JSON.stringify(Array.isArray(tags) ? tags : []) : tote.tags;
+  db.prepare(`UPDATE totes SET label = ?, location = ?, tags = ?, updated_at = datetime('now') WHERE id = ?`)
+    .run(label || tote.label, location !== undefined ? location : tote.location, tagsJson, req.params.id);
+
+  res.json(parseTote(db.prepare('SELECT * FROM totes WHERE id = ?').get(req.params.id)));
+});
+
+// Ensure a tote has a share link and a URL-based QR (upgrades older totes)
+router.post('/:id/regenerate-qr', requireEditor, async (req, res) => {
+  const tote = db.prepare('SELECT * FROM totes WHERE id = ?').get(req.params.id);
+  if (!tote) return res.status(404).json({ error: 'Tote not found' });
+
+  const token = tote.share_token || uuidv4();
+  const qrCode = await shareQr(req, token);
+  db.prepare('UPDATE totes SET share_token = ?, qr_code = ? WHERE id = ?').run(token, qrCode, req.params.id);
+
+  res.json(parseTote(db.prepare('SELECT * FROM totes WHERE id = ?').get(req.params.id)));
+});
+
+router.post('/:id/share', requireEditor, (req, res) => {
+  const tote = db.prepare('SELECT * FROM totes WHERE id = ?').get(req.params.id);
+  if (!tote) return res.status(404).json({ error: 'Tote not found' });
+
+  let token = tote.share_token;
+  if (!token) {
+    token = uuidv4();
+    db.prepare('UPDATE totes SET share_token = ? WHERE id = ?').run(token, req.params.id);
+  }
+  res.json({ token });
+});
+
+router.delete('/:id/share', requireEditor, (req, res) => {
+  db.prepare('UPDATE totes SET share_token = NULL WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
+router.delete('/:id', requireEditor, (req, res) => {
+  const tote = db.prepare('SELECT * FROM totes WHERE id = ?').get(req.params.id);
+  if (!tote) return res.status(404).json({ error: 'Tote not found' });
+  db.prepare('DELETE FROM totes WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
+router.post('/:id/items', requireEditor, (req, res) => {
+  const { name, quantity, notes } = req.body;
+  if (!name) return res.status(400).json({ error: 'Item name is required' });
+  if (name.length > 200) return res.status(400).json({ error: 'Item name must be 200 characters or fewer' });
+  if (notes && notes.length > 1000) return res.status(400).json({ error: 'Notes must be 1000 characters or fewer' });
+  const tote = db.prepare('SELECT id FROM totes WHERE id = ?').get(req.params.id);
+  if (!tote) return res.status(404).json({ error: 'Tote not found' });
+
+  const id = uuidv4();
+  db.prepare(`INSERT INTO items (id, tote_id, name, quantity, notes) VALUES (?, ?, ?, ?, ?)`)
+    .run(id, req.params.id, name, quantity || 1, notes || null);
+  db.prepare(`UPDATE totes SET updated_at = datetime('now') WHERE id = ?`).run(req.params.id);
+
+  res.status(201).json(db.prepare('SELECT * FROM items WHERE id = ?').get(id));
+});
+
+router.put('/:id/items/:itemId', requireEditor, (req, res) => {
+  const { name, quantity, notes } = req.body;
+  const item = db.prepare('SELECT * FROM items WHERE id = ? AND tote_id = ?').get(req.params.itemId, req.params.id);
+  if (!item) return res.status(404).json({ error: 'Item not found' });
+
+  db.prepare(`UPDATE items SET name = ?, quantity = ?, notes = ? WHERE id = ?`)
+    .run(name || item.name, quantity !== undefined ? quantity : item.quantity, notes !== undefined ? notes : item.notes, req.params.itemId);
+
+  res.json(db.prepare('SELECT * FROM items WHERE id = ?').get(req.params.itemId));
+});
+
+router.delete('/:id/items/:itemId', requireEditor, (req, res) => {
+  db.prepare('DELETE FROM items WHERE id = ? AND tote_id = ?').run(req.params.itemId, req.params.id);
+  res.json({ success: true });
+});
+
+export default router;
