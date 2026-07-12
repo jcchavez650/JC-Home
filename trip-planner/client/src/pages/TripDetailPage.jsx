@@ -7,9 +7,10 @@ import BudgetTab from '../components/BudgetTab.jsx'
 import BalancesTab from '../components/BalancesTab.jsx'
 import SuggestionsTab from '../components/SuggestionsTab.jsx'
 import MembersTab from '../components/MembersTab.jsx'
+import PackingTab from '../components/PackingTab.jsx'
 import EditTripForm from '../components/EditTripForm.jsx'
 
-const TABS = ['Itinerary', 'Budget', 'Expenses', 'Balances', 'Suggestions', 'Members']
+const TABS = ['Itinerary', 'Budget', 'Expenses', 'Balances', 'Suggestions', 'Packing', 'Members']
 
 export default function TripDetailPage({ tripId }) {
   const [trip, setTrip] = useState(null)
@@ -88,6 +89,7 @@ export default function TripDetailPage({ tripId }) {
       {tab === 'Expenses' && <ExpensesTab {...tabProps} />}
       {tab === 'Balances' && <BalancesTab {...tabProps} />}
       {tab === 'Suggestions' && <SuggestionsTab {...tabProps} goToItinerary={() => setTab('Itinerary')} />}
+      {tab === 'Packing' && <PackingTab {...tabProps} />}
       {tab === 'Members' && <MembersTab {...tabProps} />}
     </div>
   )

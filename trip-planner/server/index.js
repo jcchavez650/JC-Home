@@ -13,6 +13,8 @@ import {
 } from './routes/expenses.js'
 import { suggestionsRouter } from './routes/suggestions.js'
 import { reportsRouter } from './routes/reports.js'
+import { packingRouter } from './routes/packing.js'
+import { invitesRouter } from './routes/invites.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -37,7 +39,9 @@ app.get('/api/trips/:tripId/settlements', requireAuth, requireTripMember, (req, 
 })
 app.post('/api/trips/:tripId/settlements', requireAuth, requireTripMember, createSettlement)
 app.use('/api/trips/:tripId/suggestions', requireAuth, requireTripMember, suggestionsRouter)
+app.use('/api/trips/:tripId/packing', requireAuth, requireTripMember, packingRouter)
 app.use('/api/reports', requireAuth, reportsRouter)
+app.use('/api/invites', requireAuth, invitesRouter)
 
 app.use((err, _req, res, _next) => {
   if (err?.type === 'entity.too.large') {
