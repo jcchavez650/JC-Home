@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Parts Tracking{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">🔧 Parts Tracking</div>
+    <nav>
+      <a href="{{ url_for('counter') }}" class="{% if request.endpoint == 'counter' %}active{% endif %}">Counter</a>
+      <a href="{{ url_for('outstanding') }}" class="{% if request.endpoint == 'outstanding' %}active{% endif %}">Outstanding</a>
+      <a href="{{ url_for('history') }}" class="{% if request.endpoint == 'history' %}active{% endif %}">History</a>
+      <a href="{{ url_for('parts') }}" class="{% if request.endpoint == 'parts' %}active{% endif %}">Parts</a>
+      <a href="{{ url_for('people') }}" class="{% if request.endpoint == 'people' %}active{% endif %}">People</a>
+    </nav>
+  </header>
+
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flashes">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Parts — Parts Tracking{% endblock %}
+
+{% block content %}
+<h1>Parts</h1>
+
+<form class="card" method="post" action="{{ url_for('parts') }}">
+  <input type="hidden" name="action" value="add">
+  <h2>Add a part</h2>
+  <div class="form-row">
+    <input type="text" name="part_number" placeholder="Part number (barcode)" required>
+    <input type="text" name="name" placeholder="Name" required>
+    <input type="text" name="location" placeholder="Location (bin/shelf)">
+    <input type="number" name="qty_on_hand" min="0" value="0" placeholder="Qty on hand">
+    <button type="submit">Add</button>
+  </div>
+</form>
+
+{% if rows %}
+<table class="grid">
+  <thead>
+    <tr><th>Part #</th><th>Name</th><th>Location</th><th class="num">On hand</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <form method="post" action="{{ url_for('parts') }}">
+        <input type="hidden" name="action" value="update">
+        <input type="hidden" name="id" value="{{ r['id'] }}">
+        <td class="mono">{{ r["part_number"] }}</td>
+        <td><input type="text" name="name" value="{{ r['name'] }}"></td>
+        <td><input type="text" name="location" value="{{ r['location'] }}"></td>
+        <td class="num">{{ r["qty_on_hand"] }}</td>
+        <td><button type="submit" class="secondary">Save</button></td>
+      </form>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">No parts yet. Add one above.</p>
+{% endif %}
+{% endblock %}

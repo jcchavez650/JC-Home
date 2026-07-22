@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}People — Parts Tracking{% endblock %}
+
+{% block content %}
+<h1>People &amp; Badges</h1>
+
+<form class="card" method="post" action="{{ url_for('people') }}">
+  <input type="hidden" name="action" value="add">
+  <h2>Add a person</h2>
+  <div class="form-row">
+    <input type="text" name="badge_id" placeholder="Badge ID (barcode)" required>
+    <input type="text" name="name" placeholder="Name" required>
+    <select name="role">
+      <option value="worker">Worker</option>
+      <option value="approver">Approver</option>
+    </select>
+    <button type="submit">Add</button>
+  </div>
+</form>
+
+{% if rows %}
+<table class="grid">
+  <thead>
+    <tr><th>Badge</th><th>Name</th><th>Role</th><th>Active</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <form method="post" action="{{ url_for('people') }}">
+        <input type="hidden" name="action" value="update">
+        <input type="hidden" name="id" value="{{ r['id'] }}">
+        <td class="mono">{{ r["badge_id"] }}</td>
+        <td><input type="text" name="name" value="{{ r['name'] }}"></td>
+        <td>
+          <select name="role">
+            <option value="worker" {% if r['role'] == 'worker' %}selected{% endif %}>Worker</option>
+            <option value="approver" {% if r['role'] == 'approver' %}selected{% endif %}>Approver</option>
+          </select>
+        </td>
+        <td><input type="checkbox" name="active" {% if r['active'] %}checked{% endif %}></td>
+        <td><button type="submit" class="secondary">Save</button></td>
+      </form>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">No people yet. Add one above.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Outstanding — Parts Tracking{% endblock %}
+
+{% block content %}
+<h1>Currently Checked Out</h1>
+<p class="hint">Net quantity each person still has out (check-outs minus check-ins).</p>
+
+{% if rows %}
+<table class="grid">
+  <thead>
+    <tr><th>Person</th><th>Badge</th><th>Part #</th><th>Part</th><th class="num">Qty out</th></tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r["person"] }}</td>
+      <td class="mono">{{ r["badge"] }}</td>
+      <td class="mono">{{ r["part_number"] }}</td>
+      <td>{{ r["part_name"] }}</td>
+      <td class="num">{{ r["net"] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">Nothing is currently checked out.</p>
+{% endif %}
+{% endblock %}

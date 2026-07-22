@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}History — Parts Tracking{% endblock %}
+
+{% block content %}
+<h1>Movement History</h1>
+
+<form class="filters" method="get" action="{{ url_for('history') }}">
+  <input type="text" name="part_number" placeholder="Part #" value="{{ filters['part_number'] }}">
+  <input type="text" name="badge" placeholder="Badge (worker or approver)" value="{{ filters['badge'] }}">
+  <label>From <input type="date" name="start" value="{{ filters['start'] }}"></label>
+  <label>To <input type="date" name="end" value="{{ filters['end'] }}"></label>
+  <button type="submit">Filter</button>
+  <a class="button-link" href="{{ url_for('history') }}">Clear</a>
+  <a class="button-link" href="{{ url_for('history_csv', **filters) }}">Export CSV</a>
+</form>
+
+{% if rows %}
+<table class="grid">
+  <thead>
+    <tr>
+      <th>Timestamp</th><th>Part #</th><th>Part</th><th>Dir</th>
+      <th class="num">Qty</th><th>Worker</th><th>Approver</th><th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td class="mono">{{ r["created_at"] }}</td>
+      <td class="mono">{{ r["part_number"] }}</td>
+      <td>{{ r["part_name"] }}</td>
+      <td>
+        <span class="pill pill-{{ r['direction'] }}">
+          {{ 'OUT' if r['direction'] == 'out' else 'IN' }}
+        </span>
+      </td>
+      <td class="num">{{ r["quantity"] }}</td>
+      <td>{{ r["worker"] }} <span class="mono muted">({{ r["worker_badge"] }})</span></td>
+      <td>{{ r["approver"] }} <span class="mono muted">({{ r["approver_badge"] }})</span></td>
+      <td>{{ r["note"] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">No movements match these filters.</p>
+{% endif %}
+{% endblock %}

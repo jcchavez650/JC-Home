@@ -1,0 +1,3 @@
+parts.db
+__pycache__/
+*.pyc
