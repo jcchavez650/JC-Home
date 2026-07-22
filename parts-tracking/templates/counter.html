@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Counter — Parts Tracking{% endblock %}
+
+{% block content %}
+<div class="counter">
+  <h1>Counter Station</h1>
+  <p class="hint">Scan the part, choose the direction and quantity, then scan the worker
+     badge and the approver badge to sign off.</p>
+
+  <!-- Step 1: part -->
+  <section class="step" id="step-part">
+    <label class="step-label"><span class="num">1</span> Scan part</label>
+    <input type="text" id="part-input" autocomplete="off" placeholder="Scan or type part number…">
+    <div id="part-details" class="details hidden"></div>
+  </section>
+
+  <!-- Step 2: direction + quantity -->
+  <section class="step" id="step-move">
+    <label class="step-label"><span class="num">2</span> Direction &amp; quantity</label>
+    <div class="direction">
+      <label><input type="radio" name="direction" value="out" checked> Check&nbsp;out</label>
+      <label><input type="radio" name="direction" value="in"> Check&nbsp;in</label>
+    </div>
+    <input type="number" id="qty-input" min="1" value="1">
+  </section>
+
+  <!-- Step 3: worker -->
+  <section class="step" id="step-worker">
+    <label class="step-label"><span class="num">3</span> Scan worker badge</label>
+    <input type="text" id="worker-input" autocomplete="off" placeholder="Scan worker badge…">
+    <div id="worker-name" class="badge-name"></div>
+  </section>
+
+  <!-- Step 4: approver -->
+  <section class="step" id="step-approver">
+    <label class="step-label"><span class="num">4</span> Scan approver badge</label>
+    <input type="text" id="approver-input" autocomplete="off" placeholder="Scan approver badge…">
+    <div id="approver-name" class="badge-name"></div>
+  </section>
+
+  <div class="actions">
+    <button id="submit-btn" type="button">Record movement</button>
+    <button id="reset-btn" type="button" class="secondary">Reset</button>
+  </div>
+
+  <div id="result" class="result hidden"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='scan.js') }}"></script>
+{% endblock %}
